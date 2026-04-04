@@ -1,0 +1,50 @@
+name: Diagnose Marieta Folder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build credentials
+        env:
+          FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
+          BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          jq -n \
+            --arg fb_token "$FB_TOKEN_SKYHOUSE" \
+            --arg n8n_key "$N8N_API_KEY" \
+            --arg anthropic_key "$ANTHROPIC_API_KEY" \
+            --arg bunny_sky "$BUNNY_SKYHOUSE_KEY" \
+            --arg bunny_say "$BUNNY_SAYULITA_KEY" \
+            --arg tg_token "$TELEGRAM_BOT_TOKEN" \
+            '{
+              facebook: { pages: { skyhouse_sayulita: { pageId: "1004908006045909", accessToken: $fb_token } } },
+              bunny: {
+                skyhouse: { storageZoneName: "skyhousesayulita", storageApiKey: $bunny_sky },
+                sayulita_shared: { storageZoneName: "sayulitaandbeyond", storageApiKey: $bunny_say }
+              }
+            }' > credentials.local.json
+
+      - name: Run diagnostic
+        run: bash diagnose-marieta.sh
+
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add marieta-contents.txt
+          git commit -m "debug: marieta folder contents" || echo "nothing to commit"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
