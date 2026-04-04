@@ -51,7 +51,7 @@ get_or_create_cred() {
   existing_id=$(echo "$EXISTING_CREDS" | jq -r --arg n "$name" '.data[] | select(.name == $n) | .id // empty' 2>/dev/null | head -1)
 
   if [ -n "$existing_id" ]; then
-    echo "  ↩ $name already exists: $existing_id"
+    echo "  ↩ $name already exists: $existing_id" >&2
     echo "$existing_id"
     return
   fi
@@ -62,10 +62,10 @@ get_or_create_cred() {
   new_id=$(echo "$response" | jq -r '.id // empty')
 
   if [ -z "$new_id" ]; then
-    echo "ERROR creating credential '$name': $response"
+    echo "ERROR creating credential '$name': $response" >&2
     exit 1
   fi
-  echo "  ✓ $name: $new_id"
+  echo "  ✓ $name: $new_id" >&2
   echo "$new_id"
 }
 
