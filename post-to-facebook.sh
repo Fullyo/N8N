@@ -98,7 +98,10 @@ fi
 echo "  Found $FILE_COUNT images total"
 
 if [ "$FILE_COUNT" -eq 0 ]; then
-  echo "ERROR: No images found in $BUNNY_ZONE/$BUNNY_SUBFOLDER (checked subdirectories too)"
+  echo "ERROR: No images found in $BUNNY_ZONE/$BUNNY_SUBFOLDER"
+  echo "--- All root folders in $BUNNY_ZONE ---"
+  ROOT_RESP=$(curl -s -H "AccessKey: $BUNNY_KEY" "$BUNNY_STORAGE_API/$BUNNY_ZONE/")
+  echo "$ROOT_RESP" | jq -r '.[] | .ObjectName' 2>/dev/null || echo "RAW: $ROOT_RESP"
   exit 1
 fi
 
