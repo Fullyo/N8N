@@ -111,12 +111,13 @@ deploy_workflow() {
   # Remove 'active' field — n8n API rejects it on POST
   json=$(echo "$json" | jq 'del(.active)')
 
-  # Deactivate any existing workflows with same name
+  # Deactivate and delete any existing workflows with same name
   while IFS= read -r old_id; do
     [ -z "$old_id" ] && continue
     api PATCH "/workflows/$old_id" '{"active":false}' > /dev/null
-    echo "  → Deactivated old: $old_id" >&2
-  done < <(api GET /workflows | jq -r --arg name "$label" '.data[] | select(.name == $name) | .id' 2>/dev/null || true)
+    api DELETE "/workflows/$old_id" > /dev/null
+    echo "  → Deleted old: $old_id" >&2
+  done < <(api GET "/workflows?limit=100" | jq -r --arg name "$label" '.data[] | select(.name == $name) | .id' 2>/dev/null || true)
 
   echo "--- Deploying: $label ---"
   local response
