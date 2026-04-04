@@ -35,7 +35,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\nconst fromId = msg.message?.from?.id || msg.callback_query?.from?.id;\nconst text = msg.message?.text || msg.callback_query?.data || '';\nconst chatId = msg.message?.chat?.id || msg.callback_query?.message?.chat?.id;\nconst messageId = msg.message?.message_id || msg.callback_query?.message?.message_id;\nconst callbackQueryId = msg.callback_query?.id || null;\nif (fromId !== OWNER_ID) {\n  return [{ json: { authorized: false, chatId: String(chatId), text, fromId } }];\n}\nreturn [{ json: { authorized: true, chatId: String(chatId), text, fromId, messageId, callbackQueryId } }];"
+        "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\nconst fromId = msg.message?.from?.id || msg.callback_query?.from?.id;\nconst text = msg.message?.text || msg.callback_query?.data || '';\nconst chatId = msg.message?.chat?.id || msg.callback_query?.message?.chat?.id;\nconst messageId = msg.message?.message_id || msg.callback_query?.message?.message_id;\nconst callbackQueryId = msg.callback_query?.id || null;\nconst isCallbackQuery = callbackQueryId !== null;\nif (fromId !== OWNER_ID) {\n  return [{ json: { authorized: false, chatId: String(chatId), text, fromId, isCallbackQuery: false } }];\n}\nreturn [{ json: { authorized: true, chatId: String(chatId), text, fromId, messageId, callbackQueryId, isCallbackQuery } }];\n"
       }
     },
     {
@@ -76,12 +76,9 @@
       ],
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true
-          },
           "conditions": [
             {
-              "leftValue": "={{ typeof $json.callbackQueryId === 'string' }}",
+              "leftValue": "={{ $json.isCallbackQuery }}",
               "rightValue": true,
               "operator": {
                 "type": "boolean",
