@@ -111,6 +111,13 @@ deploy_workflow() {
   # Remove 'active' field — n8n API rejects it on POST
   json=$(echo "$json" | jq 'del(.active)')
 
+  # Deactivate any existing workflows with same name
+  while IFS= read -r old_id; do
+    [ -z "$old_id" ] && continue
+    api PATCH "/workflows/$old_id" '{"active":false}' > /dev/null
+    echo "  → Deactivated old: $old_id" >&2
+  done < <(api GET /workflows | jq -r --arg name "$label" '.data[] | select(.name == $name) | .id' 2>/dev/null || true)
+
   echo "--- Deploying: $label ---"
   local response
   response=$(api POST /workflows "$json")
@@ -123,6 +130,15 @@ deploy_workflow() {
   fi
   echo "  ✓ $label deployed: $wid"
   echo "  URL: $N8N_BASE_URL/workflow/$wid"
+
+  # Activate the new workflow
+  activate_resp=$(api PATCH "/workflows/$wid" '{"active":true}')
+  if echo "$activate_resp" | jq -e '.active == true' > /dev/null 2>&1; then
+    echo "  ✓ Activated!"
+  else
+    echo "  ⚠ Check n8n to activate manually"
+  fi
+
   echo "$wid"
 }
 
@@ -160,5 +176,5 @@ echo "DEPLOYMENT COMPLETE"
 echo "  SkyHouse workflow : $N8N_BASE_URL/workflow/$SKYHOUSE_ID"
 echo "  Telegram assistant: $N8N_BASE_URL/workflow/$TELEGRAM_ID"
 echo ""
-echo "Both workflows are INACTIVE — activate in n8n UI."
+echo "Both workflows deployed and activated."
 echo "==================================================="

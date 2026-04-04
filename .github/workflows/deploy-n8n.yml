@@ -2,6 +2,9 @@ name: Deploy All Fullyo Workflows to n8n
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
 
 jobs:
   deploy:
