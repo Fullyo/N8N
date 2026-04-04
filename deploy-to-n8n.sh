@@ -37,72 +37,53 @@ api() {
   fi
 }
 
-# ── Step 1: Create credentials ───────────────────────────────
-echo "--- Creating credentials ---"
+# ── Step 1: Create or reuse credentials ──────────────────────
+echo "--- Creating credentials (skipping if already exist) ---"
 
-echo "Creating: SkyHouse Facebook Token..."
-FB_CRED_RESPONSE=$(api POST /credentials "{
-  \"name\": \"SkyHouse Facebook Token\",
-  \"type\": \"httpHeaderAuth\",
-  \"data\": {
-    \"name\": \"Authorization\",
-    \"value\": \"Bearer $FB_ACCESS_TOKEN\"
-  }
-}")
-CRED_ID_FACEBOOK=$(echo "$FB_CRED_RESPONSE" | jq -r '.id // empty')
-if [ -z "$CRED_ID_FACEBOOK" ]; then
-  echo "ERROR creating Facebook credential: $FB_CRED_RESPONSE"
-  exit 1
-fi
-echo "  ✓ SkyHouse Facebook Token: $CRED_ID_FACEBOOK"
+EXISTING_CREDS=$(api GET /credentials)
 
-echo "Creating: Anthropic API..."
-ANTHROPIC_CRED_RESPONSE=$(api POST /credentials "{
-  \"name\": \"Anthropic API\",
-  \"type\": \"httpHeaderAuth\",
-  \"data\": {
-    \"name\": \"x-api-key\",
-    \"value\": \"$ANTHROPIC_API_KEY\"
-  }
-}")
-CRED_ID_ANTHROPIC=$(echo "$ANTHROPIC_CRED_RESPONSE" | jq -r '.id // empty')
-if [ -z "$CRED_ID_ANTHROPIC" ]; then
-  echo "ERROR creating Anthropic credential: $ANTHROPIC_CRED_RESPONSE"
-  exit 1
-fi
-echo "  ✓ Anthropic API: $CRED_ID_ANTHROPIC"
+get_or_create_cred() {
+  local name="$1"
+  local type="$2"
+  local data="$3"
 
-echo "Creating: Bunny SkyHouse Storage..."
-BUNNY_SKY_RESPONSE=$(api POST /credentials "{
-  \"name\": \"Bunny SkyHouse Storage\",
-  \"type\": \"httpHeaderAuth\",
-  \"data\": {
-    \"name\": \"AccessKey\",
-    \"value\": \"$BUNNY_SKYHOUSE_KEY\"
-  }
-}")
-CRED_ID_BUNNY_SKYHOUSE=$(echo "$BUNNY_SKY_RESPONSE" | jq -r '.id // empty')
-if [ -z "$CRED_ID_BUNNY_SKYHOUSE" ]; then
-  echo "ERROR creating Bunny SkyHouse credential: $BUNNY_SKY_RESPONSE"
-  exit 1
-fi
-echo "  ✓ Bunny SkyHouse Storage: $CRED_ID_BUNNY_SKYHOUSE"
+  local existing_id
+  existing_id=$(echo "$EXISTING_CREDS" | jq -r --arg n "$name" '.data[] | select(.name == $n) | .id // empty' 2>/dev/null | head -1)
 
-echo "Creating: Bunny Sayulita Shared..."
-BUNNY_SAY_RESPONSE=$(api POST /credentials "{
-  \"name\": \"Bunny Sayulita Shared\",
-  \"type\": \"httpHeaderAuth\",
-  \"data\": {
-    \"name\": \"AccessKey\",
-    \"value\": \"$BUNNY_SAYULITA_KEY\"
-  }
-}")
-CRED_ID_BUNNY_SAYULITA=$(echo "$BUNNY_SAY_RESPONSE" | jq -r '.id // empty')
-if [ -z "$CRED_ID_BUNNY_SAYULITA" ]; then
-  echo "ERROR creating Bunny Sayulita credential: $BUNNY_SAY_RESPONSE"
-  exit 1
-fi
-echo "  ✓ Bunny Sayulita Shared: $CRED_ID_BUNNY_SAYULITA"
+  if [ -n "$existing_id" ]; then
+    echo "  ↩ $name already exists: $existing_id"
+    echo "$existing_id"
+    return
+  fi
+
+  local response
+  response=$(api POST /credentials "{\"name\":\"$name\",\"type\":\"$type\",\"data\":$data}")
+  local new_id
+  new_id=$(echo "$response" | jq -r '.id // empty')
+
+  if [ -z "$new_id" ]; then
+    echo "ERROR creating credential '$name': $response"
+    exit 1
+  fi
+  echo "  ✓ $name: $new_id"
+  echo "$new_id"
+}
+
+CRED_ID_FACEBOOK=$(get_or_create_cred \
+  "SkyHouse Facebook Token" "httpHeaderAuth" \
+  "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_ACCESS_TOKEN\"}")
+
+CRED_ID_ANTHROPIC=$(get_or_create_cred \
+  "Anthropic API" "httpHeaderAuth" \
+  "{\"name\":\"x-api-key\",\"value\":\"$ANTHROPIC_API_KEY\"}")
+
+CRED_ID_BUNNY_SKYHOUSE=$(get_or_create_cred \
+  "Bunny SkyHouse Storage" "httpHeaderAuth" \
+  "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_SKYHOUSE_KEY\"}")
+
+CRED_ID_BUNNY_SAYULITA=$(get_or_create_cred \
+  "Bunny Sayulita Shared" "httpHeaderAuth" \
+  "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_SAYULITA_KEY\"}")
 
 echo ""
 
@@ -117,6 +98,9 @@ WORKFLOW_JSON=$(echo "$WORKFLOW_JSON" | sed \
   -e "s/CRED_ID_BUNNY_SAYULITA/$CRED_ID_BUNNY_SAYULITA/g")
 
 echo "  ✓ Credential IDs substituted"
+
+# Remove 'active' field — n8n API rejects it on POST
+WORKFLOW_JSON=$(echo "$WORKFLOW_JSON" | jq 'del(.active)')
 
 # ── Step 3: Deploy workflow ───────────────────────────────────
 echo "--- Deploying workflow ---"
