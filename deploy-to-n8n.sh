@@ -172,6 +172,18 @@ UPDATED=$(jq \
 echo "$UPDATED" > "$CREDS_FILE"
 echo "  ✓ credentials.local.json updated"
 echo ""
+
+# ── Step 4: Register Telegram webhook explicitly ──────────────
+echo "--- Registering Telegram webhook ---"
+TG_WEBHOOK_URL="$N8N_BASE_URL/webhook/fullyo-telegram-assistant"
+TG_RESP=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${TG_WEBHOOK_URL}")
+if echo "$TG_RESP" | jq -e '.ok == true' > /dev/null 2>&1; then
+  echo "  ✓ Telegram webhook registered: $TG_WEBHOOK_URL"
+else
+  echo "  ⚠ Telegram webhook registration failed: $TG_RESP"
+fi
+echo ""
+
 echo "==================================================="
 echo "DEPLOYMENT COMPLETE"
 echo "  SkyHouse workflow : $N8N_BASE_URL/workflow/$SKYHOUSE_ID"
