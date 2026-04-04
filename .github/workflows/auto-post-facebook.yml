@@ -10,23 +10,31 @@ on:
 jobs:
   post:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check pending post has content
+        id: check
         run: |
           CAPTION=$(jq -r '.caption' pending-post.json)
           FOLDER=$(jq -r '.photo_folder' pending-post.json)
           if [ -z "$CAPTION" ] || [ "$CAPTION" = "null" ] || [ -z "$FOLDER" ] || [ "$FOLDER" = "null" ]; then
             echo "pending-post.json is empty — nothing to post"
-            exit 0
+            echo "has_content=false" >> $GITHUB_OUTPUT
+          else
+            echo "Posting: ${CAPTION:0:60}..."
+            echo "Folder: $FOLDER"
+            echo "has_content=true" >> $GITHUB_OUTPUT
           fi
-          echo "Posting: ${CAPTION:0:60}..."
-          echo "Folder: $FOLDER"
 
       - name: Build credentials file
+        if: steps.check.outputs.has_content == 'true'
         env:
           N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
           FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
@@ -71,13 +79,15 @@ jobs:
             }' > credentials.local.json
 
       - name: Post to Facebook
+        if: steps.check.outputs.has_content == 'true'
         run: bash post-to-facebook.sh
 
       - name: Clear pending post
+        if: steps.check.outputs.has_content == 'true'
         run: |
           jq -n '{"caption": "", "photo_folder": "", "num_photos": 3}' > pending-post.json
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pending-post.json
           git commit -m "clear: post published to Facebook"
-          git push
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
