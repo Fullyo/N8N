@@ -50,31 +50,50 @@ else
   BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
 fi
 
-# ── List images from Bunny storage ────────────────────────────
+# ── List images from Bunny storage (handles 1 or 2 levels deep) ──
 echo "--- Fetching photo list from Bunny CDN ---"
 LIST_RESP=$(curl -s \
   -H "AccessKey: $BUNNY_KEY" \
   "$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER")
 
-echo "  Bunny URL: $BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER"
-echo "  Raw Bunny response (first 500 chars): ${LIST_RESP:0:500}"
-
+# Try to get images directly from this folder
 IMAGE_FILES=$(echo "$LIST_RESP" | \
   jq -r '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | .ObjectName' \
   2>/dev/null || true)
 
-# Count safely — avoid double-output from grep -c || echo 0
+# If no images found directly, the folder has subdirectories — go one level deeper
+if [ -z "$IMAGE_FILES" ]; then
+  echo "  No images at top level — checking subdirectories..."
+  SUBDIRS=$(echo "$LIST_RESP" | jq -r '.[] | select(.IsDirectory == true) | .ObjectName' 2>/dev/null || true)
+  echo "  Subdirs found: $(echo "$SUBDIRS" | tr '\n' ' ')"
+
+  ALL_IMAGES=""
+  while IFS= read -r subdir; do
+    [ -z "$subdir" ] && continue
+    SUB_URL="$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER$(python3 -c "import urllib.parse; print(urllib.parse.quote('$subdir'))")/"
+    echo "  Listing: $SUB_URL"
+    SUB_RESP=$(curl -s -H "AccessKey: $BUNNY_KEY" "$SUB_URL")
+    SUB_FILES=$(echo "$SUB_RESP" | \
+      jq -r ".[] | select(.IsDirectory == false) | select(.ObjectName | test(\"\\\\.(jpg|jpeg|png|webp)$\"; \"i\")) | \"${subdir}/\" + .ObjectName" \
+      2>/dev/null || true)
+    if [ -n "$SUB_FILES" ]; then
+      ALL_IMAGES="${ALL_IMAGES}${SUB_FILES}"$'\n'
+    fi
+  done <<< "$SUBDIRS"
+  IMAGE_FILES="$ALL_IMAGES"
+fi
+
+# Count safely
 if [ -z "$IMAGE_FILES" ]; then
   FILE_COUNT=0
 else
-  FILE_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
+  FILE_COUNT=$(printf '%s' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
   FILE_COUNT=${FILE_COUNT:-0}
 fi
-echo "  Found $FILE_COUNT images"
+echo "  Found $FILE_COUNT images total"
 
 if [ "$FILE_COUNT" -eq 0 ]; then
-  echo "ERROR: No images found in $BUNNY_ZONE/$BUNNY_SUBFOLDER"
-  echo "Full Bunny response: $LIST_RESP"
+  echo "ERROR: No images found in $BUNNY_ZONE/$BUNNY_SUBFOLDER (checked subdirectories too)"
   exit 1
 fi
 
