@@ -76,7 +76,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { text, chatId, callbackQueryId, messageId } = $input.first().json;\nconst lower = (text || '').toLowerCase().trim();\n\nlet intent = 'create_post'; // DEFAULT \u2014 assume post request\n\n// Override only for clear non-post intents\nif (lower === '/start' || lower === '/help' || lower === 'help' || lower === 'hi' || lower === 'hello') {\n  intent = 'help';\n} else if (lower === 'status' || lower === 'report' || lower === '/status') {\n  intent = 'status';\n} else if (lower.startsWith('approve_') || lower.startsWith('reject_')) {\n  intent = 'approval_response';\n}\n\nreturn [{ json: { intent, text, chatId, callbackQueryId, messageId } }];"
+        "jsCode": "const { text, chatId, callbackQueryId, messageId } = $input.first().json;\nconst lower = (text || '').toLowerCase().trim();\n\nlet intent = 'create_post'; // DEFAULT\n\nif (lower === '/start' || lower === '/help' || lower === 'help' || lower === 'hi' || lower === 'hello') {\n  intent = 'help';\n} else if (lower === 'status' || lower === 'report' || lower === '/status') {\n  intent = 'status';\n} else if (lower === 'yes' || lower === 'y' || lower === 'post it' || lower === 'approve' || lower === 'go ahead' || lower === 'ok' || lower === 'looks good') {\n  intent = 'approve';\n} else if (lower === 'no' || lower === 'n' || lower === 'cancel' || lower === 'discard' || lower === 'stop') {\n  intent = 'reject';\n}\n\nreturn [{ json: { intent, text, chatId, callbackQueryId, messageId } }];"
       }
     },
     {
@@ -157,7 +157,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system: 'You are the content creator for SkyHouse Sayulita, a luxury two-level corner penthouse vacation rental in Monterosa, Northside Sayulita, Mexico. Managed by LUX Property Management.\\n\\nPROPERTY: 3 bed, 3 bath, sleeps 8. Panoramic ocean views. Shared infinity pool. Private tennis court. Starlink WiFi. 3-min walk to beach. 5-min to town. Quiet Northside location. Host E\u00f1o offers surf lessons, boat charters, ATV tours, transfers.\\n\\nBRAND VOICE: Elegant, experiential, warm. Second or third person only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nWhen given an idea or brief, write a complete Facebook post ready to publish. Output only the post text, nothing else.', messages: [{ role: 'user', content: $json.text }] }) }}"
+        "body": "={{ JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system: 'You are the social media content creator for SkyHouse Sayulita, a luxury vacation rental in Sayulita Mexico. Write Facebook posts that get published automatically.\\n\\nSkyHouse: 3 bed/3 bath/sleeps 8, panoramic ocean views, shared infinity pool, private tennis court, Starlink WiFi, 3-min walk to beach. Host E\u00f1o offers surf lessons, boat charters, ATV tours.\\n\\nBRAND VOICE: Elegant, experiential, warm. Plain text only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nOutput ONLY the post text. No explanations, no questions, no commentary.', messages: [{ role: 'user', content: $json.text }] }) }}"
       }
     },
     {
@@ -171,7 +171,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const response = $input.first().json;\nconst chatId = $('Detect Intent').first().json.chatId;\nconst originalText = $('Detect Intent').first().json.text;\n\nlet postText = '';\nif (response.content && response.content[0]) {\n  postText = response.content[0].text.trim();\n}\n\nif (!postText) {\n  throw new Error('Claude returned empty response');\n}\n\n// Store post for potential approval flow\nreturn [{ json: { postText, chatId, originalRequest: originalText } }];"
+        "jsCode": "const response = $input.first().json;\nconst chatId = $('Detect Intent').first().json.chatId;\nconst originalText = $('Detect Intent').first().json.text;\n\nlet postText = '';\nif (response.content && response.content[0]) {\n  postText = response.content[0].text.trim();\n}\n\nif (!postText) {\n  throw new Error('Claude returned empty response');\n}\n\n// Save pending post to static data so approval step can retrieve it\nconst staticData = $getWorkflowStaticData('global');\nstaticData.pendingPost = postText;\nstaticData.pendingChatId = chatId;\n\nreturn [{ json: { postText, chatId, originalRequest: originalText } }];"
       }
     },
     {
@@ -191,10 +191,9 @@
       },
       "parameters": {
         "chatId": "={{ $json.chatId }}",
-        "text": "={{ '\u270d\ufe0f *Draft post ready:*\\n\\n' + $json.postText + '\\n\\n_Approve to post to SkyHouse Facebook now, or reply with edits._' }}",
+        "text": "={{ '\u270d\ufe0f *Draft post ready:*\\n\\n' + $json.postText + '\\n\\nReply *yes* to post to Facebook now, or *no* to discard.' }}",
         "additionalFields": {
-          "parse_mode": "Markdown",
-          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[{ text: '\u2705 Post it now', callback_data: 'approve_skyhouse' }, { text: '\u274c Discard', callback_data: 'reject_skyhouse' }]] }) }}"
+          "parse_mode": "Markdown"
         }
       }
     },
@@ -305,6 +304,200 @@
           ]
         }
       }
+    },
+    {
+      "id": "t016",
+      "name": "Handle Approval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        480
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $input.first().json.chatId;\nconst postText = staticData.pendingPost || null;\n\nif (!postText) {\n  return [{ json: { chatId, error: 'No pending post found. Please create a new post first.' } }];\n}\n\n// Clear pending post\nstaticData.pendingPost = null;\n\nreturn [{ json: { chatId, postText, hasPendingPost: true } }];"
+      }
+    },
+    {
+      "id": "t017",
+      "name": "Handle Rejection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $input.first().json.chatId;\nstaticData.pendingPost = null;\nreturn [{ json: { chatId, message: 'Post discarded. Send me a new idea whenever you\\'re ready.' } }];"
+      }
+    },
+    {
+      "id": "t018",
+      "name": "Post Approved to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        480
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FACEBOOK",
+          "name": "SkyHouse Facebook Token"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/1004908006045909/feed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ message: $json.postText }) }}"
+      }
+    },
+    {
+      "id": "t019",
+      "name": "Confirm Posted",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1560,
+        480
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $('Handle Approval').first().json.chatId }}",
+        "text": "\u2705 *Posted to SkyHouse Facebook!*\n\nCheck it live on the page.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "t020",
+      "name": "No Pending Post Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        560
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "No pending post found. Send me a post idea first.",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "t021",
+      "name": "Rejection Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        620
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "\u274c Post discarded. Send me a new idea whenever you're ready.",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "t022",
+      "name": "Is Post Pending?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        490
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hasPendingPost }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "t023",
+      "name": "Is Approve or Reject?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        340
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $json.intent }}",
+              "rightValue": "approve",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "t024",
+      "name": "Is Reject?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        560
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $json.intent }}",
+              "rightValue": "reject",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "connections": {
@@ -403,7 +596,7 @@
         ],
         [
           {
-            "node": "Is Help?",
+            "node": "Is Approve or Reject?",
             "type": "main",
             "index": 0
           }
@@ -415,6 +608,93 @@
         [
           {
             "node": "Send Help Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Reject?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Approve or Reject?": {
+      "main": [
+        [
+          {
+            "node": "Handle Approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Help?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Approval": {
+      "main": [
+        [
+          {
+            "node": "Is Post Pending?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Post Pending?": {
+      "main": [
+        [
+          {
+            "node": "Post Approved to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Pending Post Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Approved to Facebook": {
+      "main": [
+        [
+          {
+            "node": "Confirm Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Rejection": {
+      "main": [
+        [
+          {
+            "node": "Rejection Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Reject?": {
+      "main": [
+        [
+          {
+            "node": "Handle Rejection",
             "type": "main",
             "index": 0
           }
