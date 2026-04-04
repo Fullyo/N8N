@@ -76,7 +76,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { text, chatId, callbackQueryId, messageId } = $input.first().json;\nconst lower = (text || '').toLowerCase().trim();\n\nlet intent = 'create_post'; // DEFAULT\n\nif (lower === '/start' || lower === '/help' || lower === 'help' || lower === 'hi' || lower === 'hello') {\n  intent = 'help';\n} else if (lower === 'status' || lower === 'report' || lower === '/status') {\n  intent = 'status';\n} else if (lower.startsWith('yes') || lower === 'y' || lower === 'approve' || lower === 'post it' || lower === 'go ahead' || lower === 'ok' || lower === 'looks good' || lower === 'send it' || lower === 'publish') {\n  intent = 'approve';\n} else if (lower.startsWith('no') || lower === 'n' || lower === 'cancel' || lower === 'discard' || lower === 'stop' || lower === 'delete') {\n  intent = 'reject';\n}\n\nreturn [{ json: { intent, text, chatId, callbackQueryId, messageId } }];"
+        "jsCode": "const { text, chatId, callbackQueryId, messageId } = $input.first().json;\nconst lower = (text || '').toLowerCase().trim();\n\nlet intent = 'create_post'; // DEFAULT - anything goes to Claude\n\nif (lower === '/start' || lower === '/help' || lower === 'help' || lower === 'hi' || lower === 'hello') {\n  intent = 'help';\n} else if (lower === 'status' || lower === 'report' || lower === '/status') {\n  intent = 'status';\n}\n\nreturn [{ json: { intent, text, chatId, callbackQueryId, messageId } }];"
       }
     },
     {
@@ -171,30 +171,33 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const response = $input.first().json;\nconst chatId = $('Detect Intent').first().json.chatId;\nconst originalText = $('Detect Intent').first().json.text;\n\nlet postText = '';\nif (response.content && response.content[0]) {\n  postText = response.content[0].text.trim();\n}\n\nif (!postText) {\n  throw new Error('Claude returned empty response');\n}\n\n// Save pending post to static data so approval step can retrieve it\nconst staticData = $getWorkflowStaticData('global');\nstaticData.pendingPost = postText;\nstaticData.pendingChatId = chatId;\n\nreturn [{ json: { postText, chatId, originalRequest: originalText } }];"
+        "jsCode": "const response = $input.first().json;\nconst chatId = $('Detect Intent').first().json.chatId;\n\nlet postText = '';\nif (response.content && response.content[0]) {\n  postText = response.content[0].text.trim();\n}\n\nif (!postText) {\n  throw new Error('Claude returned empty response');\n}\n\nreturn [{ json: { postText, chatId } }];"
       }
     },
     {
       "id": "t010",
-      "name": "Send for Approval",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
+      "name": "Post to Facebook (Telegram)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1780,
         360
       ],
       "credentials": {
-        "telegramApi": {
-          "id": "CRED_ID_TELEGRAM",
-          "name": "Fullyo Telegram Bot"
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FACEBOOK",
+          "name": "SkyHouse Facebook Token"
         }
       },
       "parameters": {
-        "chatId": "={{ $json.chatId }}",
-        "text": "={{ '\u270d\ufe0f *Draft post ready:*\\n\\n' + $json.postText + '\\n\\nReply *yes* to post to Facebook now, or *no* to discard.' }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/1004908006045909/feed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ message: $json.postText }) }}"
       }
     },
     {
@@ -306,34 +309,6 @@
       }
     },
     {
-      "id": "t016",
-      "name": "Handle Approval",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        480
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $input.first().json.chatId;\nconst postText = staticData.pendingPost || null;\n\nif (!postText) {\n  return [{ json: { chatId, error: 'No pending post found. Please create a new post first.' } }];\n}\n\n// Clear pending post\nstaticData.pendingPost = null;\n\nreturn [{ json: { chatId, postText, hasPendingPost: true } }];"
-      }
-    },
-    {
-      "id": "t017",
-      "name": "Handle Rejection",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        600
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst chatId = $input.first().json.chatId;\nstaticData.pendingPost = null;\nreturn [{ json: { chatId, message: 'Post discarded. Send me a new idea whenever you\\'re ready.' } }];"
-      }
-    },
-    {
       "id": "t018",
       "name": "Post Approved to Facebook",
       "type": "n8n-nodes-base.httpRequest",
@@ -383,13 +358,13 @@
       }
     },
     {
-      "id": "t020",
-      "name": "No Pending Post Message",
+      "id": "t030",
+      "name": "Send Confirmation",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1340,
-        560
+        2000,
+        360
       ],
       "credentials": {
         "telegramApi": {
@@ -398,104 +373,10 @@
         }
       },
       "parameters": {
-        "chatId": "={{ $json.chatId }}",
-        "text": "No pending post found. Send me a post idea first.",
-        "additionalFields": {}
-      }
-    },
-    {
-      "id": "t021",
-      "name": "Rejection Confirmation",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1340,
-        620
-      ],
-      "credentials": {
-        "telegramApi": {
-          "id": "CRED_ID_TELEGRAM",
-          "name": "Fullyo Telegram Bot"
-        }
-      },
-      "parameters": {
-        "chatId": "={{ $json.chatId }}",
-        "text": "\u274c Post discarded. Send me a new idea whenever you're ready.",
-        "additionalFields": {}
-      }
-    },
-    {
-      "id": "t022",
-      "name": "Is Post Pending?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1340,
-        490
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {},
-          "conditions": [
-            {
-              "leftValue": "={{ $json.hasPendingPost }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "t023",
-      "name": "Is Approve or Reject?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        340
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {},
-          "conditions": [
-            {
-              "leftValue": "={{ $json.intent }}",
-              "rightValue": "approve",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "t024",
-      "name": "Is Reject?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        560
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {},
-          "conditions": [
-            {
-              "leftValue": "={{ $json.intent }}",
-              "rightValue": "reject",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
+        "chatId": "={{ $('Parse Claude Response').first().json.chatId }}",
+        "text": "={{ '\u2705 *Posted to SkyHouse Facebook!*\\n\\nHere\\'s what was published:\\n\\n' + $('Parse Claude Response').first().json.postText }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
         }
       }
     }
@@ -567,7 +448,7 @@
       "main": [
         [
           {
-            "node": "Send for Approval",
+            "node": "Post to Facebook (Telegram)",
             "type": "main",
             "index": 0
           }
@@ -596,7 +477,7 @@
         ],
         [
           {
-            "node": "Is Approve or Reject?",
+            "node": "Is Help?",
             "type": "main",
             "index": 0
           }
@@ -621,53 +502,6 @@
         ]
       ]
     },
-    "Is Approve or Reject?": {
-      "main": [
-        [
-          {
-            "node": "Handle Approval",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Is Help?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Handle Approval": {
-      "main": [
-        [
-          {
-            "node": "Is Post Pending?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Post Pending?": {
-      "main": [
-        [
-          {
-            "node": "Post Approved to Facebook",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Pending Post Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Post Approved to Facebook": {
       "main": [
         [
@@ -679,29 +513,11 @@
         ]
       ]
     },
-    "Handle Rejection": {
+    "Post to Facebook (Telegram)": {
       "main": [
         [
           {
-            "node": "Rejection Confirmation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Reject?": {
-      "main": [
-        [
-          {
-            "node": "Handle Rejection",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Send Status",
+            "node": "Send Confirmation",
             "type": "main",
             "index": 0
           }
