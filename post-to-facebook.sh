@@ -99,9 +99,17 @@ echo "  Found $FILE_COUNT images total"
 
 if [ "$FILE_COUNT" -eq 0 ]; then
   echo "ERROR: No images found in $BUNNY_ZONE/$BUNNY_SUBFOLDER"
-  echo "--- All root folders in $BUNNY_ZONE ---"
+  echo "--- Fetching all root folders in $BUNNY_ZONE ---"
   ROOT_RESP=$(curl -s -H "AccessKey: $BUNNY_KEY" "$BUNNY_STORAGE_API/$BUNNY_ZONE/")
-  echo "$ROOT_RESP" | jq -r '.[] | .ObjectName' 2>/dev/null || echo "RAW: $ROOT_RESP"
+  FOLDER_NAMES=$(echo "$ROOT_RESP" | jq -r '.[] | .ObjectName' 2>/dev/null || echo "jq_failed: $ROOT_RESP")
+  echo "$FOLDER_NAMES"
+  # Write to repo file so it can be read back
+  echo "$FOLDER_NAMES" > bunny-folders.txt
+  git config user.name "github-actions[bot]"
+  git config user.email "github-actions[bot]@users.noreply.github.com"
+  git add bunny-folders.txt
+  git commit -m "debug: actual Bunny folder names" || true
+  git push origin HEAD:claude/n8n-social-media-automation-XpSkG || true
   exit 1
 fi
 
