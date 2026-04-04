@@ -63,29 +63,36 @@ IMAGE_FILES=$(echo "$LIST_RESP" | \
   jq -r '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | .ObjectName' \
   2>/dev/null || true)
 
-# If no images found directly, the folder has subdirectories — go one level deeper
-if [ -z "$IMAGE_FILES" ]; then
-  echo "  No images at top level — checking subdirectories..."
-  SUBDIRS=$(echo "$LIST_RESP" | jq -r '.[] | select(.IsDirectory == true) | .ObjectName' 2>/dev/null || true)
-  echo "  Subdirs found: $(echo "$SUBDIRS" | tr '\n' ' ')"
+# scan_dir: recursively list images up to 3 levels deep
+scan_dir() {
+  local base_prefix="$1"   # path prefix for CDN URL (e.g. "Surf/Surf Breaks/")
+  local enc_prefix="$2"    # URL-encoded prefix for API (e.g. "Surf/Surf%20Breaks/")
+  local depth="$3"         # current depth (max 3)
+  [ "$depth" -gt 3 ] && return
 
-  ALL_IMAGES=""
-  while IFS= read -r subdir; do
-    [ -z "$subdir" ] && continue
-    # URL-encode spaces (most common special char in folder names)
-    ENCODED_SUBDIR="${subdir// /%20}"
-    SUB_URL="$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER_ENC$ENCODED_SUBDIR/"
-    echo "  Listing subdir: $SUB_URL"
-    SUB_RESP=$(curl -s -H "AccessKey: $BUNNY_KEY" "$SUB_URL")
-    SUB_FILES=$(echo "$SUB_RESP" | \
-      jq -r --arg prefix "$subdir/" \
-        '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | $prefix + .ObjectName' \
-      2>/dev/null || true)
-    if [ -n "$SUB_FILES" ]; then
-      ALL_IMAGES="${ALL_IMAGES}${SUB_FILES}"$'\n'
-    fi
-  done <<< "$SUBDIRS"
-  IMAGE_FILES="$ALL_IMAGES"
+  local resp enc_name
+  resp=$(curl -s -H "AccessKey: $BUNNY_KEY" "$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER_ENC$enc_prefix")
+
+  # Collect image files at this level
+  echo "$resp" | \
+    jq -r --arg p "$base_prefix" \
+      '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | $p + .ObjectName' \
+    2>/dev/null || true
+
+  # Recurse into subdirectories
+  local subdirs
+  subdirs=$(echo "$resp" | jq -r '.[] | select(.IsDirectory == true) | .ObjectName' 2>/dev/null || true)
+  while IFS= read -r sd; do
+    [ -z "$sd" ] && continue
+    enc_name="${sd// /%20}"
+    scan_dir "$base_prefix$sd/" "$enc_prefix$enc_name/" $(( depth + 1 ))
+  done <<< "$subdirs"
+}
+
+# If no images found directly, scan recursively
+if [ -z "$IMAGE_FILES" ]; then
+  echo "  No images at top level — scanning recursively (up to 3 levels)..."
+  IMAGE_FILES=$(scan_dir "" "" 1)
 fi
 
 # Count safely
