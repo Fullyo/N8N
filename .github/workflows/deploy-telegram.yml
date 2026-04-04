@@ -1,0 +1,42 @@
+name: Deploy Telegram Bot (One-Time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Build credentials file
+        env:
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+          FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
+          BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          jq -n \
+            --arg n8n_key "$N8N_API_KEY" \
+            --arg fb_token "$FB_TOKEN_SKYHOUSE" \
+            --arg anthropic_key "$ANTHROPIC_API_KEY" \
+            --arg bunny_sky "$BUNNY_SKYHOUSE_KEY" \
+            --arg bunny_say "$BUNNY_SAYULITA_KEY" \
+            --arg tg_token "$TELEGRAM_BOT_TOKEN" \
+            '{
+              facebook: { appId: "812551218572821", pages: { skyhouse_sayulita: { pageId: "1004908006045909", accessToken: $fb_token } } },
+              n8n: { instanceUrl: "https://fullyo.app.n8n.cloud", apiKey: $n8n_key },
+              anthropic: { apiKey: $anthropic_key },
+              bunny: {
+                storageRegionHostname: "la.storage.bunnycdn.com",
+                skyhouse: { storageZoneName: "skyhousesayulita", storageApiKey: $bunny_sky, cdnHostname: "SkyhouseSayulita.b-cdn.net" },
+                sayulita_shared: { storageZoneName: "sayulitaandbeyond", storageApiKey: $bunny_say, cdnHostname: "sayulitaandbeyond.b-cdn.net" }
+              },
+              telegram: { botToken: $tg_token, ownerChatId: "8609472348" }
+            }' > credentials.local.json
+
+      - name: Deploy Telegram workflow
+        run: bash deploy-telegram-once.sh
