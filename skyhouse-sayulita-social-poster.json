@@ -309,11 +309,6 @@
             "node": "List SkyHouse Photos",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "List Sayulita Shared Photos",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -322,7 +317,7 @@
       "main": [
         [
           {
-            "node": "Pick 3 Photos",
+            "node": "List Sayulita Shared Photos",
             "type": "main",
             "index": 0
           }
