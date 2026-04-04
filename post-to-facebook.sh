@@ -1,24 +1,32 @@
 #!/usr/bin/env bash
 # ============================================================
 # post-to-facebook.sh
-# Posts a caption + photos to the SkyHouse Facebook page.
-# Called by the "Post to Facebook" GitHub Action.
-#
-# Required env vars:
-#   CAPTION        — the post text
-#   PHOTO_FOLDER   — Bunny CDN subfolder (Surf, Yoga, etc.)
-#                    or "SkyHouse" to use skyhouse zone photos
-#   NUM_PHOTOS     — number of photos to attach (default: 3)
+# Posts to Facebook with photos from Bunny CDN.
+# Reads caption/folder from pending-post.json.
+# Called automatically when pending-post.json is pushed.
 # ============================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CREDS_FILE="$SCRIPT_DIR/credentials.local.json"
+PENDING_FILE="$SCRIPT_DIR/pending-post.json"
 
-# ── Inputs ────────────────────────────────────────────────────
-CAPTION="${CAPTION:?CAPTION env var is required}"
-PHOTO_FOLDER="${PHOTO_FOLDER:-Surf}"
-NUM_PHOTOS="${NUM_PHOTOS:-3}"
+# ── Read post details from pending-post.json ─────────────────
+CAPTION=$(jq -r '.caption' "$PENDING_FILE")
+PHOTO_FOLDER=$(jq -r '.photo_folder' "$PENDING_FILE")
+NUM_PHOTOS=$(jq -r '.num_photos // 3' "$PENDING_FILE")
+
+if [ -z "$CAPTION" ] || [ "$CAPTION" = "null" ] || [ -z "$PHOTO_FOLDER" ] || [ "$PHOTO_FOLDER" = "null" ]; then
+  echo "ERROR: pending-post.json is missing caption or photo_folder"
+  cat "$PENDING_FILE"
+  exit 1
+fi
+
+echo "=== Facebook Post Creator ==="
+echo "  Caption preview: ${CAPTION:0:80}..."
+echo "  Folder:          $PHOTO_FOLDER"
+echo "  Photos:          $NUM_PHOTOS"
+echo ""
 
 # ── Credentials ───────────────────────────────────────────────
 FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.skyhouse_sayulita.accessToken' "$CREDS_FILE")
@@ -42,19 +50,12 @@ else
   BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
 fi
 
-echo "=== Facebook Post Creator ==="
-echo "  Page:   SkyHouse Sayulita ($FB_PAGE_ID)"
-echo "  Folder: $BUNNY_ZONE/$BUNNY_SUBFOLDER"
-echo "  Photos: $NUM_PHOTOS"
-echo ""
-
 # ── List images from Bunny storage ────────────────────────────
 echo "--- Fetching photo list from Bunny CDN ---"
 LIST_RESP=$(curl -s \
   -H "AccessKey: $BUNNY_KEY" \
   "$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER")
 
-# Extract image filenames (not directories)
 IMAGE_FILES=$(echo "$LIST_RESP" | \
   jq -r '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | .ObjectName' \
   2>/dev/null || true)
@@ -79,10 +80,8 @@ PHOTO_IDS=()
 
 while IFS= read -r filename; do
   [ -z "$filename" ] && continue
-
   CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER}${filename}"
   echo "  → $filename"
-  echo "    URL: $CDN_URL"
 
   UPLOAD_RESP=$(curl -s -X POST \
     "$FB_API/$FB_PAGE_ID/photos" \
@@ -107,9 +106,6 @@ for i in "${!PHOTO_IDS[@]}"; do
 done
 MEDIA_JSON+="]"
 
-echo ""
-echo "  Media JSON: $MEDIA_JSON"
-
 # ── Create the Facebook post ──────────────────────────────────
 echo ""
 echo "--- Publishing Facebook post ---"
@@ -127,8 +123,5 @@ if [ -z "$POST_ID" ]; then
 fi
 
 echo ""
-echo "✓ Post published!"
-echo "  Post ID: $POST_ID"
-echo "  Facebook URL: https://www.facebook.com/permalink.php?story_fbid=${POST_ID##*_}&id=$FB_PAGE_ID"
-echo ""
+echo "✓ Post published! ID: $POST_ID"
 echo "=== DONE ==="
