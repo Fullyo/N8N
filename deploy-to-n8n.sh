@@ -157,9 +157,11 @@ deploy_workflow() {
 }
 
 # ── Step 2: Deploy workflows ──────────────────────────────────
+# NOTE: Telegram workflow is intentionally NOT deployed here.
+# It is deployed once manually and never touched by automation
+# to prevent webhook deregistration on every push.
 SKYHOUSE_ID=$(deploy_workflow "SkyHouse Sayulita — Daily Social Post" "$SKYHOUSE_WORKFLOW")
-echo ""
-TELEGRAM_ID=$(deploy_workflow "Fullyo — Telegram AI Assistant" "$TELEGRAM_WORKFLOW")
+TELEGRAM_ID="(managed separately — not redeployed)"
 echo ""
 
 # ── Step 3: Save IDs ─────────────────────────────────────────
