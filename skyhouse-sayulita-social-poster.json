@@ -6,7 +6,10 @@
       "name": "Daily Schedule",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 460],
+      "position": [
+        240,
+        460
+      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -23,7 +26,10 @@
       "name": "Get Day Config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 460],
+      "position": [
+        460,
+        460
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];\nconst today = new Date();\nconst dayIndex = today.getDay();\n\nconst configs = {\n  0: { audience:'Luxury Travel & Villas', postStyle:'Brand storytelling, no hard sell', ctaStyle:'Explore at skyhousesayulita.com', hookExample:'Above Sayulita. Above the ordinary. SkyHouse.' },\n  1: { audience:'Sayulita Rentals (actively searching)', postStyle:'Direct with booking CTA', ctaStyle:'Book at skyhousesayulita.com', hookExample:'Three minutes from the break. Panoramic views. Sleeps 8.' },\n  2: { audience:'Riviera Nayarit & Puerto Vallarta Travelers', postStyle:'Aspirational with soft CTA', ctaStyle:'Link in comments for availability', hookExample:'The best address on the Riviera Nayarit is not in a hotel.' },\n  3: { audience:'Digital Nomads & Remote Workers', postStyle:'Identity-specific, remote work angle', ctaStyle:'DM for availability', hookExample:'Your next office has an ocean view and the fastest WiFi in Sayulita.' },\n  4: { audience:'Sayulita Community', postStyle:'Experiential, no hard sell, community tone', ctaStyle:'None — pure experience', hookExample:'This is what Sayulita looks like from above the jungle.' },\n  5: { audience:'Mexico Expats & Frequent Travelers', postStyle:'Destination lifestyle with soft CTA', ctaStyle:'Link in comments', hookExample:'The Northside of Sayulita keeps its best address quiet for a reason.' },\n  6: { audience:'Surfers & Adventure Travelers', postStyle:'Identity-specific, surf culture', ctaStyle:'DM for availability', hookExample:'Three minutes from the break. Panoramic views of the Pacific. Sleeps 8.' }\n};\n\nconst config = configs[dayIndex];\n\nreturn [{\n  json: {\n    dayIndex,\n    dayName: days[dayIndex],\n    runDate: today.toISOString().split('T')[0],\n    audience: config.audience,\n    postStyle: config.postStyle,\n    ctaStyle: config.ctaStyle,\n    hookExample: config.hookExample\n  }\n}];"
@@ -34,7 +40,10 @@
       "name": "List SkyHouse Photos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [680, 340],
+      "position": [
+        680,
+        340
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "CRED_ID_BUNNY_SKYHOUSE",
@@ -52,7 +61,9 @@
               "value": "application/json"
             }
           ]
-        }
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
       }
     },
     {
@@ -60,7 +71,10 @@
       "name": "List Sayulita Shared Photos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [680, 580],
+      "position": [
+        680,
+        580
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "CRED_ID_BUNNY_SAYULITA",
@@ -78,7 +92,9 @@
               "value": "application/json"
             }
           ]
-        }
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
       }
     },
     {
@@ -86,7 +102,10 @@
       "name": "Pick 3 Photos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 460],
+      "position": [
+        900,
+        460
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "// Get day config\nconst dayConfig = $('Get Day Config').first().json;\n\n// Get SkyHouse files - response is an array directly\nconst skyHouseRaw = $('List SkyHouse Photos').first().json;\nconst sayulitaRaw = $('List Sayulita Shared Photos').first().json;\n\n// Bunny API returns array of objects with ObjectName, IsDirectory, Length, etc.\nconst imageExts = /\\.(jpg|jpeg|png|webp)$/i;\n\nfunction parseBunnyFiles(raw, cdnHostname) {\n  let files = [];\n  if (Array.isArray(raw)) {\n    files = raw;\n  } else if (raw && typeof raw === 'object') {\n    // Sometimes wrapped\n    files = Object.values(raw);\n  }\n  return files\n    .filter(f => !f.IsDirectory && imageExts.test(f.ObjectName))\n    .map(f => ({\n      objectName: f.ObjectName,\n      cdnUrl: `https://${cdnHostname}/${f.ObjectName}`,\n      size: f.Length || 0\n    }));\n}\n\nconst skyHouseFiles = parseBunnyFiles(skyHouseRaw, 'SkyhouseSayulita.b-cdn.net');\nconst sayulitaFiles = parseBunnyFiles(sayulitaRaw, 'sayulitaandbeyond.b-cdn.net');\n\nif (skyHouseFiles.length === 0) {\n  throw new Error(`No image files found in SkyHouse Bunny storage. Raw response: ${JSON.stringify(skyHouseRaw).substring(0, 200)}`);\n}\nif (sayulitaFiles.length === 0) {\n  throw new Error(`No image files found in Sayulita Shared Bunny storage. Raw response: ${JSON.stringify(sayulitaRaw).substring(0, 200)}`);\n}\n\n// Shuffle and pick: 2 from SkyHouse, 1 from Sayulita\nconst shuffleSkyHouse = [...skyHouseFiles].sort(() => Math.random() - 0.5);\nconst shuffleSayulita = [...sayulitaFiles].sort(() => Math.random() - 0.5);\n\nconst selected = [\n  { ...shuffleSkyHouse[0], source: 'skyhouse', photoIndex: 0 },\n  { ...shuffleSkyHouse[1] || shuffleSkyHouse[0], source: 'skyhouse', photoIndex: 1 },\n  { ...shuffleSayulita[0], source: 'sayulita', photoIndex: 2 }\n];\n\nreturn selected.map((photo, idx) => ({\n  json: {\n    photoIndex: idx,\n    objectName: photo.objectName,\n    cdnUrl: photo.cdnUrl,\n    source: photo.source,\n    dayIndex: dayConfig.dayIndex,\n    dayName: dayConfig.dayName,\n    runDate: dayConfig.runDate,\n    audience: dayConfig.audience,\n    postStyle: dayConfig.postStyle,\n    ctaStyle: dayConfig.ctaStyle,\n    hookExample: dayConfig.hookExample\n  }\n}));"
@@ -97,7 +116,10 @@
       "name": "Upload Photo to Facebook",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 460],
+      "position": [
+        1120,
+        460
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "CRED_ID_FACEBOOK",
@@ -120,7 +142,9 @@
               "value": "false"
             }
           ]
-        }
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
       }
     },
     {
@@ -128,7 +152,10 @@
       "name": "Collect Upload Results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1340, 460],
+      "position": [
+        1340,
+        460
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const uploads = $input.all();\nconst originalPhotos = $('Pick 3 Photos').all();\nconst dayConfig = $('Get Day Config').first().json;\n\nif (uploads.length === 0) {\n  throw new Error('No photos were uploaded to Facebook. Check the Page Access Token and permissions.');\n}\n\nconst fbPhotoIds = uploads.map(item => item.json.id || item.json.photo_id);\nconst cdnUrls = originalPhotos.map(item => item.json.cdnUrl);\nconst photoNames = originalPhotos.map(item => item.json.objectName);\n\nreturn [{\n  json: {\n    fbPhotoIds,\n    cdnUrls,\n    photoNames,\n    photoCount: fbPhotoIds.length,\n    dayIndex: dayConfig.dayIndex,\n    dayName: dayConfig.dayName,\n    runDate: dayConfig.runDate,\n    audience: dayConfig.audience,\n    postStyle: dayConfig.postStyle,\n    ctaStyle: dayConfig.ctaStyle,\n    hookExample: dayConfig.hookExample\n  }\n}];"
@@ -139,7 +166,10 @@
       "name": "Build Claude Request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 460],
+      "position": [
+        1560,
+        460
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const item = $input.first();\n\nconst systemPrompt = `You are the content creator for SkyHouse Sayulita, a luxury two-level corner penthouse vacation rental in Monterosa, Northside Sayulita, Nayarit, Mexico. Managed by LUX Property Management.\n\nPROPERTY FACTS — use only these, never invent:\n- 3 bedrooms, 3 en-suite bathrooms, sleeps up to 8 guests\n- Two-level corner penthouse — top floor of Monterosa complex\n- Main level: living and dining, full chef's kitchen, 2 guest bedrooms, expansive sunset terrace\n- Upper level: master suite, BBQ setup, outdoor dining, rooftop terrace with panoramic ocean views\n- Shared infinity pool (Monterosa complex only — very quiet, panoramic ocean views)\n- Private tennis court (Monterosa complex exclusive)\n- Starlink WiFi — fastest in Sayulita, suitable for video calls and remote work\n- Whole-house purified water system — safe to drink from any tap\n- 3-minute walk to beach via Avenida Palmar\n- 5-minute walk to town plaza via Calle Juan Escutia\n- Quiet Northside location — away from late-night noise\n- Secure free garage parking on premises\n- Premium linens, body soap, shampoo, conditioner, shower gel provided\n- PVR airport 45 minutes north (Puerto Vallarta International)\n- Host: Eño — born and raised in Sayulita, local realtor and surfer\n- Eño offers: golf cart and SxS rentals, private airport transfers, private boat charters, fishing, snorkeling, surf lessons, ATV explorations, jungle hikes, yoga sessions\n- Main surf break: 3-minute walk. Playa de los Muertos: quieter, local break.\n- Monkey Mountain: jungle hike, 360-degree coastal views\n- Carricitos Beach: secluded sunset spot, golf cart or ATV required\n- Dining: world-class street tacos, organic cafes, upscale seaside dining — all walkable\n- Website: skyhousesayulita.com | WhatsApp: +52 322 239 4077\n\nBRAND VOICE:\n- Elegant, experiential, warm, confident. Relaxed luxury without pretension.\n- Second person (\"you\") or third person only. Never first person.\n- Focus on moments and feelings, not feature lists.\n- No slang. No generic phrases like \"perfect vacation rental\" or \"great amenities.\"\n\nPOST STRUCTURE:\n1. Hook (Line 1): Bold, scroll-stopping opener calling out the specific audience\n2. Bridge (Line 2): One sentence connecting audience identity to SkyHouse\n3. Body (2-3 short paragraphs): Experiential, sensory moments\n4. Invitation: Clean call to action as specified\n5. Hashtags: Always at the very end only\n\nABSOLUTE RULES:\n- No markdown: no asterisks, no bold, no headers, no bullet points\n- Never mention nightly rates\n- Never claim private beach (3-minute walk)\n- Never claim private pool (shared with Monterosa complex)\n- Never claim on-site chef (self-catering kitchen only)\n- Never first person except guest testimonials\n- Hashtags only at the very end\n- 100-200 words total (excluding hashtags)\n- Plain text only`;\n\nconst userPrompt = `Generate a SkyHouse Sayulita social media post for today.\n\nAudience: ${item.json.audience}\nPost style: ${item.json.postStyle}\nCTA to use: ${item.json.ctaStyle}\nHook reference (adapt freely — do not copy exactly): ${item.json.hookExample}\n\nWrite plain text only. No markdown. 100-200 words. Hashtags at the very end only. Output the post and nothing else.`;\n\nreturn [{\n  json: {\n    ...item.json,\n    claudeRequestBody: JSON.stringify({\n      model: 'claude-opus-4-6',\n      max_tokens: 1024,\n      system: systemPrompt,\n      messages: [{ role: 'user', content: userPrompt }]\n    })\n  }\n}];"
@@ -150,7 +180,10 @@
       "name": "Call Claude API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1780, 460],
+      "position": [
+        1780,
+        460
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "CRED_ID_ANTHROPIC",
@@ -172,7 +205,9 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ $json.claudeRequestBody }}"
+        "body": "={{ $json.claudeRequestBody }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
       }
     },
     {
@@ -180,7 +215,10 @@
       "name": "Parse & Validate Post",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 460],
+      "position": [
+        2000,
+        460
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const item = $input.first();\nconst claudeResponse = item.json;\nconst prevData = $('Collect Upload Results').first().json;\n\nlet postText = '';\nif (claudeResponse.content && Array.isArray(claudeResponse.content) && claudeResponse.content.length > 0) {\n  postText = claudeResponse.content[0].text || '';\n}\n\nif (!postText.trim()) {\n  throw new Error('Claude returned empty post text. Check API key and request format.');\n}\n\nconst wordCount = postText.trim().split(/\\s+/).length;\nconst warnings = [];\n\nif (wordCount < 80) warnings.push(`Post may be too short: ${wordCount} words`);\nif (wordCount > 260) warnings.push(`Post may be too long: ${wordCount} words`);\nif (/\\*\\*|\\*[^*]|\\bhashtag\\b/i.test(postText)) warnings.push('Possible markdown detected');\n\nreturn [{\n  json: {\n    postText: postText.trim(),\n    wordCount,\n    warnings: warnings.join(' | ') || 'None',\n    fbPhotoIds: prevData.fbPhotoIds,\n    cdnUrls: prevData.cdnUrls,\n    photoNames: prevData.photoNames,\n    dayName: prevData.dayName,\n    audience: prevData.audience,\n    runDate: prevData.runDate\n  }\n}];"
@@ -191,7 +229,10 @@
       "name": "Build Facebook Post Body",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2220, 460],
+      "position": [
+        2220,
+        460
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const item = $input.first();\n\nconst fbPostBody = {\n  message: item.json.postText,\n  attached_media: item.json.fbPhotoIds.map(id => ({ media_fbid: id }))\n};\n\nreturn [{\n  json: {\n    ...item.json,\n    fbPostBodyJson: JSON.stringify(fbPostBody)\n  }\n}];"
@@ -202,7 +243,10 @@
       "name": "Post to Facebook Page",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2440, 460],
+      "position": [
+        2440,
+        460
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "CRED_ID_FACEBOOK",
@@ -215,7 +259,9 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ $json.fbPostBodyJson }}"
+        "body": "={{ $json.fbPostBodyJson }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
       }
     },
     {
@@ -223,7 +269,10 @@
       "name": "Error Trigger",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
-      "position": [240, 700],
+      "position": [
+        240,
+        700
+      ],
       "parameters": {}
     },
     {
@@ -231,7 +280,10 @@
       "name": "Log Error to Console",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 700],
+      "position": [
+        460,
+        700
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const errorData = $input.first().json;\nconsole.error('SkyHouse workflow error:', JSON.stringify({\n  date: new Date().toISOString(),\n  workflow: 'SkyHouse Sayulita — Daily Social Post',\n  error: errorData.error && errorData.error.message,\n  node: errorData.error && errorData.error.node && errorData.error.node.name,\n  executionId: errorData.execution && errorData.execution.id\n}));\nreturn $input.all();"
@@ -242,85 +294,137 @@
     "Daily Schedule": {
       "main": [
         [
-          { "node": "Get Day Config", "type": "main", "index": 0 }
+          {
+            "node": "Get Day Config",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Get Day Config": {
       "main": [
         [
-          { "node": "List SkyHouse Photos", "type": "main", "index": 0 },
-          { "node": "List Sayulita Shared Photos", "type": "main", "index": 0 }
+          {
+            "node": "List SkyHouse Photos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List Sayulita Shared Photos",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "List SkyHouse Photos": {
       "main": [
         [
-          { "node": "Pick 3 Photos", "type": "main", "index": 0 }
+          {
+            "node": "Pick 3 Photos",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "List Sayulita Shared Photos": {
       "main": [
         [
-          { "node": "Pick 3 Photos", "type": "main", "index": 0 }
+          {
+            "node": "Pick 3 Photos",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Pick 3 Photos": {
       "main": [
         [
-          { "node": "Upload Photo to Facebook", "type": "main", "index": 0 }
+          {
+            "node": "Upload Photo to Facebook",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Upload Photo to Facebook": {
       "main": [
         [
-          { "node": "Collect Upload Results", "type": "main", "index": 0 }
+          {
+            "node": "Collect Upload Results",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Collect Upload Results": {
       "main": [
         [
-          { "node": "Build Claude Request", "type": "main", "index": 0 }
+          {
+            "node": "Build Claude Request",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Build Claude Request": {
       "main": [
         [
-          { "node": "Call Claude API", "type": "main", "index": 0 }
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Call Claude API": {
       "main": [
         [
-          { "node": "Parse & Validate Post", "type": "main", "index": 0 }
+          {
+            "node": "Parse & Validate Post",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Parse & Validate Post": {
       "main": [
         [
-          { "node": "Build Facebook Post Body", "type": "main", "index": 0 }
+          {
+            "node": "Build Facebook Post Body",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Build Facebook Post Body": {
       "main": [
         [
-          { "node": "Post to Facebook Page", "type": "main", "index": 0 }
+          {
+            "node": "Post to Facebook Page",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Error Trigger": {
       "main": [
         [
-          { "node": "Log Error to Console", "type": "main", "index": 0 }
+          {
+            "node": "Log Error to Console",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }
