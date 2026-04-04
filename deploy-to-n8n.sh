@@ -94,6 +94,8 @@ CRED_ID_TELEGRAM=$(get_or_create_cred \
 echo ""
 
 # ── Helper: deploy one workflow ───────────────────────────────
+# UPDATE existing workflow if found (preserves published/active state + webhook)
+# CREATE new only on first deploy, then user publishes once manually
 deploy_workflow() {
   local label="$1"
   local file="$2"
@@ -108,38 +110,49 @@ deploy_workflow() {
     -e "s/CRED_ID_BUNNY_SAYULITA/$CRED_ID_BUNNY_SAYULITA/g" \
     -e "s/CRED_ID_TELEGRAM/$CRED_ID_TELEGRAM/g")
 
-  # Remove 'active' field — n8n API rejects it on POST
+  # Remove 'active' field — managed separately
   json=$(echo "$json" | jq 'del(.active)')
 
-  # Deactivate and delete any existing workflows with same name
-  while IFS= read -r old_id; do
-    [ -z "$old_id" ] && continue
-    api PATCH "/workflows/$old_id" '{"active":false}' > /dev/null
-    api DELETE "/workflows/$old_id" > /dev/null
-    echo "  → Deleted old: $old_id" >&2
-  done < <(api GET "/workflows?limit=100" | jq -r --arg name "$label" '.data[] | select(.name == $name) | .id' 2>/dev/null || true)
-
   echo "--- Deploying: $label ---"
-  local response
-  response=$(api POST /workflows "$json")
-  local wid
-  wid=$(echo "$response" | jq -r '.id // empty')
 
-  if [ -z "$wid" ]; then
-    echo "ERROR deploying $label: $response"
-    exit 1
-  fi
-  echo "  ✓ $label deployed: $wid"
-  echo "  URL: $N8N_BASE_URL/workflow/$wid"
+  # Find existing workflow by name (keep newest if multiple)
+  local all_wf existing_id
+  all_wf=$(api GET "/workflows?limit=100")
+  existing_id=$(echo "$all_wf" | jq -r --arg name "$label" '[.data[] | select(.name == $name)] | sort_by(.createdAt) | last | .id // empty' 2>/dev/null)
 
-  # Activate the new workflow
-  activate_resp=$(api PATCH "/workflows/$wid" '{"active":true}')
-  if echo "$activate_resp" | jq -e '.active == true' > /dev/null 2>&1; then
-    echo "  ✓ Activated!"
+  local wid response
+  if [ -n "$existing_id" ]; then
+    # UPDATE existing — preserves published state, no webhook re-registration needed
+    echo "  → Updating existing workflow: $existing_id"
+    response=$(api PUT "/workflows/$existing_id" "$json")
+    wid=$(echo "$response" | jq -r '.id // empty')
+    if [ -z "$wid" ]; then
+      echo "ERROR updating $label: $response"
+      exit 1
+    fi
+    echo "  ✓ Updated in place: $wid"
+
+    # Delete any duplicate workflows with same name (keep the one we just updated)
+    while IFS= read -r dup_id; do
+      [ -z "$dup_id" ] || [ "$dup_id" = "$wid" ] && continue
+      api PATCH "/workflows/$dup_id" '{"active":false}' > /dev/null
+      api DELETE "/workflows/$dup_id" > /dev/null
+      echo "  → Removed duplicate: $dup_id" >&2
+    done < <(echo "$all_wf" | jq -r --arg name "$label" '.data[] | select(.name == $name) | .id' 2>/dev/null || true)
   else
-    echo "  ⚠ Check n8n to activate manually"
+    # CREATE new — user must click Publish once in n8n UI after first deploy
+    response=$(api POST /workflows "$json")
+    wid=$(echo "$response" | jq -r '.id // empty')
+    if [ -z "$wid" ]; then
+      echo "ERROR creating $label: $response"
+      exit 1
+    fi
+    echo "  ✓ Created: $wid"
+    echo "  ⚠ ACTION NEEDED: Open n8n and click Publish on this workflow once."
+    api PATCH "/workflows/$wid" '{"active":true}' > /dev/null
   fi
 
+  echo "  URL: $N8N_BASE_URL/workflow/$wid"
   echo "$wid"
 }
 
