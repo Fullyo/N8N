@@ -1,0 +1,17 @@
+name: Optimize SkyHouse Facebook Page
+
+on:
+  workflow_dispatch:
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run page optimizer
+        env:
+          FB_PAGE_TOKEN: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+        run: bash optimize-facebook-page.sh
