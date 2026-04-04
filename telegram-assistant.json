@@ -1,12 +1,15 @@
 {
-  "name": "Fullyo — Telegram AI Assistant",
+  "name": "Fullyo \u2014 Telegram AI Assistant",
   "nodes": [
     {
       "id": "t001",
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "webhookId": "fullyo-telegram-assistant",
       "credentials": {
         "telegramApi": {
@@ -15,7 +18,10 @@
         }
       },
       "parameters": {
-        "updates": ["message", "callback_query"]
+        "updates": [
+          "message",
+          "callback_query"
+        ]
       }
     },
     {
@@ -23,7 +29,10 @@
       "name": "Security Check",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\n\n// Handle both messages and callback queries\nconst fromId = msg.message?.from?.id || msg.callback_query?.from?.id;\nconst text = msg.message?.text || msg.callback_query?.data || '';\nconst chatId = msg.message?.chat?.id || msg.callback_query?.message?.chat?.id;\nconst messageId = msg.message?.message_id || msg.callback_query?.message?.message_id;\nconst callbackQueryId = msg.callback_query?.id || null;\n\nif (fromId !== OWNER_ID) {\n  return [{ json: { authorized: false, chatId, text, fromId } }];\n}\n\nreturn [{ json: { authorized: true, chatId, text, fromId, messageId, callbackQueryId } }];"
@@ -34,15 +43,23 @@
       "name": "Is Authorized?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [680, 300],
+      "position": [
+        680,
+        300
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true },
+          "options": {
+            "caseSensitive": true
+          },
           "conditions": [
             {
               "leftValue": "={{ $json.authorized }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
             }
           ]
         }
@@ -53,29 +70,13 @@
       "name": "Detect Intent",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 200],
+      "position": [
+        900,
+        200
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { text, chatId, callbackQueryId, messageId } = $input.first().json;\nconst lower = text.toLowerCase().trim();\n\nlet intent = 'unknown';\n\n// Approval callbacks\nif (lower.startsWith('approve_') || lower.startsWith('reject_')) {\n  intent = 'approval_response';\n}\n// Status request\nelse if (lower.includes('status') || lower.includes('how many') || lower.includes('report')) {\n  intent = 'status';\n}\n// Help\nelse if (lower === '/start' || lower === '/help' || lower === 'help') {\n  intent = 'help';\n}\n// On-the-fly post for a specific business\nelse if (lower.includes('skyhouse') || lower.includes('moroccan') || lower.includes('casa') || lower.includes('lux') || lower.includes('villas')) {\n  intent = 'create_post';\n}\n// Generic post idea\nelse if (lower.includes('post') || lower.includes('publish') || lower.includes('create') || lower.includes('idea') || lower.includes('write')) {\n  intent = 'create_post';\n}\n\nreturn [{ json: { intent, text, chatId, callbackQueryId, messageId } }];"
-      }
-    },
-    {
-      "id": "t005",
-      "name": "Route Intent",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3,
-      "position": [1120, 200],
-      "parameters": {
-        "mode": "rules",
-        "rules": {
-          "values": [
-            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "help", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "help" },
-            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "status", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "status" },
-            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "create_post", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "create_post" },
-            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "approval_response", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "approval" }
-          ]
-        },
-        "fallbackOutput": "none"
+        "jsCode": "const { text, chatId, callbackQueryId, messageId } = $input.first().json;\nconst lower = (text || '').toLowerCase().trim();\n\nlet intent = 'create_post'; // DEFAULT \u2014 assume post request\n\n// Override only for clear non-post intents\nif (lower === '/start' || lower === '/help' || lower === 'help' || lower === 'hi' || lower === 'hello') {\n  intent = 'help';\n} else if (lower === 'status' || lower === 'report' || lower === '/status') {\n  intent = 'status';\n} else if (lower.startsWith('approve_') || lower.startsWith('reject_')) {\n  intent = 'approval_response';\n}\n\nreturn [{ json: { intent, text, chatId, callbackQueryId, messageId } }];"
       }
     },
     {
@@ -83,7 +84,10 @@
       "name": "Send Help Message",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1340, 80],
+      "position": [
+        1340,
+        80
+      ],
       "credentials": {
         "telegramApi": {
           "id": "CRED_ID_TELEGRAM",
@@ -92,7 +96,7 @@
       },
       "parameters": {
         "chatId": "={{ $json.chatId }}",
-        "text": "👋 *Fullyo AI Assistant* — ready.\n\nHere's what you can say:\n\n📝 *Create a post:*\n_\"SkyHouse — we have availability April 20-25, create urgency post\"_\n_\"Post about Eño taking guests on a sunset boat charter\"_\n_\"Moroccan Palace — romantic getaway post\"_\n\n📊 *Get status:*\n_\"Status\"_ or _\"Report\"_\n\nJust type naturally — I understand context.",
+        "text": "\ud83d\udc4b *Fullyo AI Assistant* \u2014 ready.\n\nHere's what you can say:\n\n\ud83d\udcdd *Create a post:*\n_\"SkyHouse \u2014 we have availability April 20-25, create urgency post\"_\n_\"Post about E\u00f1o taking guests on a sunset boat charter\"_\n_\"Moroccan Palace \u2014 romantic getaway post\"_\n\n\ud83d\udcca *Get status:*\n_\"Status\"_ or _\"Report\"_\n\nJust type naturally \u2014 I understand context.",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -103,7 +107,10 @@
       "name": "Send Status",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1340, 220],
+      "position": [
+        1340,
+        220
+      ],
       "credentials": {
         "telegramApi": {
           "id": "CRED_ID_TELEGRAM",
@@ -112,7 +119,7 @@
       },
       "parameters": {
         "chatId": "={{ $json.chatId }}",
-        "text": "📊 *Fullyo — Automation Status*\n\n*Social Media Automation:*\n✅ SkyHouse Sayulita — Daily Facebook posts active (11am MX time)\n⏳ Moroccan Palace — Not yet set up\n⏳ Casa Sempre Avanti — Not yet set up\n⏳ LUX Property Management — Not yet set up\n⏳ Villas Sempre Avanti — Not yet set up\n\n*Integrations:*\n✅ Bunny CDN — SkyHouse + Sayulita photos\n✅ Claude AI — Caption generation\n✅ Facebook Graph API — Publishing\n⏳ Instagram — Pending account setup\n⏳ ManyChat — Comment automation (set up in progress)\n⏳ GHL — Lead capture (Phase 3)\n\n*Next priority:* Set up Moroccan Palace workflow",
+        "text": "\ud83d\udcca *Fullyo \u2014 Automation Status*\n\n*Social Media Automation:*\n\u2705 SkyHouse Sayulita \u2014 Daily Facebook posts active (11am MX time)\n\u23f3 Moroccan Palace \u2014 Not yet set up\n\u23f3 Casa Sempre Avanti \u2014 Not yet set up\n\u23f3 LUX Property Management \u2014 Not yet set up\n\u23f3 Villas Sempre Avanti \u2014 Not yet set up\n\n*Integrations:*\n\u2705 Bunny CDN \u2014 SkyHouse + Sayulita photos\n\u2705 Claude AI \u2014 Caption generation\n\u2705 Facebook Graph API \u2014 Publishing\n\u23f3 Instagram \u2014 Pending account setup\n\u23f3 ManyChat \u2014 Comment automation (set up in progress)\n\u23f3 GHL \u2014 Lead capture (Phase 3)\n\n*Next priority:* Set up Moroccan Palace workflow",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -123,7 +130,10 @@
       "name": "Generate Post with Claude",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1340, 360],
+      "position": [
+        1340,
+        360
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "CRED_ID_ANTHROPIC",
@@ -137,12 +147,17 @@
         "nodeCredentialType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "anthropic-version", "value": "2023-06-01" }]
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
         },
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system: 'You are the content creator for SkyHouse Sayulita, a luxury two-level corner penthouse vacation rental in Monterosa, Northside Sayulita, Mexico. Managed by LUX Property Management.\\n\\nPROPERTY: 3 bed, 3 bath, sleeps 8. Panoramic ocean views. Shared infinity pool. Private tennis court. Starlink WiFi. 3-min walk to beach. 5-min to town. Quiet Northside location. Host Eño offers surf lessons, boat charters, ATV tours, transfers.\\n\\nBRAND VOICE: Elegant, experiential, warm. Second or third person only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nWhen given an idea or brief, write a complete Facebook post ready to publish. Output only the post text, nothing else.', messages: [{ role: 'user', content: $json.text }] }) }}"
+        "body": "={{ JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system: 'You are the content creator for SkyHouse Sayulita, a luxury two-level corner penthouse vacation rental in Monterosa, Northside Sayulita, Mexico. Managed by LUX Property Management.\\n\\nPROPERTY: 3 bed, 3 bath, sleeps 8. Panoramic ocean views. Shared infinity pool. Private tennis court. Starlink WiFi. 3-min walk to beach. 5-min to town. Quiet Northside location. Host E\u00f1o offers surf lessons, boat charters, ATV tours, transfers.\\n\\nBRAND VOICE: Elegant, experiential, warm. Second or third person only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nWhen given an idea or brief, write a complete Facebook post ready to publish. Output only the post text, nothing else.', messages: [{ role: 'user', content: $json.text }] }) }}"
       }
     },
     {
@@ -150,7 +165,10 @@
       "name": "Parse Claude Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 360],
+      "position": [
+        1560,
+        360
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const response = $input.first().json;\nconst chatId = $('Detect Intent').first().json.chatId;\nconst originalText = $('Detect Intent').first().json.text;\n\nlet postText = '';\nif (response.content && response.content[0]) {\n  postText = response.content[0].text.trim();\n}\n\nif (!postText) {\n  throw new Error('Claude returned empty response');\n}\n\n// Store post for potential approval flow\nreturn [{ json: { postText, chatId, originalRequest: originalText } }];"
@@ -161,7 +179,10 @@
       "name": "Send for Approval",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1780, 360],
+      "position": [
+        1780,
+        360
+      ],
       "credentials": {
         "telegramApi": {
           "id": "CRED_ID_TELEGRAM",
@@ -170,10 +191,10 @@
       },
       "parameters": {
         "chatId": "={{ $json.chatId }}",
-        "text": "={{ '✍️ *Draft post ready:*\\n\\n' + $json.postText + '\\n\\n_Approve to post to SkyHouse Facebook now, or reply with edits._' }}",
+        "text": "={{ '\u270d\ufe0f *Draft post ready:*\\n\\n' + $json.postText + '\\n\\n_Approve to post to SkyHouse Facebook now, or reply with edits._' }}",
         "additionalFields": {
           "parse_mode": "Markdown",
-          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[{ text: '✅ Post it now', callback_data: 'approve_skyhouse' }, { text: '❌ Discard', callback_data: 'reject_skyhouse' }]] }) }}"
+          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[{ text: '\u2705 Post it now', callback_data: 'approve_skyhouse' }, { text: '\u274c Discard', callback_data: 'reject_skyhouse' }]] }) }}"
         }
       }
     },
@@ -182,7 +203,10 @@
       "name": "Ignore Unauthorized",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [900, 420],
+      "position": [
+        900,
+        420
+      ],
       "parameters": {}
     },
     {
@@ -190,10 +214,18 @@
       "name": "Weekly Status Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 560],
+      "position": [
+        240,
+        560
+      ],
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "0 14 * * 1" }]
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 14 * * 1"
+            }
+          ]
         }
       }
     },
@@ -202,7 +234,10 @@
       "name": "Send Weekly Summary",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [460, 560],
+      "position": [
+        460,
+        560
+      ],
       "credentials": {
         "telegramApi": {
           "id": "CRED_ID_TELEGRAM",
@@ -211,45 +246,187 @@
       },
       "parameters": {
         "chatId": "8609472348",
-        "text": "☀️ *Good morning Seb — Weekly Automation Check-in*\n\n*This week:*\n✅ SkyHouse Sayulita posted daily on Facebook\n\n*Action items to consider:*\n• Set up next business (Moroccan Palace)\n• Check ManyChat comment automation\n• Review Facebook page insights\n• Upload new photos to Bunny CDN if needed\n\n*Reminder:* Reply with any post idea and I'll draft and publish it instantly.\n\n_Have a great week!_",
+        "text": "\u2600\ufe0f *Good morning Seb \u2014 Weekly Automation Check-in*\n\n*This week:*\n\u2705 SkyHouse Sayulita posted daily on Facebook\n\n*Action items to consider:*\n\u2022 Set up next business (Moroccan Palace)\n\u2022 Check ManyChat comment automation\n\u2022 Review Facebook page insights\n\u2022 Upload new photos to Bunny CDN if needed\n\n*Reminder:* Reply with any post idea and I'll draft and publish it instantly.\n\n_Have a great week!_",
         "additionalFields": {
           "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "t014",
+      "name": "Is Post Request?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.intent }}",
+              "rightValue": "create_post",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "t015",
+      "name": "Is Help?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        340
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.intent }}",
+              "rightValue": "help",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
         }
       }
     }
   ],
   "connections": {
     "Telegram Trigger": {
-      "main": [[{ "node": "Security Check", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Security Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Security Check": {
-      "main": [[{ "node": "Is Authorized?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Is Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Is Authorized?": {
       "main": [
-        [{ "node": "Detect Intent", "type": "main", "index": 0 }],
-        [{ "node": "Ignore Unauthorized", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Detect Intent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignore Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Detect Intent": {
-      "main": [[{ "node": "Route Intent", "type": "main", "index": 0 }]]
-    },
-    "Route Intent": {
       "main": [
-        [{ "node": "Send Help Message", "type": "main", "index": 0 }],
-        [{ "node": "Send Status", "type": "main", "index": 0 }],
-        [{ "node": "Generate Post with Claude", "type": "main", "index": 0 }],
-        []
+        [
+          {
+            "node": "Is Post Request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Generate Post with Claude": {
-      "main": [[{ "node": "Parse Claude Response", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Claude Response": {
-      "main": [[{ "node": "Send for Approval", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Send for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Weekly Status Trigger": {
-      "main": [[{ "node": "Send Weekly Summary", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Send Weekly Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Post Request?": {
+      "main": [
+        [
+          {
+            "node": "Generate Post with Claude",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Help?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Help?": {
+      "main": [
+        [
+          {
+            "node": "Send Help Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
