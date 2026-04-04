@@ -19,8 +19,7 @@
       },
       "parameters": {
         "updates": [
-          "message",
-          "callback_query"
+          "message"
         ]
       }
     },
@@ -35,7 +34,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\nconst fromId = msg.message?.from?.id || msg.callback_query?.from?.id;\nconst text = msg.message?.text || msg.callback_query?.data || '';\nconst chatId = msg.message?.chat?.id || msg.callback_query?.message?.chat?.id;\nconst messageId = msg.message?.message_id || msg.callback_query?.message?.message_id;\nconst callbackQueryId = msg.callback_query?.id || null;\nconst isCallbackQuery = callbackQueryId !== null;\nif (fromId !== OWNER_ID) {\n  return [{ json: { authorized: false, chatId: String(chatId), text, fromId, isCallbackQuery: false } }];\n}\nreturn [{ json: { authorized: true, chatId: String(chatId), text, fromId, messageId, callbackQueryId, isCallbackQuery } }];\n"
+        "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\nconst fromId = msg.message?.from?.id;\nconst text = msg.message?.text || '';\nconst chatId = String(msg.message?.chat?.id || '');\nconst authorized = fromId === OWNER_ID;\nreturn [{ json: { authorized, chatId, text, fromId } }];"
       }
     },
     {
@@ -49,9 +48,6 @@
       ],
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true
-          },
           "conditions": [
             {
               "leftValue": "={{ $json.authorized }}",
@@ -67,340 +63,29 @@
     },
     {
       "id": "t004",
-      "name": "Is Callback?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        900,
-        400
-      ],
-      "parameters": {
-        "conditions": {
-          "conditions": [
-            {
-              "leftValue": "={{ $json.isCallbackQuery }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "t005",
-      "name": "Route Callback",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        150
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const { callbackQueryId, chatId, text } = $input.first().json;\nconst action = text; // 'post_confirm', 'edit_request', 'cancel_post'\nconst staticData = $getWorkflowStaticData('global');\nconst drafts = staticData.drafts || {};\nconst draft = drafts[chatId] || {};\nreturn [{ json: { action, chatId, callbackQueryId, postText: draft.postText || '', fbPhotoIds: draft.fbPhotoIds || [], originalBrief: draft.originalBrief || '' } }];"
-      }
-    },
-    {
-      "id": "t006",
-      "name": "Answer Callback Query",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1340,
-        150
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8737461895:AAGhm6YK_nLs8sKrhBTRhLUURlE4QpLMtPw/answerCallbackQuery",
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ callback_query_id: $json.callbackQueryId, text: \"\" }) }}"
-      }
-    },
-    {
-      "id": "t007",
-      "name": "Is Post Confirm?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1560,
-        150
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $('Route Callback').first().json.action }}",
-              "rightValue": "post_confirm",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "t008",
-      "name": "Post to Facebook (Callback)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1780,
-        60
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "CRED_ID_FACEBOOK",
-          "name": "SkyHouse Facebook Token"
-        }
-      },
-      "parameters": {
-        "method": "POST",
-        "url": "https://graph.facebook.com/v19.0/1004908006045909/feed",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ message: $('Route Callback').first().json.postText, attached_media: $('Route Callback').first().json.fbPhotoIds.map(id => ({ media_fbid: id })) }) }}"
-      }
-    },
-    {
-      "id": "t009",
-      "name": "Send Posted Confirmation",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2000,
-        60
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8737461895:AAGhm6YK_nLs8sKrhBTRhLUURlE4QpLMtPw/sendMessage",
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ chat_id: $('Route Callback').first().json.chatId, text: \"✅ Posted to SkyHouse Facebook!\\n\\nCheck it live on the page.\" }) }}"
-      }
-    },
-    {
-      "id": "t010",
-      "name": "Is Edit?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1780,
-        240
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $('Route Callback').first().json.action }}",
-              "rightValue": "edit_request",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "t011",
-      "name": "Set Edit Mode",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2000,
-        180
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const { chatId, postText, originalBrief, fbPhotoIds } = $('Route Callback').first().json;\nconst staticData = $getWorkflowStaticData('global');\nconst drafts = staticData.drafts || {};\ndrafts[chatId] = { postText, originalBrief, fbPhotoIds, awaitingEdit: true };\nstaticData.drafts = drafts;\nreturn [{ json: { chatId } }];"
-      }
-    },
-    {
-      "id": "t012",
-      "name": "Send Edit Prompt",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2220,
-        180
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8737461895:AAGhm6YK_nLs8sKrhBTRhLUURlE4QpLMtPw/sendMessage",
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ chat_id: $json.chatId, text: \"✏️ What should I change? Reply with your feedback and I'll rewrite it.\" }) }}"
-      }
-    },
-    {
-      "id": "t013",
-      "name": "Send Cancel",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2000,
-        300
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8737461895:AAGhm6YK_nLs8sKrhBTRhLUURlE4QpLMtPw/sendMessage",
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ chat_id: $('Route Callback').first().json.chatId, text: \"🗑️ Draft cancelled. Send me a new idea whenever you're ready.\" }) }}"
-      }
-    },
-    {
-      "id": "t014",
-      "name": "Check Edit Mode",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        620
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const { chatId, text } = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\nconst drafts = staticData.drafts || {};\nconst draft = drafts[chatId] || {};\nif (draft.awaitingEdit) {\n  draft.awaitingEdit = false;\n  drafts[chatId] = draft;\n  staticData.drafts = drafts;\n  return [{ json: { mode: 'edit', chatId, feedback: text, originalBrief: draft.originalBrief || '', fbPhotoIds: draft.fbPhotoIds || [] } }];\n}\nreturn [{ json: { mode: 'new', chatId, text } }];"
-      }
-    },
-    {
-      "id": "t015",
-      "name": "Is Edit Mode?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1340,
-        620
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $json.mode }}",
-              "rightValue": "edit",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "t016",
-      "name": "Build Claude Request (Edit)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1560,
-        500
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const { chatId, feedback, originalBrief, fbPhotoIds } = $input.first().json;\nconst system = \"You are the social media content creator for SkyHouse Sayulita, a luxury vacation rental in Sayulita Mexico. Write Facebook posts that get published automatically.\\n\\nSkyHouse: 3 bed/3 bath/sleeps 8, panoramic ocean views, shared infinity pool, private tennis court, Starlink WiFi, 3-min walk to beach. Host Eño offers surf lessons, boat charters, ATV tours.\\n\\nBRAND VOICE: Elegant, experiential, warm. Plain text only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nOutput ONLY the post text. No explanations, no questions, no commentary.\";\nconst content = 'Original request: ' + originalBrief + '\\n\\nUser feedback: ' + feedback + '\\n\\nPlease rewrite the post incorporating this feedback. Output only the post text, nothing else.';\nconst requestBody = JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system, messages: [{ role: 'user', content }] });\nreturn [{ json: { chatId, originalBrief, fbPhotoIds, requestBody } }];"
-      }
-    },
-    {
-      "id": "t017",
-      "name": "Regenerate with Claude",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1780,
-        500
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "CRED_ID_ANTHROPIC",
-          "name": "Anthropic API"
-        }
-      },
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ $json.requestBody }}"
-      }
-    },
-    {
-      "id": "t018",
-      "name": "Parse & Store Draft (Edit)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2000,
-        500
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const response = $input.first().json;\nconst { chatId, fbPhotoIds, originalBrief } = $('Build Claude Request (Edit)').first().json;\nlet postText = '';\nif (response.content && response.content[0]) { postText = response.content[0].text.trim(); }\nif (!postText) throw new Error('Claude returned empty response');\nconst staticData = $getWorkflowStaticData('global');\nconst drafts = staticData.drafts || {};\ndrafts[chatId] = { postText, fbPhotoIds, originalBrief, awaitingEdit: false };\nstaticData.drafts = drafts;\nreturn [{ json: { chatId, postText, fbPhotoIds } }];"
-      }
-    },
-    {
-      "id": "t019",
       "name": "Detect Intent",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1560,
-        740
+        900,
+        320
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { text, chatId } = $input.first().json;\nconst lower = (text || '').toLowerCase().trim();\nlet intent = 'create_post';\nif (lower === '/start' || lower === '/help' || lower === 'help' || lower === 'hi' || lower === 'hello') { intent = 'help'; }\nelse if (lower === 'status' || lower === 'report' || lower === '/status') { intent = 'status'; }\nreturn [{ json: { intent, text, chatId } }];"
+        "jsCode": "const { text, chatId } = $input.first().json;\nconst lower = (text || '').toLowerCase().trim();\nlet intent = 'create_post';\nif (['/start','/help','help','hi','hello'].includes(lower)) intent = 'help';\nelse if (['status','report','/status'].includes(lower)) intent = 'status';\nreturn [{ json: { intent, text, chatId } }];"
       }
     },
     {
-      "id": "t020",
+      "id": "t005",
       "name": "Is Post Request?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1780,
-        740
+        1120,
+        320
       ],
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true
-          },
           "conditions": [
             {
               "leftValue": "={{ $json.intent }}",
@@ -415,19 +100,16 @@
       }
     },
     {
-      "id": "t021",
+      "id": "t006",
       "name": "Is Help?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2000,
-        860
+        1340,
+        480
       ],
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true
-          },
           "conditions": [
             {
               "leftValue": "={{ $json.intent }}",
@@ -442,13 +124,13 @@
       }
     },
     {
-      "id": "t022",
-      "name": "Send Help Message",
+      "id": "t007",
+      "name": "Send Help",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2220,
-        820
+        1560,
+        420
       ],
       "credentials": {
         "telegramApi": {
@@ -458,20 +140,20 @@
       },
       "parameters": {
         "chatId": "={{ $json.chatId }}",
-        "text": "👋 *Fullyo AI Assistant* — ready.\n\nJust describe what you want to post:\n\n📝 _\"SkyHouse — we have availability April 20-25, create urgency post\"_\n📝 _\"Post about Eño taking guests on a sunset boat charter\"_\n\nI'll pick photos, write the caption, and show you a preview with tap-to-approve buttons.\n\n📊 Type *status* for automation status.",
+        "text": "👋 *Fullyo AI Assistant* — ready.\n\nJust describe what you want to post:\n\n_\"Post about waking up to ocean views at SkyHouse\"_\n_\"Surf post about the five best breaks near Sayulita\"_\n\nI'll pick photos, write the caption, and post to Facebook.\n\nType *status* for automation status.",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
       }
     },
     {
-      "id": "t023",
+      "id": "t008",
       "name": "Send Status",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2220,
-        900
+        1560,
+        560
       ],
       "credentials": {
         "telegramApi": {
@@ -481,20 +163,31 @@
       },
       "parameters": {
         "chatId": "={{ $json.chatId }}",
-        "text": "📊 *Fullyo — Automation Status*\n\n✅ SkyHouse Sayulita — Daily Facebook posts active\n⏳ Moroccan Palace — Not yet set up\n\n*Integrations:* ✅ Bunny CDN ✅ Claude AI ✅ Facebook Graph API",
+        "text": "📊 *Fullyo — Automation Status*\n\n✅ SkyHouse Sayulita — Daily Facebook posts active\n⏳ Moroccan Palace — Not yet set up\n\n✅ Bunny CDN · ✅ Claude AI · ✅ Facebook API",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
       }
     },
     {
-      "id": "t024",
+      "id": "t009",
+      "name": "Ignore Unauthorized",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        900,
+        520
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "t010",
       "name": "List SkyHouse Photos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2000,
-        700
+        1340,
+        200
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -519,27 +212,27 @@
       }
     },
     {
-      "id": "t025",
+      "id": "t011",
       "name": "Pick 3 Photos",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2220,
-        700
+        1560,
+        200
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const items = $input.all().map(i => i.json);\nconst chatId = $('Is Post Request?').first().json.chatId;\nconst text = $('Is Post Request?').first().json.text;\nconst files = items\n  .filter(f => f && !f.IsDirectory && (f.Length > 0 || f.ContentLength > 0))\n  .map(f => ({ objectName: f.ObjectName, cdnUrl: 'https://SkyhouseSayulita.b-cdn.net/' + f.ObjectName }));\nif (files.length === 0) throw new Error('No photos found in SkyHouse storage');\nconst shuffled = [...files].sort(() => Math.random() - 0.5);\nconst selected = shuffled.slice(0, Math.min(3, shuffled.length));\nreturn selected.map((photo, idx) => ({ json: { photoIndex: idx, cdnUrl: photo.cdnUrl, objectName: photo.objectName, chatId, originalBrief: text } }));"
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst chatId = $('Is Post Request?').first().json.chatId;\nconst text = $('Is Post Request?').first().json.text;\nconst files = items\n  .filter(f => f && !f.IsDirectory && (f.Length > 0 || f.ContentLength > 0))\n  .map(f => ({ objectName: f.ObjectName, cdnUrl: 'https://SkyhouseSayulita.b-cdn.net/' + f.ObjectName }));\nif (files.length === 0) throw new Error('No photos found in SkyHouse storage');\nconst shuffled = [...files].sort(() => Math.random() - 0.5);\nconst selected = shuffled.slice(0, Math.min(3, shuffled.length));\nreturn selected.map((p, i) => ({ json: { photoIndex: i, cdnUrl: p.cdnUrl, objectName: p.objectName, chatId, originalBrief: text } }));"
       }
     },
     {
-      "id": "t026",
-      "name": "Upload to Facebook (Telegram)",
+      "id": "t012",
+      "name": "Upload Photo to Facebook",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2440,
-        700
+        1780,
+        200
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -569,41 +262,41 @@
       }
     },
     {
-      "id": "t027",
+      "id": "t013",
       "name": "Collect Photo IDs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2660,
-        700
+        2000,
+        200
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const uploads = $input.all();\nconst chatId = $('Pick 3 Photos').first().json.chatId;\nconst originalBrief = $('Pick 3 Photos').first().json.originalBrief;\nconst fbPhotoIds = uploads.map(item => item.json.id || item.json.photo_id).filter(Boolean);\nif (fbPhotoIds.length === 0) throw new Error('No photos uploaded to Facebook');\nreturn [{ json: { chatId, originalBrief, fbPhotoIds } }];"
+        "jsCode": "const uploads = $input.all();\nconst chatId = $('Pick 3 Photos').first().json.chatId;\nconst originalBrief = $('Pick 3 Photos').first().json.originalBrief;\nconst fbPhotoIds = uploads.map(u => u.json.id || u.json.photo_id).filter(Boolean);\nif (fbPhotoIds.length === 0) throw new Error('No photos uploaded to Facebook');\nreturn [{ json: { chatId, originalBrief, fbPhotoIds } }];"
       }
     },
     {
-      "id": "t028",
-      "name": "Build Claude Request (New)",
+      "id": "t014",
+      "name": "Build Claude Request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2880,
-        700
+        2220,
+        200
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { chatId, originalBrief, fbPhotoIds } = $input.first().json;\nconst system = \"You are the social media content creator for SkyHouse Sayulita, a luxury vacation rental in Sayulita Mexico. Write Facebook posts that get published automatically.\\n\\nSkyHouse: 3 bed/3 bath/sleeps 8, panoramic ocean views, shared infinity pool, private tennis court, Starlink WiFi, 3-min walk to beach. Host Eño offers surf lessons, boat charters, ATV tours.\\n\\nBRAND VOICE: Elegant, experiential, warm. Plain text only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nOutput ONLY the post text. No explanations, no questions, no commentary.\";\nconst requestBody = JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system, messages: [{ role: 'user', content: originalBrief }] });\nreturn [{ json: { chatId, originalBrief, fbPhotoIds, requestBody } }];"
+        "jsCode": "const system = \"You are the social media content creator for SkyHouse Sayulita, a luxury vacation rental in Sayulita Mexico.\\n\\nSkyHouse: 3 bed/3 bath/sleeps 8, panoramic ocean views, shared infinity pool, private tennis court, Starlink WiFi, 3-min walk to beach. Host E\\u00f1o offers surf lessons, boat charters, ATV tours.\\n\\nBRAND VOICE: Elegant, experiential, warm. Plain text only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nOutput ONLY the post text. No explanations, no questions, no commentary.\";\nconst { chatId, originalBrief, fbPhotoIds } = $input.first().json;\nconst requestBody = JSON.stringify({\n  model: 'claude-opus-4-6',\n  max_tokens: 1024,\n  system,\n  messages: [{ role: 'user', content: originalBrief }]\n});\nreturn [{ json: { chatId, originalBrief, fbPhotoIds, requestBody } }];"
       }
     },
     {
-      "id": "t029",
-      "name": "Generate Post with Claude",
+      "id": "t015",
+      "name": "Call Claude",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3100,
-        700
+        2440,
+        200
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -632,56 +325,62 @@
       }
     },
     {
-      "id": "t030",
-      "name": "Parse & Store Draft (New)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        3300,
-        700
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const response = $input.first().json;\nconst { chatId, fbPhotoIds, originalBrief } = $('Collect Photo IDs').first().json;\nlet postText = '';\nif (response.content && response.content[0]) { postText = response.content[0].text.trim(); }\nif (!postText) throw new Error('Claude returned empty response');\nconst staticData = $getWorkflowStaticData('global');\nconst drafts = staticData.drafts || {};\ndrafts[chatId] = { postText, fbPhotoIds, originalBrief, awaitingEdit: false };\nstaticData.drafts = drafts;\nreturn [{ json: { chatId, postText, fbPhotoIds } }];"
-      }
-    },
-    {
-      "id": "t031",
-      "name": "Send Draft with Buttons",
+      "id": "t016",
+      "name": "Post to Facebook",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2220,
-        600
+        2660,
+        200
       ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FACEBOOK",
+          "name": "SkyHouse Facebook Token"
+        }
+      },
       "parameters": {
         "method": "POST",
-        "url": "https://api.telegram.org/bot8737461895:AAGhm6YK_nLs8sKrhBTRhLUURlE4QpLMtPw/sendMessage",
+        "url": "https://graph.facebook.com/v19.0/1004908006045909/feed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ chat_id: $json.chatId, text: \"Here's your draft:\\n\\n\" + $json.postText + \"\\n\\nTap a button to proceed:\", reply_markup: { inline_keyboard: [[{ text: \"✅ Post It\", callback_data: \"post_confirm\" }, { text: \"✏️ Edit\", callback_data: \"edit_request\" }, { text: \"🗑️ Cancel\", callback_data: \"cancel_post\" }]] } }) }}"
+        "body": "={{ JSON.stringify({ message: $('Call Claude').first().json.content[0].text.trim(), attached_media: $('Collect Photo IDs').first().json.fbPhotoIds.map(id => ({ media_fbid: id })) }) }}"
       }
     },
     {
-      "id": "t032",
-      "name": "Ignore Unauthorized",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "id": "t017",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
-        900,
-        560
+        2880,
+        200
       ],
-      "parameters": {}
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $('Collect Photo IDs').first().json.chatId }}",
+        "text": "={{ '✅ Posted to SkyHouse Facebook!\\n\\n' + $('Call Claude').first().json.content[0].text.trim() }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
     },
     {
-      "id": "t033",
+      "id": "t018",
       "name": "Weekly Status Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
         240,
-        900
+        620
       ],
       "parameters": {
         "rule": {
@@ -695,13 +394,13 @@
       }
     },
     {
-      "id": "t034",
+      "id": "t019",
       "name": "Send Weekly Summary",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
         460,
-        900
+        620
       ],
       "credentials": {
         "telegramApi": {
@@ -711,7 +410,7 @@
       },
       "parameters": {
         "chatId": "8609472348",
-        "text": "☀️ *Good morning Seb — Weekly Automation Check-in*\n\n✅ SkyHouse posted daily this week\n\n*Action items:*\n• Set up Moroccan Palace workflow\n• Check ManyChat comment automation\n• Review Facebook insights\n\n_Have a great week!_",
+        "text": "☀️ *Good morning Seb — Weekly Check-in*\n\n✅ SkyHouse posted daily this week\n\nReply with any post idea and I'll publish it instantly.\n\n_Have a great week!_",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -745,7 +444,7 @@
       "main": [
         [
           {
-            "node": "Is Callback?",
+            "node": "Detect Intent",
             "type": "main",
             "index": 0
           }
@@ -753,166 +452,6 @@
         [
           {
             "node": "Ignore Unauthorized",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Callback?": {
-      "main": [
-        [
-          {
-            "node": "Route Callback",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Check Edit Mode",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Route Callback": {
-      "main": [
-        [
-          {
-            "node": "Answer Callback Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Answer Callback Query": {
-      "main": [
-        [
-          {
-            "node": "Is Post Confirm?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Post Confirm?": {
-      "main": [
-        [
-          {
-            "node": "Post to Facebook (Callback)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Is Edit?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Post to Facebook (Callback)": {
-      "main": [
-        [
-          {
-            "node": "Send Posted Confirmation",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Edit?": {
-      "main": [
-        [
-          {
-            "node": "Set Edit Mode",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Send Cancel",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Edit Mode": {
-      "main": [
-        [
-          {
-            "node": "Send Edit Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Edit Mode": {
-      "main": [
-        [
-          {
-            "node": "Is Edit Mode?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Edit Mode?": {
-      "main": [
-        [
-          {
-            "node": "Build Claude Request (Edit)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Detect Intent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Claude Request (Edit)": {
-      "main": [
-        [
-          {
-            "node": "Regenerate with Claude",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Regenerate with Claude": {
-      "main": [
-        [
-          {
-            "node": "Parse & Store Draft (Edit)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse & Store Draft (Edit)": {
-      "main": [
-        [
-          {
-            "node": "Send Draft with Buttons",
             "type": "main",
             "index": 0
           }
@@ -952,7 +491,7 @@
       "main": [
         [
           {
-            "node": "Send Help Message",
+            "node": "Send Help",
             "type": "main",
             "index": 0
           }
@@ -981,14 +520,14 @@
       "main": [
         [
           {
-            "node": "Upload to Facebook (Telegram)",
+            "node": "Upload Photo to Facebook",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Upload to Facebook (Telegram)": {
+    "Upload Photo to Facebook": {
       "main": [
         [
           {
@@ -1003,40 +542,40 @@
       "main": [
         [
           {
-            "node": "Build Claude Request (New)",
+            "node": "Build Claude Request",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Build Claude Request (New)": {
+    "Build Claude Request": {
       "main": [
         [
           {
-            "node": "Generate Post with Claude",
+            "node": "Call Claude",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Generate Post with Claude": {
+    "Call Claude": {
       "main": [
         [
           {
-            "node": "Parse & Store Draft (New)",
+            "node": "Post to Facebook",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Parse & Store Draft (New)": {
+    "Post to Facebook": {
       "main": [
         [
           {
-            "node": "Send Draft with Buttons",
+            "node": "Send Confirmation",
             "type": "main",
             "index": 0
           }
