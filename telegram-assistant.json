@@ -2,12 +2,12 @@
   "name": "Fullyo — Telegram AI Assistant",
   "nodes": [
     {
-      "id": "t001",
+      "id": "T01",
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
       "position": [
-        240,
+        200,
         400
       ],
       "webhookId": "fullyo-telegram-assistant",
@@ -24,26 +24,26 @@
       }
     },
     {
-      "id": "t002",
+      "id": "T02",
       "name": "Security Check",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        460,
+        420,
         400
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\nconst fromId = msg.message?.from?.id;\nconst text = msg.message?.text || '';\nconst chatId = String(msg.message?.chat?.id || '');\nconst authorized = fromId === OWNER_ID;\nreturn [{ json: { authorized, chatId, text, fromId } }];"
+        "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\nconst fromId = msg.message?.from?.id;\nconst text = msg.message?.text || '';\nconst chatId = String(msg.message?.chat?.id || '');\nreturn [{ json: { authorized: fromId === OWNER_ID, chatId, text } }];"
       }
     },
     {
-      "id": "t003",
+      "id": "T03",
       "name": "Is Authorized?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        680,
+        640,
         400
       ],
       "parameters": {
@@ -62,13 +62,273 @@
       }
     },
     {
-      "id": "t004",
+      "id": "T04",
+      "name": "Ignore Unauthorized",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        860,
+        540
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "T05",
+      "name": "Check State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { chatId, text } = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\nconst draft = (staticData.drafts || {})[chatId] || {};\nif (draft.pending) {\n  return [{ json: { mode: 'confirm', chatId, text,\n    postText: draft.postText, fbPhotoIds: draft.fbPhotoIds, originalBrief: draft.originalBrief } }];\n}\nreturn [{ json: { mode: 'new', chatId, text } }];"
+      }
+    },
+    {
+      "id": "T06",
+      "name": "Is Pending?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "confirm",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "T07",
+      "name": "Is Yes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.text.toLowerCase().trim() }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "T08",
+      "name": "Prep Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { chatId, postText, fbPhotoIds } = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\nif (staticData.drafts) delete staticData.drafts[chatId];\nreturn [{ json: { chatId, postText, fbPhotoIds } }];"
+      }
+    },
+    {
+      "id": "T09",
+      "name": "Post Approved to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/1004908006045909/feed",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ message: $json.postText, attached_media: $json.fbPhotoIds.map(id => ({ media_fbid: id })) }) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FACEBOOK",
+          "name": "SkyHouse Facebook Token"
+        }
+      }
+    },
+    {
+      "id": "T10",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1960,
+        140
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $('Prep Post').first().json.chatId }}",
+        "text": "={{ '✅ Posted to SkyHouse Facebook!\\n\\n' + $('Prep Post').first().json.postText }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "T11",
+      "name": "Is No?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.text.toLowerCase().trim() }}",
+              "rightValue": "no",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "T12",
+      "name": "Clear State on Cancel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { chatId } = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\nif (staticData.drafts) delete staticData.drafts[chatId];\nreturn [{ json: { chatId } }];"
+      }
+    },
+    {
+      "id": "T13",
+      "name": "Send Cancel",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1960,
+        320
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "🗑️ Draft cancelled. Send a new post idea whenever you're ready.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "T14",
+      "name": "Build Edit Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { chatId, text, postText, fbPhotoIds, originalBrief } = $input.first().json;\nconst system = \"You are the social media content creator for SkyHouse Sayulita, a luxury vacation rental in Sayulita Mexico. Write Facebook posts that get published automatically.\\n\\nSkyHouse: 3 bed/3 bath/sleeps 8, panoramic ocean views, shared infinity pool, private tennis court, Starlink WiFi, 3-min walk to beach. Host E\\u00f1o offers surf lessons, boat charters, ATV tours.\\n\\nBRAND VOICE: Elegant, experiential, warm. Plain text only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nOutput ONLY the post text. No explanations, no questions, no commentary.\";\nconst content = 'Original request: ' + originalBrief + '\\n\\nCurrent draft:\\n' + postText + '\\n\\nUser feedback: ' + text + '\\n\\nRewrite incorporating this feedback. Output only the post text.';\nconst requestBody = JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system, messages: [{ role: 'user', content }] });\nreturn [{ json: { chatId, fbPhotoIds, originalBrief, postText, requestBody } }];"
+      }
+    },
+    {
+      "id": "T15",
+      "name": "Call Claude for Edit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1960,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.requestBody }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_ANTHROPIC",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "id": "T16",
+      "name": "Parse & Store Edit Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2180,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const response = $input.first().json;\nconst prev = $('Build Edit Request').first().json;\nlet postText = '';\nif (response.content && response.content[0]) postText = response.content[0].text.trim();\nif (!postText) throw new Error('Claude returned empty response');\nconst staticData = $getWorkflowStaticData('global');\nconst drafts = staticData.drafts || {};\ndrafts[prev.chatId] = { postText, fbPhotoIds: prev.fbPhotoIds, originalBrief: prev.originalBrief, pending: true };\nstaticData.drafts = drafts;\nreturn [{ json: { chatId: prev.chatId, postText } }];"
+      }
+    },
+    {
+      "id": "T17",
       "name": "Detect Intent",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        320
+        1080,
+        460
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
@@ -76,13 +336,13 @@
       }
     },
     {
-      "id": "t005",
+      "id": "T18",
       "name": "Is Post Request?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1120,
-        320
+        1300,
+        460
       ],
       "parameters": {
         "conditions": {
@@ -100,13 +360,13 @@
       }
     },
     {
-      "id": "t006",
+      "id": "T19",
       "name": "Is Help?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1340,
-        480
+        1520,
+        580
       ],
       "parameters": {
         "conditions": {
@@ -124,13 +384,13 @@
       }
     },
     {
-      "id": "t007",
+      "id": "T20",
       "name": "Send Help",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1560,
-        420
+        1740,
+        540
       ],
       "credentials": {
         "telegramApi": {
@@ -140,20 +400,20 @@
       },
       "parameters": {
         "chatId": "={{ $json.chatId }}",
-        "text": "👋 *Fullyo AI Assistant* — ready.\n\nJust describe what you want to post:\n\n_\"Post about waking up to ocean views at SkyHouse\"_\n_\"Surf post about the five best breaks near Sayulita\"_\n\nI'll pick photos, write the caption, and post to Facebook.\n\nType *status* for automation status.",
+        "text": "👋 *Fullyo AI Assistant* — ready.\n\nDescribe any post and I'll pick the right photos and write the caption:\n\n📝 _\"Surf post about the five best breaks near Sayulita\"_ → surf folder photos\n📝 _\"Post about waking up to ocean views at SkyHouse\"_ → SkyHouse photos\n\nYou'll see a preview before anything is posted.\n\nType *status* for automation status.",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
       }
     },
     {
-      "id": "t008",
+      "id": "T21",
       "name": "Send Status",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1560,
-        560
+        1740,
+        640
       ],
       "credentials": {
         "telegramApi": {
@@ -170,24 +430,96 @@
       }
     },
     {
-      "id": "t009",
-      "name": "Ignore Unauthorized",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "id": "T22",
+      "name": "Analyze Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        900,
-        520
+        1520,
+        460
       ],
-      "parameters": {}
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { text, chatId } = $input.first().json;\nconst lower = text.toLowerCase();\nconst folderMap = [\n  ['surf','Surf'],['yoga','Yoga'],['restaurant','Restaurants'],['food','Restaurants'],\n  ['dining','Restaurants'],['fishing','Fishing Charter'],['whale','Whale Tours'],\n  ['boat','Ally Cat'],['charter','Ally Cat'],['sup','SUP'],['paddle','SUP'],\n  ['golf','Golf'],['monkey mountain','Monkey Mountain'],['mountain','Monkey Mountain'],\n  ['jungle','Monkey Mountain'],['hike','Monkey Mountain'],['marieta','Marieta Islands'],\n  ['island','Marieta Islands'],['cultural','Local Cultural']\n];\nlet sayulitaFolder = null;\nfor (const [kw, folder] of folderMap) {\n  if (lower.includes(kw)) { sayulitaFolder = folder; break; }\n}\nconst isExperience = sayulitaFolder !== null;\nreturn [{ json: { chatId, originalBrief: text, isExperience, sayulitaFolder } }];"
+      }
     },
     {
-      "id": "t010",
+      "id": "T23",
+      "name": "Is Experience Post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        460
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isExperience }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "T24",
+      "name": "List Sayulita Photos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1960,
+        360
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_BUNNY_SAYULITA",
+          "name": "Bunny Sayulita Shared"
+        }
+      },
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://la.storage.bunnycdn.com/sayulitaandbeyond/' + $('Analyze Brief').first().json.sayulitaFolder + '/' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "T25",
+      "name": "Pick 3 Sayulita",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2180,
+        360
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst { chatId, originalBrief, sayulitaFolder } = $('Analyze Brief').first().json;\nconst files = items\n  .filter(f => f && !f.IsDirectory && (f.Length > 0 || f.ContentLength > 0))\n  .map(f => ({ cdnUrl: 'https://sayulitaandbeyond.b-cdn.net/' + sayulitaFolder + '/' + f.ObjectName }));\nif (files.length === 0) throw new Error('No photos in Sayulita/' + sayulitaFolder);\nconst selected = [...files].sort(() => Math.random() - 0.5).slice(0, Math.min(3, files.length));\nreturn selected.map((p, i) => ({ json: { photoIndex: i, cdnUrl: p.cdnUrl, chatId, originalBrief } }));"
+      }
+    },
+    {
+      "id": "T26",
       "name": "List SkyHouse Photos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1340,
-        200
+        1960,
+        560
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -212,27 +544,27 @@
       }
     },
     {
-      "id": "t011",
-      "name": "Pick 3 Photos",
+      "id": "T27",
+      "name": "Pick 3 SkyHouse",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1560,
-        200
+        2180,
+        560
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const items = $input.all().map(i => i.json);\nconst chatId = $('Is Post Request?').first().json.chatId;\nconst text = $('Is Post Request?').first().json.text;\nconst files = items\n  .filter(f => f && !f.IsDirectory && (f.Length > 0 || f.ContentLength > 0))\n  .map(f => ({ objectName: f.ObjectName, cdnUrl: 'https://SkyhouseSayulita.b-cdn.net/' + f.ObjectName }));\nif (files.length === 0) throw new Error('No photos found in SkyHouse storage');\nconst shuffled = [...files].sort(() => Math.random() - 0.5);\nconst selected = shuffled.slice(0, Math.min(3, shuffled.length));\nreturn selected.map((p, i) => ({ json: { photoIndex: i, cdnUrl: p.cdnUrl, objectName: p.objectName, chatId, originalBrief: text } }));"
+        "jsCode": "const items = $input.all().map(i => i.json);\nconst { chatId, originalBrief } = $('Analyze Brief').first().json;\nconst files = items\n  .filter(f => f && !f.IsDirectory && (f.Length > 0 || f.ContentLength > 0))\n  .map(f => ({ cdnUrl: 'https://SkyhouseSayulita.b-cdn.net/' + f.ObjectName }));\nif (files.length === 0) throw new Error('No photos in SkyHouse storage');\nconst selected = [...files].sort(() => Math.random() - 0.5).slice(0, Math.min(3, files.length));\nreturn selected.map((p, i) => ({ json: { photoIndex: i, cdnUrl: p.cdnUrl, chatId, originalBrief } }));"
       }
     },
     {
-      "id": "t012",
+      "id": "T28",
       "name": "Upload Photo to Facebook",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1780,
-        200
+        2400,
+        460
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -262,53 +594,51 @@
       }
     },
     {
-      "id": "t013",
+      "id": "T29",
       "name": "Collect Photo IDs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2000,
-        200
+        2620,
+        460
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const uploads = $input.all();\nconst chatId = $('Pick 3 Photos').first().json.chatId;\nconst originalBrief = $('Pick 3 Photos').first().json.originalBrief;\nconst fbPhotoIds = uploads.map(u => u.json.id || u.json.photo_id).filter(Boolean);\nif (fbPhotoIds.length === 0) throw new Error('No photos uploaded to Facebook');\nreturn [{ json: { chatId, originalBrief, fbPhotoIds } }];"
+        "jsCode": "const uploads = $input.all();\nconst { chatId, originalBrief } = $('Analyze Brief').first().json;\nconst fbPhotoIds = uploads.map(u => u.json.id || u.json.photo_id).filter(Boolean);\nif (fbPhotoIds.length === 0) throw new Error('No photos uploaded to Facebook');\nreturn [{ json: { chatId, originalBrief, fbPhotoIds } }];"
       }
     },
     {
-      "id": "t014",
+      "id": "T30",
       "name": "Build Claude Request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2220,
-        200
+        2840,
+        460
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const system = \"You are the social media content creator for SkyHouse Sayulita, a luxury vacation rental in Sayulita Mexico.\\n\\nSkyHouse: 3 bed/3 bath/sleeps 8, panoramic ocean views, shared infinity pool, private tennis court, Starlink WiFi, 3-min walk to beach. Host E\\u00f1o offers surf lessons, boat charters, ATV tours.\\n\\nBRAND VOICE: Elegant, experiential, warm. Plain text only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nOutput ONLY the post text. No explanations, no questions, no commentary.\";\nconst { chatId, originalBrief, fbPhotoIds } = $input.first().json;\nconst requestBody = JSON.stringify({\n  model: 'claude-opus-4-6',\n  max_tokens: 1024,\n  system,\n  messages: [{ role: 'user', content: originalBrief }]\n});\nreturn [{ json: { chatId, originalBrief, fbPhotoIds, requestBody } }];"
+        "jsCode": "const { chatId, originalBrief, fbPhotoIds } = $input.first().json;\nconst system = \"You are the social media content creator for SkyHouse Sayulita, a luxury vacation rental in Sayulita Mexico. Write Facebook posts that get published automatically.\\n\\nSkyHouse: 3 bed/3 bath/sleeps 8, panoramic ocean views, shared infinity pool, private tennis court, Starlink WiFi, 3-min walk to beach. Host E\\u00f1o offers surf lessons, boat charters, ATV tours.\\n\\nBRAND VOICE: Elegant, experiential, warm. Plain text only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nOutput ONLY the post text. No explanations, no questions, no commentary.\";\nconst requestBody = JSON.stringify({\n  model: 'claude-opus-4-6', max_tokens: 1024, system,\n  messages: [{ role: 'user', content: originalBrief }]\n});\nreturn [{ json: { chatId, originalBrief, fbPhotoIds, requestBody } }];"
       }
     },
     {
-      "id": "t015",
+      "id": "T31",
       "name": "Call Claude",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2440,
-        200
+        3060,
+        460
       ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "CRED_ID_ANTHROPIC",
-          "name": "Anthropic API"
-        }
-      },
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.requestBody }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -317,47 +647,37 @@
               "value": "2023-06-01"
             }
           ]
-        },
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ $json.requestBody }}"
-      }
-    },
-    {
-      "id": "t016",
-      "name": "Post to Facebook",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2660,
-        200
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "CRED_ID_FACEBOOK",
-          "name": "SkyHouse Facebook Token"
         }
       },
-      "parameters": {
-        "method": "POST",
-        "url": "https://graph.facebook.com/v19.0/1004908006045909/feed",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth",
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ message: $('Call Claude').first().json.content[0].text.trim(), attached_media: $('Collect Photo IDs').first().json.fbPhotoIds.map(id => ({ media_fbid: id })) }) }}"
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_ANTHROPIC",
+          "name": "Anthropic API"
+        }
       }
     },
     {
-      "id": "t017",
-      "name": "Send Confirmation",
+      "id": "T32",
+      "name": "Parse & Store Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3280,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const response = $input.first().json;\nconst { chatId, fbPhotoIds, originalBrief } = $('Collect Photo IDs').first().json;\nlet postText = '';\nif (response.content && response.content[0]) postText = response.content[0].text.trim();\nif (!postText) throw new Error('Claude returned empty response');\nconst staticData = $getWorkflowStaticData('global');\nconst drafts = staticData.drafts || {};\ndrafts[chatId] = { postText, fbPhotoIds, originalBrief, pending: true };\nstaticData.drafts = drafts;\nreturn [{ json: { chatId, postText } }];"
+      }
+    },
+    {
+      "id": "T33",
+      "name": "Send Draft to User",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2880,
-        200
+        3500,
+        460
       ],
       "credentials": {
         "telegramApi": {
@@ -366,21 +686,21 @@
         }
       },
       "parameters": {
-        "chatId": "={{ $('Collect Photo IDs').first().json.chatId }}",
-        "text": "={{ '✅ Posted to SkyHouse Facebook!\\n\\n' + $('Call Claude').first().json.content[0].text.trim() }}",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ '📝 Here\\'s your draft:\\n\\n' + $json.postText + '\\n\\n---\\nReply *YES* to post, describe changes to edit, or *NO* to cancel.' }}",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
       }
     },
     {
-      "id": "t018",
+      "id": "T34",
       "name": "Weekly Status Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        240,
-        620
+        200,
+        640
       ],
       "parameters": {
         "rule": {
@@ -394,13 +714,13 @@
       }
     },
     {
-      "id": "t019",
+      "id": "T35",
       "name": "Send Weekly Summary",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        460,
-        620
+        420,
+        640
       ],
       "credentials": {
         "telegramApi": {
@@ -410,7 +730,7 @@
       },
       "parameters": {
         "chatId": "8609472348",
-        "text": "☀️ *Good morning Seb — Weekly Check-in*\n\n✅ SkyHouse posted daily this week\n\nReply with any post idea and I'll publish it instantly.\n\n_Have a great week!_",
+        "text": "☀️ *Good morning Seb — Weekly Check-in*\n\n✅ SkyHouse posted daily this week\n\nSend any post idea and I'll draft it with photos for your review.\n\n_Have a great week!_",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -444,7 +764,7 @@
       "main": [
         [
           {
-            "node": "Detect Intent",
+            "node": "Check State",
             "type": "main",
             "index": 0
           }
@@ -452,6 +772,137 @@
         [
           {
             "node": "Ignore Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check State": {
+      "main": [
+        [
+          {
+            "node": "Is Pending?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Pending?": {
+      "main": [
+        [
+          {
+            "node": "Is Yes?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Detect Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Yes?": {
+      "main": [
+        [
+          {
+            "node": "Prep Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is No?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Post": {
+      "main": [
+        [
+          {
+            "node": "Post Approved to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Approved to Facebook": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is No?": {
+      "main": [
+        [
+          {
+            "node": "Clear State on Cancel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Edit Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear State on Cancel": {
+      "main": [
+        [
+          {
+            "node": "Send Cancel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Edit Request": {
+      "main": [
+        [
+          {
+            "node": "Call Claude for Edit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude for Edit": {
+      "main": [
+        [
+          {
+            "node": "Parse & Store Edit Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Store Edit Draft": {
+      "main": [
+        [
+          {
+            "node": "Send Draft to User",
             "type": "main",
             "index": 0
           }
@@ -473,7 +924,7 @@
       "main": [
         [
           {
-            "node": "List SkyHouse Photos",
+            "node": "Analyze Brief",
             "type": "main",
             "index": 0
           }
@@ -505,18 +956,69 @@
         ]
       ]
     },
-    "List SkyHouse Photos": {
+    "Analyze Brief": {
       "main": [
         [
           {
-            "node": "Pick 3 Photos",
+            "node": "Is Experience Post?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Pick 3 Photos": {
+    "Is Experience Post?": {
+      "main": [
+        [
+          {
+            "node": "List Sayulita Photos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List SkyHouse Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Sayulita Photos": {
+      "main": [
+        [
+          {
+            "node": "Pick 3 Sayulita",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick 3 Sayulita": {
+      "main": [
+        [
+          {
+            "node": "Upload Photo to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List SkyHouse Photos": {
+      "main": [
+        [
+          {
+            "node": "Pick 3 SkyHouse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick 3 SkyHouse": {
       "main": [
         [
           {
@@ -564,18 +1066,18 @@
       "main": [
         [
           {
-            "node": "Post to Facebook",
+            "node": "Parse & Store Draft",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Post to Facebook": {
+    "Parse & Store Draft": {
       "main": [
         [
           {
-            "node": "Send Confirmation",
+            "node": "Send Draft to User",
             "type": "main",
             "index": 0
           }
