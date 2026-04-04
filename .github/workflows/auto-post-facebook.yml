@@ -42,6 +42,7 @@ jobs:
           BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
           BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
           jq -n \
             --arg n8n_key "$N8N_API_KEY" \
@@ -50,6 +51,7 @@ jobs:
             --arg bunny_sky "$BUNNY_SKYHOUSE_KEY" \
             --arg bunny_say "$BUNNY_SAYULITA_KEY" \
             --arg tg_token "$TELEGRAM_BOT_TOKEN" \
+            --arg pexels_key "$PEXELS_API_KEY" \
             '{
               facebook: {
                 appId: "812551218572821",
@@ -75,7 +77,8 @@ jobs:
                   cdnHostname: "sayulitaandbeyond.b-cdn.net"
                 }
               },
-              telegram: { botToken: $tg_token, ownerChatId: "8609472348" }
+              telegram: { botToken: $tg_token, ownerChatId: "8609472348" },
+              pexels: { apiKey: $pexels_key }
             }' > credentials.local.json
 
       - name: Post to Facebook
