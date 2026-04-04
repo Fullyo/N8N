@@ -56,16 +56,25 @@ LIST_RESP=$(curl -s \
   -H "AccessKey: $BUNNY_KEY" \
   "$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER")
 
+echo "  Bunny URL: $BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER"
+echo "  Raw Bunny response (first 500 chars): ${LIST_RESP:0:500}"
+
 IMAGE_FILES=$(echo "$LIST_RESP" | \
   jq -r '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | .ObjectName' \
   2>/dev/null || true)
 
-FILE_COUNT=$(echo "$IMAGE_FILES" | grep -c '[^[:space:]]' || echo 0)
+# Count safely — avoid double-output from grep -c || echo 0
+if [ -z "$IMAGE_FILES" ]; then
+  FILE_COUNT=0
+else
+  FILE_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
+  FILE_COUNT=${FILE_COUNT:-0}
+fi
 echo "  Found $FILE_COUNT images"
 
 if [ "$FILE_COUNT" -eq 0 ]; then
   echo "ERROR: No images found in $BUNNY_ZONE/$BUNNY_SUBFOLDER"
-  echo "Raw response: $LIST_RESP"
+  echo "Full Bunny response: $LIST_RESP"
   exit 1
 fi
 
