@@ -43,18 +43,20 @@ if [ "$PHOTO_FOLDER" = "SkyHouse" ]; then
   BUNNY_KEY="$BUNNY_SKYHOUSE_KEY"
   BUNNY_CDN_HOST="SkyhouseSayulita.b-cdn.net"
   BUNNY_SUBFOLDER=""
+  BUNNY_SUBFOLDER_ENC=""
 else
   BUNNY_ZONE="sayulitaandbeyond"
   BUNNY_KEY="$BUNNY_SAYULITA_KEY"
   BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
   BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+  BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
 fi
 
 # ── List images from Bunny storage (handles 1 or 2 levels deep) ──
 echo "--- Fetching photo list from Bunny CDN ---"
 LIST_RESP=$(curl -s \
   -H "AccessKey: $BUNNY_KEY" \
-  "$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER")
+  "$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER_ENC")
 
 # Try to get images directly from this folder
 IMAGE_FILES=$(echo "$LIST_RESP" | \
@@ -72,7 +74,7 @@ if [ -z "$IMAGE_FILES" ]; then
     [ -z "$subdir" ] && continue
     # URL-encode spaces (most common special char in folder names)
     ENCODED_SUBDIR="${subdir// /%20}"
-    SUB_URL="$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER$ENCODED_SUBDIR/"
+    SUB_URL="$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER_ENC$ENCODED_SUBDIR/"
     echo "  Listing subdir: $SUB_URL"
     SUB_RESP=$(curl -s -H "AccessKey: $BUNNY_KEY" "$SUB_URL")
     SUB_FILES=$(echo "$SUB_RESP" | \
@@ -112,7 +114,7 @@ PHOTO_IDS=()
 while IFS= read -r filename; do
   [ -z "$filename" ] && continue
   ENCODED_FILENAME="${filename// /%20}"
-  CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER}${ENCODED_FILENAME}"
+  CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER_ENC}${ENCODED_FILENAME}"
   echo "  → $filename"
 
   UPLOAD_RESP=$(curl -s -X POST \
