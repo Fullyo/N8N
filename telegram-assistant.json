@@ -1,0 +1,258 @@
+{
+  "name": "Fullyo — Telegram AI Assistant",
+  "nodes": [
+    {
+      "id": "t001",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "fullyo-telegram-assistant",
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "updates": ["message", "callback_query"]
+      }
+    },
+    {
+      "id": "t002",
+      "name": "Security Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const msg = $input.first().json;\nconst OWNER_ID = 8609472348;\n\n// Handle both messages and callback queries\nconst fromId = msg.message?.from?.id || msg.callback_query?.from?.id;\nconst text = msg.message?.text || msg.callback_query?.data || '';\nconst chatId = msg.message?.chat?.id || msg.callback_query?.message?.chat?.id;\nconst messageId = msg.message?.message_id || msg.callback_query?.message?.message_id;\nconst callbackQueryId = msg.callback_query?.id || null;\n\nif (fromId !== OWNER_ID) {\n  return [{ json: { authorized: false, chatId, text, fromId } }];\n}\n\nreturn [{ json: { authorized: true, chatId, text, fromId, messageId, callbackQueryId } }];"
+      }
+    },
+    {
+      "id": "t003",
+      "name": "Is Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.authorized }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "t004",
+      "name": "Detect Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { text, chatId, callbackQueryId, messageId } = $input.first().json;\nconst lower = text.toLowerCase().trim();\n\nlet intent = 'unknown';\n\n// Approval callbacks\nif (lower.startsWith('approve_') || lower.startsWith('reject_')) {\n  intent = 'approval_response';\n}\n// Status request\nelse if (lower.includes('status') || lower.includes('how many') || lower.includes('report')) {\n  intent = 'status';\n}\n// Help\nelse if (lower === '/start' || lower === '/help' || lower === 'help') {\n  intent = 'help';\n}\n// On-the-fly post for a specific business\nelse if (lower.includes('skyhouse') || lower.includes('moroccan') || lower.includes('casa') || lower.includes('lux') || lower.includes('villas')) {\n  intent = 'create_post';\n}\n// Generic post idea\nelse if (lower.includes('post') || lower.includes('publish') || lower.includes('create') || lower.includes('idea') || lower.includes('write')) {\n  intent = 'create_post';\n}\n\nreturn [{ json: { intent, text, chatId, callbackQueryId, messageId } }];"
+      }
+    },
+    {
+      "id": "t005",
+      "name": "Route Intent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1120, 200],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "help", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "help" },
+            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "status", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "status" },
+            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "create_post", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "create_post" },
+            { "conditions": { "conditions": [{ "leftValue": "={{ $json.intent }}", "rightValue": "approval_response", "operator": { "type": "string", "operation": "equals" } }] }, "renameOutput": true, "outputKey": "approval" }
+          ]
+        },
+        "fallbackOutput": "none"
+      }
+    },
+    {
+      "id": "t006",
+      "name": "Send Help Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 80],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "👋 *Fullyo AI Assistant* — ready.\n\nHere's what you can say:\n\n📝 *Create a post:*\n_\"SkyHouse — we have availability April 20-25, create urgency post\"_\n_\"Post about Eño taking guests on a sunset boat charter\"_\n_\"Moroccan Palace — romantic getaway post\"_\n\n📊 *Get status:*\n_\"Status\"_ or _\"Report\"_\n\nJust type naturally — I understand context.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "t007",
+      "name": "Send Status",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 220],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "📊 *Fullyo — Automation Status*\n\n*Social Media Automation:*\n✅ SkyHouse Sayulita — Daily Facebook posts active (11am MX time)\n⏳ Moroccan Palace — Not yet set up\n⏳ Casa Sempre Avanti — Not yet set up\n⏳ LUX Property Management — Not yet set up\n⏳ Villas Sempre Avanti — Not yet set up\n\n*Integrations:*\n✅ Bunny CDN — SkyHouse + Sayulita photos\n✅ Claude AI — Caption generation\n✅ Facebook Graph API — Publishing\n⏳ Instagram — Pending account setup\n⏳ ManyChat — Comment automation (set up in progress)\n⏳ GHL — Lead capture (Phase 3)\n\n*Next priority:* Set up Moroccan Palace workflow",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "t008",
+      "name": "Generate Post with Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 360],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_ANTHROPIC",
+          "name": "Anthropic API"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "anthropic-version", "value": "2023-06-01" }]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1024, system: 'You are the content creator for SkyHouse Sayulita, a luxury two-level corner penthouse vacation rental in Monterosa, Northside Sayulita, Mexico. Managed by LUX Property Management.\\n\\nPROPERTY: 3 bed, 3 bath, sleeps 8. Panoramic ocean views. Shared infinity pool. Private tennis court. Starlink WiFi. 3-min walk to beach. 5-min to town. Quiet Northside location. Host Eño offers surf lessons, boat charters, ATV tours, transfers.\\n\\nBRAND VOICE: Elegant, experiential, warm. Second or third person only. No markdown. No nightly rates. Never claim private beach or private pool. 100-200 words. Hashtags at end only.\\n\\nWhen given an idea or brief, write a complete Facebook post ready to publish. Output only the post text, nothing else.', messages: [{ role: 'user', content: $json.text }] }) }}"
+      }
+    },
+    {
+      "id": "t009",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 360],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const response = $input.first().json;\nconst chatId = $('Detect Intent').first().json.chatId;\nconst originalText = $('Detect Intent').first().json.text;\n\nlet postText = '';\nif (response.content && response.content[0]) {\n  postText = response.content[0].text.trim();\n}\n\nif (!postText) {\n  throw new Error('Claude returned empty response');\n}\n\n// Store post for potential approval flow\nreturn [{ json: { postText, chatId, originalRequest: originalText } }];"
+      }
+    },
+    {
+      "id": "t010",
+      "name": "Send for Approval",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1780, 360],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ '✍️ *Draft post ready:*\\n\\n' + $json.postText + '\\n\\n_Approve to post to SkyHouse Facebook now, or reply with edits._' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": "={{ JSON.stringify({ inline_keyboard: [[{ text: '✅ Post it now', callback_data: 'approve_skyhouse' }, { text: '❌ Discard', callback_data: 'reject_skyhouse' }]] }) }}"
+        }
+      }
+    },
+    {
+      "id": "t011",
+      "name": "Ignore Unauthorized",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 420],
+      "parameters": {}
+    },
+    {
+      "id": "t012",
+      "name": "Weekly Status Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 560],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 14 * * 1" }]
+        }
+      }
+    },
+    {
+      "id": "t013",
+      "name": "Send Weekly Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [460, 560],
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
+      },
+      "parameters": {
+        "chatId": "8609472348",
+        "text": "☀️ *Good morning Seb — Weekly Automation Check-in*\n\n*This week:*\n✅ SkyHouse Sayulita posted daily on Facebook\n\n*Action items to consider:*\n• Set up next business (Moroccan Palace)\n• Check ManyChat comment automation\n• Review Facebook page insights\n• Upload new photos to Bunny CDN if needed\n\n*Reminder:* Reply with any post idea and I'll draft and publish it instantly.\n\n_Have a great week!_",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Security Check", "type": "main", "index": 0 }]]
+    },
+    "Security Check": {
+      "main": [[{ "node": "Is Authorized?", "type": "main", "index": 0 }]]
+    },
+    "Is Authorized?": {
+      "main": [
+        [{ "node": "Detect Intent", "type": "main", "index": 0 }],
+        [{ "node": "Ignore Unauthorized", "type": "main", "index": 0 }]
+      ]
+    },
+    "Detect Intent": {
+      "main": [[{ "node": "Route Intent", "type": "main", "index": 0 }]]
+    },
+    "Route Intent": {
+      "main": [
+        [{ "node": "Send Help Message", "type": "main", "index": 0 }],
+        [{ "node": "Send Status", "type": "main", "index": 0 }],
+        [{ "node": "Generate Post with Claude", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Generate Post with Claude": {
+      "main": [[{ "node": "Parse Claude Response", "type": "main", "index": 0 }]]
+    },
+    "Parse Claude Response": {
+      "main": [[{ "node": "Send for Approval", "type": "main", "index": 0 }]]
+    },
+    "Weekly Status Trigger": {
+      "main": [[{ "node": "Send Weekly Summary", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # ============================================================
-# SkyHouse Sayulita — n8n Cloud Deployment Script
-# Run this from any machine with unrestricted internet access.
+# Fullyo — n8n Cloud Deployment Script
+# Deploys all workflows: SkyHouse social poster + Telegram assistant
 # Reads credentials from credentials.local.json in same directory.
 # ============================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CREDS_FILE="$SCRIPT_DIR/credentials.local.json"
-WORKFLOW_FILE="$SCRIPT_DIR/skyhouse-sayulita-social-poster.json"
+SKYHOUSE_WORKFLOW="$SCRIPT_DIR/skyhouse-sayulita-social-poster.json"
+TELEGRAM_WORKFLOW="$SCRIPT_DIR/telegram-assistant.json"
 
 # ── Read credentials ─────────────────────────────────────────
 N8N_BASE_URL="https://fullyo.app.n8n.cloud"
@@ -17,8 +18,9 @@ FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.skyhouse_sayulita.accessToken' "$CREDS_
 ANTHROPIC_API_KEY=$(jq -r '.anthropic.apiKey' "$CREDS_FILE")
 BUNNY_SKYHOUSE_KEY=$(jq -r '.bunny.skyhouse.storageApiKey' "$CREDS_FILE")
 BUNNY_SAYULITA_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+TELEGRAM_BOT_TOKEN=$(jq -r '.telegram.botToken' "$CREDS_FILE")
 
-echo "=== SkyHouse Sayulita — n8n Cloud Deployment ==="
+echo "=== Fullyo — n8n Cloud Deployment ==="
 echo "Instance: $N8N_BASE_URL"
 echo ""
 
@@ -85,70 +87,78 @@ CRED_ID_BUNNY_SAYULITA=$(get_or_create_cred \
   "Bunny Sayulita Shared" "httpHeaderAuth" \
   "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_SAYULITA_KEY\"}")
 
+CRED_ID_TELEGRAM=$(get_or_create_cred \
+  "Fullyo Telegram Bot" "telegramApi" \
+  "{\"accessToken\":\"$TELEGRAM_BOT_TOKEN\"}")
+
 echo ""
 
-# ── Step 2: Inject credential IDs into workflow JSON ─────────
-echo "--- Injecting credential IDs into workflow ---"
+# ── Helper: deploy one workflow ───────────────────────────────
+deploy_workflow() {
+  local label="$1"
+  local file="$2"
+  local json
+  json=$(cat "$file")
 
-WORKFLOW_JSON=$(cat "$WORKFLOW_FILE")
-WORKFLOW_JSON=$(echo "$WORKFLOW_JSON" | sed \
-  -e "s/CRED_ID_FACEBOOK/$CRED_ID_FACEBOOK/g" \
-  -e "s/CRED_ID_ANTHROPIC/$CRED_ID_ANTHROPIC/g" \
-  -e "s/CRED_ID_BUNNY_SKYHOUSE/$CRED_ID_BUNNY_SKYHOUSE/g" \
-  -e "s/CRED_ID_BUNNY_SAYULITA/$CRED_ID_BUNNY_SAYULITA/g")
+  # Substitute credential IDs
+  json=$(echo "$json" | sed \
+    -e "s/CRED_ID_FACEBOOK/$CRED_ID_FACEBOOK/g" \
+    -e "s/CRED_ID_ANTHROPIC/$CRED_ID_ANTHROPIC/g" \
+    -e "s/CRED_ID_BUNNY_SKYHOUSE/$CRED_ID_BUNNY_SKYHOUSE/g" \
+    -e "s/CRED_ID_BUNNY_SAYULITA/$CRED_ID_BUNNY_SAYULITA/g" \
+    -e "s/CRED_ID_TELEGRAM/$CRED_ID_TELEGRAM/g")
 
-echo "  ✓ Credential IDs substituted"
+  # Remove 'active' field — n8n API rejects it on POST
+  json=$(echo "$json" | jq 'del(.active)')
 
-# Remove 'active' field — n8n API rejects it on POST
-WORKFLOW_JSON=$(echo "$WORKFLOW_JSON" | jq 'del(.active)')
+  echo "--- Deploying: $label ---"
+  local response
+  response=$(api POST /workflows "$json")
+  local wid
+  wid=$(echo "$response" | jq -r '.id // empty')
 
-# ── Step 3: Deploy workflow ───────────────────────────────────
-echo "--- Deploying workflow ---"
+  if [ -z "$wid" ]; then
+    echo "ERROR deploying $label: $response"
+    exit 1
+  fi
+  echo "  ✓ $label deployed: $wid"
+  echo "  URL: $N8N_BASE_URL/workflow/$wid"
+  echo "$wid"
+}
 
-WORKFLOW_RESPONSE=$(api POST /workflows "$WORKFLOW_JSON")
-WORKFLOW_ID=$(echo "$WORKFLOW_RESPONSE" | jq -r '.id // empty')
-
-if [ -z "$WORKFLOW_ID" ]; then
-  echo "ERROR deploying workflow: $WORKFLOW_RESPONSE"
-  exit 1
-fi
-echo "  ✓ Workflow deployed: $WORKFLOW_ID"
+# ── Step 2: Deploy workflows ──────────────────────────────────
+SKYHOUSE_ID=$(deploy_workflow "SkyHouse Sayulita — Daily Social Post" "$SKYHOUSE_WORKFLOW")
+echo ""
+TELEGRAM_ID=$(deploy_workflow "Fullyo — Telegram AI Assistant" "$TELEGRAM_WORKFLOW")
 echo ""
 
-# ── Step 4: Update credentials.local.json ────────────────────
+# ── Step 3: Save IDs ─────────────────────────────────────────
 echo "--- Saving IDs to credentials.local.json ---"
 
-UPDATED_CREDS=$(jq \
-  --arg wid "$WORKFLOW_ID" \
+UPDATED=$(jq \
+  --arg wsky "$SKYHOUSE_ID" \
+  --arg wtg "$TELEGRAM_ID" \
   --arg fb "$CRED_ID_FACEBOOK" \
   --arg ant "$CRED_ID_ANTHROPIC" \
   --arg bsky "$CRED_ID_BUNNY_SKYHOUSE" \
   --arg bsay "$CRED_ID_BUNNY_SAYULITA" \
-  '.n8n.workflowId = $wid
+  --arg tg "$CRED_ID_TELEGRAM" \
+  '.n8n.workflowIds.skyhouse = $wsky
+   | .n8n.workflowIds.telegramAssistant = $wtg
    | .n8n.credentialIds.facebookSkyhouse = $fb
    | .n8n.credentialIds.anthropic = $ant
    | .n8n.credentialIds.bunnySkyhouse = $bsky
-   | .n8n.credentialIds.bunnySayulita = $bsay' \
+   | .n8n.credentialIds.bunnySayulita = $bsay
+   | .n8n.credentialIds.telegram = $tg' \
   "$CREDS_FILE")
 
-echo "$UPDATED_CREDS" > "$CREDS_FILE"
+echo "$UPDATED" > "$CREDS_FILE"
 echo "  ✓ credentials.local.json updated"
 echo ""
-
-# ── Step 5: Summary ───────────────────────────────────────────
 echo "==================================================="
 echo "DEPLOYMENT COMPLETE"
-echo "==================================================="
-echo "Credential IDs:"
-echo "  SkyHouse Facebook Token : $CRED_ID_FACEBOOK"
-echo "  Anthropic API           : $CRED_ID_ANTHROPIC"
-echo "  Bunny SkyHouse Storage  : $CRED_ID_BUNNY_SKYHOUSE"
-echo "  Bunny Sayulita Shared   : $CRED_ID_BUNNY_SAYULITA"
+echo "  SkyHouse workflow : $N8N_BASE_URL/workflow/$SKYHOUSE_ID"
+echo "  Telegram assistant: $N8N_BASE_URL/workflow/$TELEGRAM_ID"
 echo ""
-echo "Workflow ID: $WORKFLOW_ID"
-echo "Workflow URL: $N8N_BASE_URL/workflow/$WORKFLOW_ID"
-echo ""
-echo "The workflow is INACTIVE. To activate or test manually:"
-echo "  Activate : PATCH $N8N_BASE_URL/api/v1/workflows/$WORKFLOW_ID  {\"active\":true}"
-echo "  Test run : POST  $N8N_BASE_URL/api/v1/workflows/$WORKFLOW_ID/run"
+echo "Both workflows are INACTIVE — activate in n8n UI."
 echo "==================================================="
