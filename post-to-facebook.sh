@@ -70,11 +70,14 @@ if [ -z "$IMAGE_FILES" ]; then
   ALL_IMAGES=""
   while IFS= read -r subdir; do
     [ -z "$subdir" ] && continue
-    SUB_URL="$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER$(python3 -c "import urllib.parse; print(urllib.parse.quote('$subdir'))")/"
-    echo "  Listing: $SUB_URL"
+    # URL-encode spaces (most common special char in folder names)
+    ENCODED_SUBDIR="${subdir// /%20}"
+    SUB_URL="$BUNNY_STORAGE_API/$BUNNY_ZONE/$BUNNY_SUBFOLDER$ENCODED_SUBDIR/"
+    echo "  Listing subdir: $SUB_URL"
     SUB_RESP=$(curl -s -H "AccessKey: $BUNNY_KEY" "$SUB_URL")
     SUB_FILES=$(echo "$SUB_RESP" | \
-      jq -r ".[] | select(.IsDirectory == false) | select(.ObjectName | test(\"\\\\.(jpg|jpeg|png|webp)$\"; \"i\")) | \"${subdir}/\" + .ObjectName" \
+      jq -r --arg prefix "$subdir/" \
+        '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | $prefix + .ObjectName' \
       2>/dev/null || true)
     if [ -n "$SUB_FILES" ]; then
       ALL_IMAGES="${ALL_IMAGES}${SUB_FILES}"$'\n'
@@ -108,7 +111,8 @@ PHOTO_IDS=()
 
 while IFS= read -r filename; do
   [ -z "$filename" ] && continue
-  CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER}${filename}"
+  ENCODED_FILENAME="${filename// /%20}"
+  CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER}${ENCODED_FILENAME}"
   echo "  → $filename"
 
   UPLOAD_RESP=$(curl -s -X POST \
