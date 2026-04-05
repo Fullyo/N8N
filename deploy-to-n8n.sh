@@ -131,6 +131,8 @@ deploy_workflow() {
       exit 1
     fi
     echo "  ✓ Updated in place: $wid"
+    api PATCH "/workflows/$wid" '{"active":true}' > /dev/null
+    echo "  ✓ Activated"
 
     # Delete any duplicate workflows with same name (keep the one we just updated)
     while IFS= read -r dup_id; do
