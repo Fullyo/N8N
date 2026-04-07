@@ -10,14 +10,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CREDS_FILE="$SCRIPT_DIR/credentials.local.json"
 SKYHOUSE_WORKFLOW="$SCRIPT_DIR/skyhouse-sayulita-social-poster.json"
 TELEGRAM_WORKFLOW="$SCRIPT_DIR/telegram-assistant.json"
+VSA_WORKFLOW="$SCRIPT_DIR/villas-sempre-avanti-social-poster.json"
 
 # ── Read credentials ─────────────────────────────────────────
 N8N_BASE_URL="https://fullyo.app.n8n.cloud"
 N8N_API_KEY=$(jq -r '.n8n.apiKey' "$CREDS_FILE")
 FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.skyhouse_sayulita.accessToken' "$CREDS_FILE")
+FB_VSA_TOKEN=$(jq -r '.facebook.pages.casasempreavanti.accessToken' "$CREDS_FILE")
 ANTHROPIC_API_KEY=$(jq -r '.anthropic.apiKey' "$CREDS_FILE")
 BUNNY_SKYHOUSE_KEY=$(jq -r '.bunny.skyhouse.storageApiKey' "$CREDS_FILE")
 BUNNY_SAYULITA_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+BUNNY_CSA_KEY=$(jq -r '.bunny.casasempreavanti.storageApiKey' "$CREDS_FILE")
 TELEGRAM_BOT_TOKEN=$(jq -r '.telegram.botToken' "$CREDS_FILE")
 
 echo "=== Fullyo — n8n Cloud Deployment ==="
@@ -91,6 +94,14 @@ CRED_ID_TELEGRAM=$(get_or_create_cred \
   "Fullyo Telegram Bot" "telegramApi" \
   "{\"accessToken\":\"$TELEGRAM_BOT_TOKEN\"}")
 
+CRED_ID_FB_CASASEMPREAVANTI=$(get_or_create_cred \
+  "Facebook VSA Page Token" "httpHeaderAuth" \
+  "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_VSA_TOKEN\"}")
+
+CRED_ID_BUNNY_CASASEMPREAVANTI=$(get_or_create_cred \
+  "Bunny VSA Storage" "httpHeaderAuth" \
+  "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_CSA_KEY\"}")
+
 echo ""
 
 # ── Helper: deploy one workflow ───────────────────────────────
@@ -108,7 +119,9 @@ deploy_workflow() {
     -e "s/CRED_ID_ANTHROPIC/$CRED_ID_ANTHROPIC/g" \
     -e "s/CRED_ID_BUNNY_SKYHOUSE/$CRED_ID_BUNNY_SKYHOUSE/g" \
     -e "s/CRED_ID_BUNNY_SAYULITA/$CRED_ID_BUNNY_SAYULITA/g" \
-    -e "s/CRED_ID_TELEGRAM/$CRED_ID_TELEGRAM/g")
+    -e "s/CRED_ID_TELEGRAM/$CRED_ID_TELEGRAM/g" \
+    -e "s/CRED_ID_FB_CASASEMPREAVANTI/$CRED_ID_FB_CASASEMPREAVANTI/g" \
+    -e "s/CRED_ID_BUNNY_CASASEMPREAVANTI/$CRED_ID_BUNNY_CASASEMPREAVANTI/g")
 
   # Remove 'active' field — managed separately
   json=$(echo "$json" | jq 'del(.active)')
@@ -163,6 +176,7 @@ deploy_workflow() {
 # It is deployed once manually and never touched by automation
 # to prevent webhook deregistration on every push.
 SKYHOUSE_ID=$(deploy_workflow "SkyHouse Sayulita — Daily Social Post" "$SKYHOUSE_WORKFLOW")
+VSA_ID=$(deploy_workflow "Villas Sempre Avanti — Daily Social Post" "$VSA_WORKFLOW")
 TELEGRAM_ID="(managed separately — not redeployed)"
 echo ""
 
@@ -171,18 +185,24 @@ echo "--- Saving IDs to credentials.local.json ---"
 
 UPDATED=$(jq \
   --arg wsky "$SKYHOUSE_ID" \
+  --arg wvsa "$VSA_ID" \
   --arg wtg "$TELEGRAM_ID" \
   --arg fb "$CRED_ID_FACEBOOK" \
+  --arg fbvsa "$CRED_ID_FB_CASASEMPREAVANTI" \
   --arg ant "$CRED_ID_ANTHROPIC" \
   --arg bsky "$CRED_ID_BUNNY_SKYHOUSE" \
   --arg bsay "$CRED_ID_BUNNY_SAYULITA" \
+  --arg bcsa "$CRED_ID_BUNNY_CASASEMPREAVANTI" \
   --arg tg "$CRED_ID_TELEGRAM" \
   '.n8n.workflowIds.skyhouse = $wsky
+   | .n8n.workflowIds.villasSempreAvanti = $wvsa
    | .n8n.workflowIds.telegramAssistant = $wtg
    | .n8n.credentialIds.facebookSkyhouse = $fb
+   | .n8n.credentialIds.facebookVSA = $fbvsa
    | .n8n.credentialIds.anthropic = $ant
    | .n8n.credentialIds.bunnySkyhouse = $bsky
    | .n8n.credentialIds.bunnySayulita = $bsay
+   | .n8n.credentialIds.bunnyCasaSempreAvanti = $bcsa
    | .n8n.credentialIds.telegram = $tg' \
   "$CREDS_FILE")
 
@@ -203,8 +223,9 @@ echo ""
 
 echo "==================================================="
 echo "DEPLOYMENT COMPLETE"
-echo "  SkyHouse workflow : $N8N_BASE_URL/workflow/$SKYHOUSE_ID"
-echo "  Telegram assistant: $N8N_BASE_URL/workflow/$TELEGRAM_ID"
+echo "  SkyHouse workflow       : $N8N_BASE_URL/workflow/$SKYHOUSE_ID"
+echo "  Villas Sempre Avanti    : $N8N_BASE_URL/workflow/$VSA_ID"
+echo "  Telegram assistant      : $N8N_BASE_URL/workflow/$TELEGRAM_ID"
 echo ""
 echo "Both workflows deployed and activated."
 echo "==================================================="
