@@ -1,0 +1,462 @@
+{
+  "name": "Villas Sempre Avanti — Daily Social Post",
+  "nodes": [
+    {
+      "id": "a1b2c3d4-0001",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        460
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0002",
+      "name": "Get Day Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];\nconst today = new Date();\nconst dayIndex = today.getDay();\n\n// Property days: Mon(1), Thu(4), Sat(6) — Villa Luisa, Villa Pietro, full estate\n// Experience days: Sun(0), Tue(2), Wed(3), Fri(5) — activities\nconst propertyDays = [1, 4, 6];\nconst postType = propertyDays.includes(dayIndex) ? 'property' : 'experience';\n\nconst categoryMap = {\n  0: { category: 'Surf', folder: 'Surf', zone: 'sayulitaandbeyond', topic: 'Surfing with Victor — La Lancha, El Anclote, Sayulita breaks' },\n  1: { category: 'Villa Luisa', folder: 'Villa Luisa', zone: 'villassempreavanti', topic: 'Villa Luisa — 3BR beachfront villa, infinity pool, ocean views' },\n  2: { category: 'Wellness', folder: 'Yoga', zone: 'sayulitaandbeyond', topic: 'Yoga, sound healing, massages — wellness at Villas Sempre Avanti' },\n  3: { category: 'Ocean Adventures', folder: 'Ally Cat', zone: 'sayulitaandbeyond', topic: 'Ally Cat sailing, spearfishing, whale watching, private boat charters' },\n  4: { category: 'Villa Pietro', folder: 'Villa Pietro', zone: 'villassempreavanti', topic: 'Villa Pietro — intimate 2BR villa, private pool, romantic beachfront' },\n  5: { category: 'Chef & Dining', folder: 'Restaurants', zone: 'sayulitaandbeyond', topic: 'Ricardo & Crethell — private chefs, pizza night, sunset margaritas, fresh catch' },\n  6: { category: 'Land Adventures', folder: 'Monkey Mountain', zone: 'sayulitaandbeyond', topic: 'UTV coastal cruise, horseback riding, zipline, Monkey Mountain hike' }\n};\n\nconst audienceMap = {\n  0: { audience: 'Surfers & Adventure Travelers', postStyle: 'Energetic, surf culture, identity-specific', ctaStyle: 'DM to reserve your stay', hookExample: 'La Lancha at dawn. World-class left. Five minutes from your infinity pool.' },\n  1: { audience: 'Families & Multi-family Groups', postStyle: 'Warm, spacious, family-friendly', ctaStyle: 'Inquire at villassempreavanti.com', hookExample: 'Three bedrooms. Private pool. 250 feet of Pacific beachfront. Villa Luisa.' },\n  2: { audience: 'Wellness Retreat Organizers', postStyle: 'Intentional, quiet, restorative', ctaStyle: 'Link in bio for wellness stays', hookExample: 'Sunrise yoga. Sound healing at dusk. The ocean never stops.' },\n  3: { audience: 'Luxury Travelers & Couples', postStyle: 'Aspirational, sensory, cinematic', ctaStyle: 'Inquire to book your experience', hookExample: 'Open bar. Fresh ceviche. Snorkeling the Marietas. This is Ally Cat.' },\n  4: { audience: 'Couples & Romantic Getaways', postStyle: 'Intimate, romantic, slow luxury', ctaStyle: 'DM to check availability', hookExample: 'Two bedrooms. Your own pool. The sound of the Pacific from every room.' },\n  5: { audience: 'Foodies & Culinary Travelers', postStyle: 'Warm, sensory, food-forward', ctaStyle: 'Ask about our chef packages', hookExample: 'Ricardo fires the wood oven at dusk. Guests choose their toppings. Magic happens.' },\n  6: { audience: 'Adventure Seekers & Active Travelers', postStyle: 'Energetic, outdoorsy, free-spirited', ctaStyle: 'Inquire to book your adventure stay', hookExample: 'Coast north from Sayulita to El Anclote. Stop when the view demands it.' }\n};\n\nconst cfg = categoryMap[dayIndex];\nconst aud = audienceMap[dayIndex];\n\nreturn [{\n  json: {\n    dayIndex,\n    dayName: days[dayIndex],\n    runDate: today.toISOString().split('T')[0],\n    postType,\n    photoFolder: cfg.folder,\n    photoZone: cfg.zone,\n    topic: cfg.topic,\n    audience: aud.audience,\n    postStyle: aud.postStyle,\n    ctaStyle: aud.ctaStyle,\n    hookExample: aud.hookExample\n  }\n}];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0003",
+      "name": "List VSA Property Photos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        340
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_BUNNY_SKYHOUSE",
+          "name": "Bunny VSA Storage"
+        }
+      },
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://la.storage.bunnycdn.com/villassempreavanti/' + .first().json.photoFolder.replace(/ /g, '%20') + '/' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0004",
+      "name": "List Sayulita Shared Photos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        580
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_BUNNY_SAYULITA",
+          "name": "Bunny Sayulita Shared"
+        }
+      },
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://la.storage.bunnycdn.com/sayulitaandbeyond/' + .first().json.photoFolder.replace(/ /g, '%20') + '/' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0005",
+      "name": "Pick 3 Photos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const dayConfig = $('Get Day Config').first().json;\nconst postType = dayConfig.postType;\nconst skyHouseItems = $('List SkyHouse Photos').all().map(i => i.json);\n\nfunction parseBunnyFiles(items, cdnHostname, subfolder) {\n  return items\n    .filter(f => f && !f.IsDirectory && (f.Length > 0 || f.ContentLength > 0))\n    .map(f => ({\n      objectName: f.ObjectName,\n      cdnUrl: subfolder\n        ? `https://${cdnHostname}/${subfolder}/${f.ObjectName}`\n        : `https://${cdnHostname}/${f.ObjectName}`,\n      size: f.Length || f.ContentLength || 0\n    }));\n}\n\nconst skyHouseFiles = parseBunnyFiles(skyHouseItems, 'SkyhouseSayulita.b-cdn.net', null);\n\nif (skyHouseFiles.length === 0) {\n  throw new Error('No files in SkyHouse storage. Sample: ' + JSON.stringify(skyHouseItems[0]));\n}\n\nconst shuffleSkyHouse = [...skyHouseFiles].sort(() => Math.random() - 0.5);\nlet selected;\n\nif (postType === 'property') {\n  selected = [\n    { ...shuffleSkyHouse[0], source: 'skyhouse' },\n    { ...(shuffleSkyHouse[1] || shuffleSkyHouse[0]), source: 'skyhouse' },\n    { ...(shuffleSkyHouse[2] || shuffleSkyHouse[0]), source: 'skyhouse' }\n  ];\n} else {\n  const folder = $('Pick Sayulita Folder').first().json.sayulitaFolder;\n  const sayulitaItems = $('List Sayulita Shared Photos').all().map(i => i.json);\n  const sayulitaFiles = parseBunnyFiles(sayulitaItems, 'sayulitaandbeyond.b-cdn.net', folder);\n\n  if (sayulitaFiles.length === 0) {\n    throw new Error('No files in Sayulita/' + folder + '. Sample: ' + JSON.stringify(sayulitaItems[0]));\n  }\n\n  const shuffleSayulita = [...sayulitaFiles].sort(() => Math.random() - 0.5);\n  selected = [\n    { ...shuffleSkyHouse[0], source: 'skyhouse' },\n    { ...shuffleSayulita[0], source: folder },\n    { ...(shuffleSayulita[1] || shuffleSayulita[0]), source: folder }\n  ];\n}\n\nconst folderUsed = postType === 'experience' ? $('Pick Sayulita Folder').first().json.sayulitaFolder : null;\n\nreturn selected.map((photo, idx) => ({\n  json: {\n    photoIndex: idx,\n    objectName: photo.objectName,\n    cdnUrl: photo.cdnUrl,\n    source: photo.source,\n    postType: dayConfig.postType,\n    dayIndex: dayConfig.dayIndex,\n    dayName: dayConfig.dayName,\n    runDate: dayConfig.runDate,\n    audience: dayConfig.audience,\n    postStyle: dayConfig.postStyle,\n    ctaStyle: dayConfig.ctaStyle,\n    hookExample: dayConfig.hookExample,\n    sayulitaFolder: folderUsed\n  }\n}));"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0006",
+      "name": "Upload Photo to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FACEBOOK",
+          "name": "SkyHouse Facebook Token"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/1004908006045909/photos",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.cdnUrl }}"
+            },
+            {
+              "name": "published",
+              "value": "false"
+            }
+          ]
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0007",
+      "name": "Collect Upload Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const uploads = $input.all();\nconst originalPhotos = $('Pick 3 Photos').all();\nconst dayConfig = $('Get Day Config').first().json;\n\nif (uploads.length === 0) {\n  throw new Error('No photos were uploaded to Facebook. Check the Page Access Token and permissions.');\n}\n\nconst fbPhotoIds = uploads.map(item => item.json.id || item.json.photo_id);\nconst cdnUrls = originalPhotos.map(item => item.json.cdnUrl);\nconst photoNames = originalPhotos.map(item => item.json.objectName);\n\nreturn [{\n  json: {\n    fbPhotoIds,\n    cdnUrls,\n    photoNames,\n    photoCount: fbPhotoIds.length,\n    dayIndex: dayConfig.dayIndex,\n    dayName: dayConfig.dayName,\n    runDate: dayConfig.runDate,\n    audience: dayConfig.audience,\n    postStyle: dayConfig.postStyle,\n    ctaStyle: dayConfig.ctaStyle,\n    hookExample: dayConfig.hookExample\n  }\n}];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0008",
+      "name": "Build Claude Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst postType = item.json.postType;\nconst folder = item.json.sayulitaFolder;\n\nconst systemPrompt = `You are the content creator for SkyHouse Sayulita, a luxury two-level corner penthouse vacation rental in Monterosa, Northside Sayulita, Nayarit, Mexico. Managed by LUX Property Management.\n\nPROPERTY FACTS — use only these, never invent:\n- 3 bedrooms, 3 en-suite bathrooms, sleeps up to 8 guests\n- Two-level corner penthouse — top floor of Monterosa complex\n- Main level: living and dining, full chef kitchen, 2 guest bedrooms, expansive sunset terrace\n- Upper level: master suite, BBQ, outdoor dining, rooftop terrace with panoramic ocean views\n- Shared infinity pool (Monterosa complex — quiet, panoramic ocean views)\n- Private tennis court (Monterosa complex exclusive)\n- Starlink WiFi — fastest in Sayulita, suitable for video calls and remote work\n- Whole-house purified water system — safe to drink from any tap\n- 3-minute walk to beach via Avenida Palmar\n- 5-minute walk to town plaza via Calle Juan Escutia\n- Quiet Northside location — away from late-night noise\n- Secure free garage parking on premises\n- Premium linens and toiletries provided\n- PVR airport 45 minutes north (Puerto Vallarta International)\n- Host: Eño — born and raised in Sayulita, local realtor and surfer\n- Eño offers: golf cart and SxS rentals, airport transfers, boat charters, fishing, snorkeling, surf lessons, ATV explorations, jungle hikes, yoga sessions\n- Main surf break: 3-minute walk. Playa de los Muertos: quieter local break.\n- Monkey Mountain: jungle hike with 360-degree coastal views\n- Carricitos Beach: secluded sunset spot, golf cart or ATV required\n- Dining: street tacos, organic cafes, upscale seaside dining — all walkable\n- Website: skyhousesayulita.com | WhatsApp: +52 322 239 4077\n\nBRAND VOICE:\n- Elegant, experiential, warm, confident. Relaxed luxury without pretension.\n- Second person or third person only. Never first person.\n- Focus on moments and feelings, not feature lists.\n- No slang. No generic phrases like perfect vacation rental or great amenities.\n\nPOST STRUCTURE:\n1. Hook (Line 1): Bold, scroll-stopping opener calling out the specific audience\n2. Bridge (Line 2): One sentence connecting the audience to SkyHouse or the featured experience\n3. Body (2-3 short paragraphs): Experiential, sensory moments\n4. Invitation: Clean call to action as specified\n5. Hashtags: At the very end only\n\nABSOLUTE RULES:\n- No markdown: no asterisks, no bold, no headers, no bullet points\n- Never mention nightly rates\n- Never claim private beach (3-minute walk)\n- Never claim private pool (shared with Monterosa complex)\n- Never claim on-site chef (self-catering kitchen only)\n- Hashtags only at the very end\n- 100-200 words total excluding hashtags\n- Plain text only`;\n\nlet userPrompt;\n\nif (postType === 'property') {\n  userPrompt = `Generate a SkyHouse Sayulita Facebook post focused on the PROPERTY.\n\nAudience: ${item.json.audience}\nPost style: ${item.json.postStyle}\nCTA: ${item.json.ctaStyle}\nHook reference (adapt freely): ${item.json.hookExample}\n\nFocus on the villa, the views, the terraces, the feeling of being at SkyHouse. Make the reader want to book.\nPlain text only. No markdown. 100-200 words. Hashtags at end only. Output the post and nothing else.`;\n} else {\n  userPrompt = `Generate a SkyHouse Sayulita Facebook post focused on the experience: ${folder}.\n\nAudience: ${item.json.audience}\nPost style: ${item.json.postStyle}\nCTA: ${item.json.ctaStyle}\nHook reference (adapt freely): ${item.json.hookExample}\n\nThe post is ENTIRELY about the ${folder} experience in Sayulita. Mention SkyHouse only briefly as the perfect home base — it is NOT the main subject. Make the reader fall in love with the experience first.\nPlain text only. No markdown. 100-200 words. Hashtags at end only. Output the post and nothing else.`;\n}\n\nreturn [{\n  json: {\n    ...item.json,\n    claudeRequestBody: JSON.stringify({\n      model: 'claude-opus-4-6',\n      max_tokens: 1024,\n      system: systemPrompt,\n      messages: [{ role: 'user', content: userPrompt }]\n    })\n  }\n}];",
+        "system": "You are the social media voice for Villas Sempre Avanti — a fully hosted private beachfront estate in Patzcuaro Beach, Riviera Nayarit, Mexico. The estate consists of Villa Luisa (3BR) and Villa Pietro (2BR), offering 250 feet of secluded Pacific beachfront, two infinity pools, and a dedicated team including private chefs Ricardo and Crethell, housekeeper Angy, and caretaker Paco.\n\nBRAND PHILOSOPHY: \"Hosted, Not Rented\" — Sempre Avanti means Always Forward.\n\nPROPERTY FACTS:\n- Villa Luisa: 3 bedrooms, 3.5 baths, private infinity pool, ocean views, sleeps up to 8\n- Villa Pietro: 2 bedrooms, 2.5 baths, private infinity pool, romantic and intimate, sleeps up to 6\n- Together as Villas Sempre Avanti: 5BR, 2 pools, 250ft secluded beachfront, rooftop terrace, pizza oven, Tiki bar\n- Location: Patzcuaro Beach — 2 min to Sayulita, 5 min to Punta de Mita, 60 min from PVR airport\n- Architecture: Andalusian/Spanish colonial, Moorish stone walls, Palapa roof, marble, dark wood\n\nSTAFF: Private chefs Ricardo & Crethell (daily sourcing from local fishermen/markets), Housekeeper Angy (daily service), Caretaker Paco\n\nSIGNATURE EXPERIENCES: Pizza Night (wood-fired oven, 5-hour ritual), Sunset Margaritas (daily ritual at dusk), Beach BBQ, UTV Coastal Cruise (Polaris/Can-Am, 10 USD/day), Surf with Victor (@yeahvary.surf), Ally Cat Sailing (,200 MXN/person — open bar, ceviche, Marietas), Cachasol Distillery Tour (,500 MXN/person — 10 min away)\n\nACTIVITIES: Surfing (La Lancha, El Anclote, Sayulita main break), Horseback riding (6 USD/person), Zipline (13 lines, Rancho Mi Chula), Monkey Mountain hike (3.5h, 6 USD), Whale watching (Dec-Mar), Spearfishing, Yoga/Sound healing/Massage, Golf (El Tigre, Flamingos, Pacifico, Bahía)\n\nFACEBOOK PAGE: Casa Sempre Avanti — ID 350547805544245\n\nBRAND VOICE RULES:\n- Warm, intimate, personal — NOT cold hotel language\n- Lead with a scene or sensory moment — never \"Welcome to...\"\n- No markdown (no **, no #, no bullet points)\n- NEVER say \"private beach\" — say \"secluded beach\", \"your own stretch of Pacific shore\", or \"steps from the water\"\n- NEVER mention specific pricing\n- 100-200 words maximum\n- End with a soft CTA: \"Inquire to reserve your stay\" or \"Link in bio to book\"\n- 3-5 relevant hashtags at the end only\n- Rotate between property-focused, experience-focused, and story-driven posts\n\nHASHTAGS TO USE: #VillasSempreAvanti #SempreAvanti #RivieraNayarit #Sayulita #LuxuryVilla #BeachfrontVilla #PrivateVilla #MexicoTravel #LuxuryTravel #PuntaDeMita #PatzcuaroBeach #AlwaysForward #HostedNotRented"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0009",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_ANTHROPIC",
+          "name": "Anthropic API"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.claudeRequestBody }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0010",
+      "name": "Parse & Validate Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst claudeResponse = item.json;\nconst prevData = $('Collect Upload Results').first().json;\n\nlet postText = '';\nif (claudeResponse.content && Array.isArray(claudeResponse.content) && claudeResponse.content.length > 0) {\n  postText = claudeResponse.content[0].text || '';\n}\n\nif (!postText.trim()) {\n  throw new Error('Claude returned empty post text. Check API key and request format.');\n}\n\nconst wordCount = postText.trim().split(/\\s+/).length;\nconst warnings = [];\n\nif (wordCount < 80) warnings.push(`Post may be too short: ${wordCount} words`);\nif (wordCount > 260) warnings.push(`Post may be too long: ${wordCount} words`);\nif (/\\*\\*|\\*[^*]|\\bhashtag\\b/i.test(postText)) warnings.push('Possible markdown detected');\n\nreturn [{\n  json: {\n    postText: postText.trim(),\n    wordCount,\n    warnings: warnings.join(' | ') || 'None',\n    fbPhotoIds: prevData.fbPhotoIds,\n    cdnUrls: prevData.cdnUrls,\n    photoNames: prevData.photoNames,\n    dayName: prevData.dayName,\n    audience: prevData.audience,\n    runDate: prevData.runDate\n  }\n}];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0011",
+      "name": "Build Facebook Post Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\n\nconst fbPostBody = {\n  message: item.json.postText,\n  attached_media: item.json.fbPhotoIds.map(id => ({ media_fbid: id }))\n};\n\nreturn [{\n  json: {\n    ...item.json,\n    fbPostBodyJson: JSON.stringify(fbPostBody)\n  }\n}];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0012",
+      "name": "Post to Facebook Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2440,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FACEBOOK",
+          "name": "Facebook VSA Page Token"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/350547805544245/feed",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.fbPostBodyJson }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0013",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        700
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a1b2c3d4-0014",
+      "name": "Log Error to Console",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        700
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const errorData = $input.first().json;\nconsole.error('SkyHouse workflow error:', JSON.stringify({\n  date: new Date().toISOString(),\n  workflow: 'SkyHouse Sayulita — Daily Social Post',\n  error: errorData.error && errorData.error.message,\n  node: errorData.error && errorData.error.node && errorData.error.node.name,\n  executionId: errorData.execution && errorData.execution.id\n}));\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0015",
+      "name": "Pick Sayulita Folder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        440
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const dayConfig = $input.first().json;\n\nconst allFolders = [\n  'Surf', 'Yoga', 'Restaurants', 'Marieta Islands',\n  'Monkey Mountain', 'Golf', 'Fishing Charter',\n  'Whale Tours', 'SUP', 'Ally Cat', 'CachaSol', 'Local Cultural'\n];\n\nconst staticData = $getWorkflowStaticData('global');\nlet usedFolders = staticData.usedFolders || [];\n\nif (usedFolders.length >= allFolders.length) {\n  usedFolders = [];\n}\n\nconst available = allFolders.filter(f => !usedFolders.includes(f));\nconst folder = available[Math.floor(Math.random() * available.length)];\n\nusedFolders.push(folder);\nstaticData.usedFolders = usedFolders;\n\nreturn [{\n  json: {\n    ...dayConfig,\n    sayulitaFolder: folder\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Day Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Day Config": {
+      "main": [
+        [
+          {
+            "node": "List SkyHouse Photos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pick Sayulita Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List SkyHouse Photos": {
+      "main": [
+        [
+          {
+            "node": "Pick 3 Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Sayulita Shared Photos": {
+      "main": [
+        [
+          {
+            "node": "Pick 3 Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick 3 Photos": {
+      "main": [
+        [
+          {
+            "node": "Upload Photo to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Photo to Facebook": {
+      "main": [
+        [
+          {
+            "node": "Collect Upload Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Upload Results": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Request": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Post": {
+      "main": [
+        [
+          {
+            "node": "Build Facebook Post Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Facebook Post Body": {
+      "main": [
+        [
+          {
+            "node": "Post to Facebook Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Log Error to Console",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Sayulita Folder": {
+      "main": [
+        [
+          {
+            "node": "List Sayulita Shared Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

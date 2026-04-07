@@ -2,73 +2,114 @@
 # ============================================================
 # post-to-facebook.sh
 #
-# Posts an approved caption + photos to the SkyHouse Facebook page.
+# Multi-property Facebook poster.
+# Supports: SkyHouse Sayulita, Villas Sempre Avanti (and future properties)
 #
 # Photo sourcing priority:
 #   1. Bunny CDN (authentic photos — always checked first)
 #   2. Pexels API fallback (stock photos for activity content)
 #      → Downloads and SAVES to Bunny CDN for future reuse
-#   3. Hard fail with clear message (SkyHouse property only)
+#   3. Hard fail for property-specific folders (real photos required)
 #
-# pending-post.json schema:
+# pending-post JSON schema:
+#   property      — "skyhouse" | "casasempreavanti" (default: skyhouse)
 #   caption       — the post text
-#   photo_folder  — logical category (e.g. "Surf", "Whale Tours")
+#   photo_folder  — logical category (e.g. "Surf", "Villa Luisa")
 #   num_photos    — photos to attach (default: 3)
 #   pexels_query  — optional: override auto Pexels search term
+#
+# PENDING_FILE env var overrides the default pending-post.json path.
 # ============================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CREDS_FILE="$SCRIPT_DIR/credentials.local.json"
-PENDING_FILE="$SCRIPT_DIR/pending-post.json"
+PENDING_FILE="${PENDING_FILE:-$SCRIPT_DIR/pending-post.json}"
 
 # ── Read post details ─────────────────────────────────────────
 CAPTION=$(jq -r '.caption' "$PENDING_FILE")
 PHOTO_FOLDER=$(jq -r '.photo_folder' "$PENDING_FILE")
 NUM_PHOTOS=$(jq -r '.num_photos // 3' "$PENDING_FILE")
 PEXELS_QUERY_OVERRIDE=$(jq -r '.pexels_query // empty' "$PENDING_FILE")
+PROPERTY=$(jq -r '.property // "skyhouse"' "$PENDING_FILE")
 
 if [ -z "$CAPTION" ] || [ "$CAPTION" = "null" ] || \
    [ -z "$PHOTO_FOLDER" ] || [ "$PHOTO_FOLDER" = "null" ]; then
-  echo "ERROR: pending-post.json is missing caption or photo_folder"
+  echo "ERROR: pending-post JSON is missing caption or photo_folder"
   exit 1
 fi
 
 echo "=== Facebook Post Creator ==="
+echo "  Property:  $PROPERTY"
 echo "  Category:  $PHOTO_FOLDER"
 echo "  Photos:    $NUM_PHOTOS"
 echo "  Caption:   ${CAPTION:0:80}..."
 echo ""
 
-# ── Credentials ───────────────────────────────────────────────
-FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.skyhouse_sayulita.accessToken' "$CREDS_FILE")
-FB_PAGE_ID=$(jq -r '.facebook.pages.skyhouse_sayulita.pageId' "$CREDS_FILE")
-BUNNY_SAYULITA_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
-BUNNY_SKYHOUSE_KEY=$(jq -r '.bunny.skyhouse.storageApiKey' "$CREDS_FILE")
-PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
-
 FB_API="https://graph.facebook.com/v19.0"
 BUNNY_STORAGE_API="https://la.storage.bunnycdn.com"
 
-# ── Determine Bunny zone ──────────────────────────────────────
+# ── Property routing ──────────────────────────────────────────
 IS_SKYHOUSE=false
-if [ "$PHOTO_FOLDER" = "SkyHouse" ]; then
-  IS_SKYHOUSE=true
-  BUNNY_ZONE="skyhousesayulita"
-  BUNNY_KEY="$BUNNY_SKYHOUSE_KEY"
-  BUNNY_CDN_HOST="SkyhouseSayulita.b-cdn.net"
-  BUNNY_SUBFOLDER=""
-  BUNNY_SUBFOLDER_ENC=""
-else
-  BUNNY_ZONE="sayulitaandbeyond"
-  BUNNY_KEY="$BUNNY_SAYULITA_KEY"
-  BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
-  BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
-  BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
-fi
+IS_PROPERTY_FOLDER=false
+
+case "$PROPERTY" in
+
+  "casasempreavanti"|"villas_sempre_avanti")
+    FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.casasempreavanti.accessToken' "$CREDS_FILE")
+    FB_PAGE_ID=$(jq -r '.facebook.pages.casasempreavanti.pageId' "$CREDS_FILE")
+    BUNNY_CSA_KEY=$(jq -r '.bunny.casasempreavanti.storageApiKey' "$CREDS_FILE")
+    BUNNY_SAY_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+    PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
+
+    # Villa-specific folders → use villassempreavanti zone; hard fail if empty
+    # Activity folders → fall back to sayulitaandbeyond zone (same area, same activities)
+    case "$PHOTO_FOLDER" in
+      "Villa Luisa"|"Villa Pietro"|"Villas Sempre Avanti")
+        IS_PROPERTY_FOLDER=true
+        BUNNY_ZONE="villassempreavanti"
+        BUNNY_KEY="$BUNNY_CSA_KEY"
+        BUNNY_CDN_HOST="VillasSempreAvanti.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+      *)
+        # Activity categories — sayulitaandbeyond has same local photos
+        BUNNY_ZONE="sayulitaandbeyond"
+        BUNNY_KEY="$BUNNY_SAY_KEY"
+        BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+    esac
+    BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
+    ;;
+
+  *)  # Default: SkyHouse Sayulita
+    IS_SKYHOUSE=true
+    FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.skyhouse_sayulita.accessToken' "$CREDS_FILE")
+    FB_PAGE_ID=$(jq -r '.facebook.pages.skyhouse_sayulita.pageId' "$CREDS_FILE")
+    BUNNY_SKYHOUSE_KEY=$(jq -r '.bunny.skyhouse.storageApiKey' "$CREDS_FILE")
+    BUNNY_SAYULITA_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+    PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
+
+    if [ "$PHOTO_FOLDER" = "SkyHouse" ]; then
+      BUNNY_ZONE="skyhousesayulita"
+      BUNNY_KEY="$BUNNY_SKYHOUSE_KEY"
+      BUNNY_CDN_HOST="SkyhouseSayulita.b-cdn.net"
+      BUNNY_SUBFOLDER=""
+      BUNNY_SUBFOLDER_ENC=""
+      IS_PROPERTY_FOLDER=true
+    else
+      IS_SKYHOUSE=false
+      BUNNY_ZONE="sayulitaandbeyond"
+      BUNNY_KEY="$BUNNY_SAYULITA_KEY"
+      BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+      BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+      BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
+    fi
+    ;;
+esac
 
 # ── Recursive Bunny scanner (up to 3 levels deep) ────────────
-# Returns "subpath/filename.ext" lines
 scan_bunny_dir() {
   local base_prefix="$1"
   local enc_prefix="$2"
@@ -94,7 +135,7 @@ scan_bunny_dir() {
 }
 
 # ── Step 1: Scan Bunny CDN ────────────────────────────────────
-echo "--- Scanning Bunny CDN ---"
+echo "--- Scanning Bunny CDN ($BUNNY_ZONE/$BUNNY_SUBFOLDER) ---"
 IMAGE_FILES=$(scan_bunny_dir "" "" 1)
 
 BUNNY_COUNT=0
@@ -106,13 +147,15 @@ echo "  Found $BUNNY_COUNT images in Bunny CDN"
 PEXELS_USED=false
 if [ "$BUNNY_COUNT" -eq 0 ]; then
 
-  # Hard stop for SkyHouse — never use stock photos for the property
-  if [ "$IS_SKYHOUSE" = "true" ]; then
+  # Hard stop for property-specific folders — never use stock photos for actual villa
+  if [ "$IS_PROPERTY_FOLDER" = "true" ]; then
+    ZONE_DISPLAY="${BUNNY_ZONE}/${BUNNY_SUBFOLDER}"
     echo ""
     echo "╔══════════════════════════════════════════════════════╗"
-    echo "║  STOP: SkyHouse Bunny folder is empty.              ║"
-    echo "║  Stock photos cannot be used for the property.      ║"
-    echo "║  Upload real SkyHouse photos to Bunny CDN first.    ║"
+    echo "║  STOP: Property folder is empty.                    ║"
+    echo "║  Folder: $ZONE_DISPLAY"
+    echo "║  Stock photos cannot be used for property shots.    ║"
+    echo "║  Upload real photos to Bunny CDN first.             ║"
     echo "╚══════════════════════════════════════════════════════╝"
     exit 1
   fi
@@ -128,19 +171,29 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
     PEXELS_QUERY="$PEXELS_QUERY_OVERRIDE"
   else
     case "$PHOTO_FOLDER" in
-      "Surf")             PEXELS_QUERY="surfing Mexico Pacific waves beach" ;;
-      "Yoga")             PEXELS_QUERY="yoga beach sunrise Mexico tropical" ;;
-      "Restaurants")      PEXELS_QUERY="Mexican food tacos street food" ;;
-      "Marieta Islands")  PEXELS_QUERY="Marieta Islands hidden beach Mexico" ;;
-      "Monkey Mountain")  PEXELS_QUERY="jungle hiking Mexico wildlife monkeys" ;;
-      "Golf")             PEXELS_QUERY="golf course tropical Mexico ocean" ;;
-      "Fishing Charter")  PEXELS_QUERY="deep sea fishing Mexico Pacific" ;;
-      "Whale Tours")      PEXELS_QUERY="humpback whale ocean Mexico Pacific" ;;
-      "SUP")              PEXELS_QUERY="stand up paddleboard ocean tropical" ;;
-      "Ally Cat")         PEXELS_QUERY="sailing catamaran Mexico Pacific sunset" ;;
-      "CachaSol")         PEXELS_QUERY="Mexico beach sunset cocktails bar" ;;
-      "Local Cultural")   PEXELS_QUERY="Mexico culture festival traditional" ;;
-      *)                  PEXELS_QUERY="$PHOTO_FOLDER Mexico travel" ;;
+      # VSA-specific categories
+      "Villa Luisa")           PEXELS_QUERY="luxury beachfront villa pool Mexico tropical" ;;
+      "Villa Pietro")          PEXELS_QUERY="luxury villa ocean view Mexico intimate pool" ;;
+      "Villas Sempre Avanti")  PEXELS_QUERY="luxury estate beachfront Mexico Riviera Nayarit" ;;
+      # Shared Sayulita/Riviera Nayarit categories
+      "Surf")                  PEXELS_QUERY="surfing Mexico Pacific waves beach" ;;
+      "Yoga")                  PEXELS_QUERY="yoga beach sunrise Mexico tropical" ;;
+      "Restaurants")           PEXELS_QUERY="Mexican food tacos street food" ;;
+      "Marieta Islands")       PEXELS_QUERY="Marieta Islands hidden beach Mexico" ;;
+      "Monkey Mountain")       PEXELS_QUERY="jungle hiking Mexico wildlife monkeys" ;;
+      "Golf")                  PEXELS_QUERY="golf course tropical Mexico ocean" ;;
+      "Fishing Charter")       PEXELS_QUERY="deep sea fishing Mexico Pacific" ;;
+      "Whale Tours")           PEXELS_QUERY="humpback whale ocean Mexico Pacific" ;;
+      "SUP")                   PEXELS_QUERY="stand up paddleboard ocean tropical" ;;
+      "Ally Cat")              PEXELS_QUERY="sailing catamaran Mexico Pacific sunset" ;;
+      "CachaSol")              PEXELS_QUERY="Mexico agave tequila distillery farm" ;;
+      "Local Cultural")        PEXELS_QUERY="Mexico culture festival artisan market" ;;
+      "Wellness")              PEXELS_QUERY="wellness yoga sound healing meditation beach" ;;
+      "Boats")                 PEXELS_QUERY="boat sailing Mexico Pacific catamaran" ;;
+      "Land Adventures")       PEXELS_QUERY="ATV adventure Mexico jungle coastal" ;;
+      "Weddings")              PEXELS_QUERY="beach wedding ceremony Mexico tropical" ;;
+      "Chef")                  PEXELS_QUERY="private chef cooking Mexican cuisine beachfront" ;;
+      *)                       PEXELS_QUERY="$PHOTO_FOLDER Mexico travel Riviera Nayarit" ;;
     esac
   fi
 
@@ -151,7 +204,6 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
     -H "Authorization: $PEXELS_API_KEY" \
     "https://api.pexels.com/v1/search?query=$ENCODED_QUERY&per_page=20&orientation=landscape")
 
-  # Get "id|||url" pairs (||| avoids conflicts with URL chars)
   PEXELS_ITEMS=$(echo "$PEXELS_RESP" | \
     jq -r '.photos[] | (.id | tostring) + "|||" + (.src.large2x // .src.large)' \
     2>/dev/null || true)
@@ -162,18 +214,16 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
 
   if [ "$PEXELS_COUNT" -eq 0 ]; then
     echo "ERROR: No Pexels results for: $PEXELS_QUERY"
-    echo "Set pexels_query in pending-post.json to override."
+    echo "Set pexels_query in pending-post JSON to override."
     exit 1
   fi
 
-  # Select N random Pexels items
   ACTUAL_COUNT=$(( NUM_PHOTOS < PEXELS_COUNT ? NUM_PHOTOS : PEXELS_COUNT ))
   SELECTED_PEXELS=$(printf '%s\n' "$PEXELS_ITEMS" | grep '|||' | shuf -n "$ACTUAL_COUNT")
 
   echo ""
   echo "--- Downloading from Pexels → saving to Bunny CDN ---"
   echo "  Zone: $BUNNY_ZONE/$BUNNY_SUBFOLDER"
-  echo "  (Photos saved here are reusable by any property)"
   echo ""
 
   SAVED_FILENAMES=()
@@ -184,7 +234,6 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
     FILENAME="pexels-${PEXELS_ID}.jpg"
 
     echo "  Downloading pexels-$PEXELS_ID ..."
-    # Stream directly: Pexels → Bunny CDN (no temp file)
     HTTP_STATUS=$(curl -sL --max-time 30 "$PEXELS_URL" | \
       curl -s -X PUT \
         -H "AccessKey: $BUNNY_KEY" \
@@ -204,13 +253,10 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
   done <<< "$SELECTED_PEXELS"
 
   PEXELS_USED=true
-
-  # Rebuild IMAGE_FILES from saved filenames for the upload step below
   IMAGE_FILES=$(printf '%s\n' "${SAVED_FILENAMES[@]}")
   ACTUAL_COUNT=${#SAVED_FILENAMES[@]}
 
 else
-  # Bunny has photos — select randomly
   ACTUAL_COUNT=$(( NUM_PHOTOS < BUNNY_COUNT ? NUM_PHOTOS : BUNNY_COUNT ))
 fi
 
@@ -226,13 +272,12 @@ fi
 
 # ── Step 4: Upload each photo to Facebook (unpublished) ───────
 echo ""
-echo "--- Uploading to Facebook ---"
+echo "--- Uploading to Facebook (page: $FB_PAGE_ID) ---"
 PHOTO_IDS=()
 
 while IFS= read -r item; do
   [ -z "$item" ] && continue
 
-  # Handle direct Pexels URL fallback (Bunny upload failed)
   if [[ "$item" == __pexels_direct__* ]]; then
     CDN_URL="${item#__pexels_direct__}"
   else

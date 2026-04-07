@@ -257,7 +257,7 @@ Guest catches fish via spearfishing or charter, Ricardo cooks it for dinner.
 - "250 feet of beachfront"
 
 ### NEVER say in posts:
-- "Private beach" — the beach is shared by the Patzcuaro Beach community (not exclusively owned)
+- "Private beach" — Patzcuaro Beach is not exclusively owned. Use "secluded beach", "your own stretch of beach", "steps from a quiet Pacific shore", "uncrowded beachfront"
 - "All-inclusive" — food/drinks are not included in the room rate
 - Pricing specifics in posts
 - Markdown formatting (no ** bold, no #, no bullet points in captions)
