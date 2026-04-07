@@ -1,11 +1,11 @@
-# Casa Sempre Avanti — Brand Guide
+# Villas Sempre Avanti — Brand Guide
 ## Social Media & AI Posting Reference
 
 ---
 
 ## 1. PROPERTY IDENTITY
 
-**Official Brand Name:** Casa Sempre Avanti (also: Villas Sempre Avanti)
+**Official Brand Name:** Villas Sempre Avanti
 **Translation:** "Sempre Avanti" = *Always Forward* (Italian)
 **Tagline:** *Hosted, Not Rented*
 **Core Philosophy:** Guests are not checking into a rental — they are arriving at a fully hosted private estate. Every detail is personally attended to.
@@ -13,12 +13,14 @@
 **The Estate:**
 - **Villa Luisa** — 3 bedrooms / 3.5 bathrooms / private infinity pool / primary gathering villa
 - **Villa Pietro** (also: Casa Pietro) — 2 bedrooms / 2.5 bathrooms / private infinity pool / more intimate and romantic
-- **Together** = Casa Sempre Avanti / Villas Sempre Avanti — 5 bedrooms, 2 infinity pools, 250 feet of private beachfront
+- **Together** = **Villas Sempre Avanti** — 5 bedrooms, 2 infinity pools, 250 feet of private beachfront
 
-**Configuration flexibility:**
-- Each villa can be rented independently
-- Both together = full estate experience (ideal for groups 8–12)
-- Social posts may target Villa Luisa, Villa Pietro, or the combined estate
+**Naming rules — critical:**
+- **Villa Luisa** — rented alone (3BR)
+- **Villa Pietro** — rented alone (2BR)
+- **Villas Sempre Avanti** — the combined listing when BOTH villas are rented together (5BR full estate)
+- NEVER refer to the combined property as "Casa Sempre Avanti" — the correct combined brand name is **Villas Sempre Avanti**
+- Social posts may target Villa Luisa, Villa Pietro, or the combined Villas Sempre Avanti
 
 ---
 
@@ -28,11 +30,12 @@
 **Region:** Riviera Nayarit / Mexican Pacific Coast
 
 **Distances:**
-- Sayulita village: 5 min by UTV / 8–10 min by car
-- Punta de Mita: 25 min by UTV / short drive
-- San Pancho: 15 min via Sayulita
-- La Cruz de Huanacaxtle: 30 min by car (Sunday Market)
-- Puerto Vallarta (PVR airport): ~55 min by car
+- Sayulita village: 2 min by UTV / 8–10 min by car
+- Punta de Mita: 5 min by UTV / short drive
+- San Pancho: 15 min from villa
+- La Cruz de Huanacaxtle: 25 min by car (Sunday Market)
+- Bucerias: 30 min by car (Saturday art walk)
+- Puerto Vallarta (PVR airport): ~60 min by car
 
 **Setting:** Nestled between tropical rainforest/jungle and the Pacific Ocean. Beachfront access is direct — 65 steps from the infinity pool. Views of Monkey Mountain (Cerro del Mono), jungle, and open Pacific.
 
@@ -109,30 +112,28 @@ Guest catches fish via spearfishing or charter, Ricardo cooks it for dinner.
 
 ## 7. EXPERIENCES & ACTIVITIES
 
-### On-Property / Arranged Through Villa
-- Yoga (8:30–9:30 AM daily, beachside)
-- Breathwork
-- Sound Bowl / Crystal Sound Healing
-- In-villa massage (multiple types — relaxation, deep tissue, hot stone, prenatal, cupping, etc.)
-- Spa treatments (mani/pedi, body scrub, facials)
-- Private bartender / sunset margarita service
-- Cooking classes
-- Pizza Night (wood-fired oven)
-- Beach BBQ
-- Taco Tour in Sayulita
-- Cachasol Farm & Distillery Tour (agave farm, tastings, open-fire kitchen — 90 min, walking distance)
+### On-Property / Arranged Through Villa (with pricing)
+- Yoga — from $1,200 MXN/session (all styles: Vinyasa, Yin, Restorative; mats provided)
+- Breathwork — from $2,500 MXN/session
+- Sound Bath / Crystal Bowls — $3,000 MXN/session (up to 10 guests; evenings recommended)
+- In-villa massage — from $1,500 MXN (Swedish, deep tissue, hot stone, couples, prenatal, cupping, reflexology)
+- Spa treatments — from $1,100 MXN (mani/pedi, body scrub, facials)
+- Sunset Private Bartender — from $2,500 MXN / 3 hours (min 4 guests; margaritas, palomas, mojitos)
+- Cooking classes — $1,200 MXN/person (at villa or Cachasol, Tue–Sun 2:30 PM)
+- Pizza Night (wood-fired oven — 5-hour heat-up ritual)
+- Beach Fire — $100 USD (setup, firewood, safety included)
+- After-Hours Dinner — $25 USD + food cost (chef service from 9 PM; min 4 guests)
+- Sayulita Taco Tour — $1,200 MXN/person (min 4; 5 stops, mezcal tasting included)
+- Cachasol Farm & Distillery Tour — $1,500 MXN/person (90 min, agave farm walk, blanco/reposado/añejo tasting)
 
-### Ocean
-- Surf lessons (with guide Vary — beginner to advanced)
-- Spearfishing (shore and boat)
-- Boat charters
-- Whale watching (Dec–March, humpback whales in the Bay of Banderas)
-- Snorkeling
-- Paddleboarding
-- Sailing (Ally Cat — snorkeling + open bar + ceviche + sunset)
-- Kitesurfing
-- Scuba diving
-- Deep-sea fishing
+### Ocean (with pricing)
+- **Surf with Victor** (`@yeahvary.surf`) — Beginner $1,200 MXN/pp · La Lancha $2,000 MXN/pp · Guided (intermediate) $2,500 MXN/pp · Advanced coaching $3,500 MXN/pp · Boat Surf Safari $15,000 MXN (up to 4)
+- **Ally Cat Sailing** — $3,200 MXN/person (56ft catamaran, open bar, ceviche, snorkeling, boom netting, ~4 hours)
+- **Private Boat Tour** — 3h $9,500 MXN / 4h $11,500 MXN (up to 7 guests; Marietas Islands route)
+- **Fishing Charter (Seawolf)** — $10,000 MXN / 4 hours (up to 4 guests; mahi-mahi, tuna, snapper)
+- **Spearfishing** — Inshore $12,000 MXN / Deep Water $21,000 MXN (full day 7AM–4PM, max 3 guests)
+- **Whale Watching** — Seasonal Dec–March (humpback whales, Banderas Bay; ~3 hours)
+- Snorkeling, Paddleboarding, Kitesurfing, Scuba diving
 
 ### Surf Breaks (accessible from the villa)
 - **La Lancha** — world-class left point break near Punta de Mita (transportation + boards + lesson included)
@@ -142,13 +143,13 @@ Guest catches fish via spearfishing or charter, Ricardo cooks it for dinner.
 - **El Chillo** — powerful reef break for advanced surfers
 - **Sayulita Main Beach** — accessible town beach, fun for all levels
 
-### Land
-- Horseback riding
-- ATV / UTV tours
-- Zipline (Rancho Mi Chula)
-- Bird watching
-- Monkey Mountain hike (howler monkeys)
-- Hiking / jungle trails
+### Land (with pricing — all via MiChula Tours unless noted)
+- **Horseback Riding** — $76 USD/person · 2 hours · jungle trails + beach · guides Antonio, Jorge & Miguel · photography team on-site
+- **Canopy Zipline** — 13 lines through jungle canopy (Rancho Mi Chula, 5 min from villa)
+- **ATV / RZR** — Single $119 USD / Double $147 USD / RZR 2-pax $324 USD · 2 hours
+- **UTV Coastal Cruise** — $110 USD/day (2-day min) · Polaris or Can-Am · self-guided Sayulita → El Anclote → San Pancho
+- **Monkey Mountain Hike** — $96 USD (1–3 pax) / $81 USD/pp (4+) · 3.5 hours · 6.5 km · panoramic Banderas Bay views
+- Bird watching, jungle hikes, mangrove kayaking (San Pancho river)
 
 ### Golf
 - El Tigre Golf Club
@@ -168,15 +169,27 @@ Guest catches fish via spearfishing or charter, Ricardo cooks it for dinner.
 - Cachasol Distillery (craft mezcal/tequila, on-site tasting, open-fire cooking)
 - Tequila tastings
 
-### Nearby Restaurants (Sayulita)
-- Don Pedro's — iconic beachfront, watch surfers
-- Café Sayulita — breakfast & brunch favorite
-- Xochi — elevated Mexican cuisine
-- Purillo — Italian-Mexican fusion
-- Naty's Kitchen — authentic homestyle cooking
-- Los Corazones — romantic rooftop dining
-- Esperanza — local favorite for seafood
+### Nearby Restaurants
+
+**Sayulita (2 min)**
+- La Rustica — wood-fired pizza & pasta, great for groups
+- El Itacate — local favorite for breakfast (huevos rancheros, chilaquiles)
+- Orgánico — health food, smoothie bowls, avocado toast
+- Mary's Restaurant — comida corrida, authentic and great value
+- Yambak — Caribbean-Mexican fusion, creative cocktails, lively atmosphere
+- La Casita — rooftop, international menu, romantic for dinner
+- Don Pedro's — iconic beachfront, watch surfers while eating
 - Si Señor — classic Sayulita spot
+
+**Punta Mita (5 min)**
+- El Anclote — grilled fish & shrimp tacos on the beach, quintessential lunch spot
+- Sufi's — thin-crust wood-fire pizza, garden setting
+- Four Seasons / St. Regis — world-class fine dining, reservations required
+
+**San Pancho (15 min)**
+- El Coleguita — best tacos al pastor in San Pancho
+- Lo Chido — modern Mexican, natural wine, great interior
+- Bistro Punta Rosa — intimate garden, European-Mexican fusion, rotating menu
 
 ---
 
@@ -267,7 +280,7 @@ Guest catches fish via spearfishing or charter, Ricardo cooks it for dinner.
 
 | Platform | Handle / URL |
 |---|---|
-| Facebook | Casa Sempre Avanti — Page ID: 350547805544245 |
+| Facebook | Villas Sempre Avanti — Page ID: 350547805544245 |
 | Instagram | @casa_sempre_avanti |
 | Website | villassempreavanti.com |
 
