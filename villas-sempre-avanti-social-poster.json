@@ -321,7 +321,7 @@
       "main": [
         [
           {
-            "node": "List SkyHouse Photos",
+            "node": "List VSA Property Photos",
             "type": "main",
             "index": 0
           },
@@ -333,7 +333,7 @@
         ]
       ]
     },
-    "List SkyHouse Photos": {
+    "List VSA Property Photos": {
       "main": [
         [
           {
