@@ -18,17 +18,21 @@ jobs:
         env:
           N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
           FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+          FB_TOKEN_CASASEMPREAVANTI: ${{ secrets.FB_TOKEN_CASASEMPREAVANTI }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
           BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
+          BUNNY_SEMPREAVANTI_KEY: ${{ secrets.BUNNY_SEMPREAVANTI_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           jq -n \
             --arg n8n_key "$N8N_API_KEY" \
-            --arg fb_token "$FB_TOKEN_SKYHOUSE" \
+            --arg fb_sky "$FB_TOKEN_SKYHOUSE" \
+            --arg fb_vsa "$FB_TOKEN_CASASEMPREAVANTI" \
             --arg anthropic_key "$ANTHROPIC_API_KEY" \
             --arg bunny_sky "$BUNNY_SKYHOUSE_KEY" \
             --arg bunny_say "$BUNNY_SAYULITA_KEY" \
+            --arg bunny_csa "$BUNNY_SEMPREAVANTI_KEY" \
             --arg tg_token "$TELEGRAM_BOT_TOKEN" \
             '{
               facebook: {
@@ -36,7 +40,12 @@ jobs:
                 pages: {
                   skyhouse_sayulita: {
                     pageId: "1004908006045909",
-                    accessToken: $fb_token
+                    accessToken: $fb_sky
+                  },
+                  casasempreavanti: {
+                    pageId: "350547805544245",
+                    pageName: "Casa Sempre Avanti",
+                    accessToken: $fb_vsa
                   }
                 }
               },
@@ -58,6 +67,11 @@ jobs:
                   storageZoneName: "sayulitaandbeyond",
                   storageApiKey: $bunny_say,
                   cdnHostname: "sayulitaandbeyond.b-cdn.net"
+                },
+                casasempreavanti: {
+                  storageZoneName: "villassempreavanti",
+                  storageApiKey: $bunny_csa,
+                  cdnHostname: "VillasSempreAvanti.b-cdn.net"
                 }
               },
               telegram: {
