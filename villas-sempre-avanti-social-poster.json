@@ -46,7 +46,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "CRED_ID_BUNNY_SKYHOUSE",
+          "id": "CRED_ID_BUNNY_CASASEMPREAVANTI",
           "name": "Bunny VSA Storage"
         }
       },
@@ -122,8 +122,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "CRED_ID_FACEBOOK",
-          "name": "SkyHouse Facebook Token"
+          "id": "CRED_ID_FB_CASASEMPREAVANTI",
+          "name": "Facebook VSA Page Token"
         }
       },
       "parameters": {
@@ -250,7 +250,7 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "CRED_ID_FACEBOOK",
+          "id": "CRED_ID_FB_CASASEMPREAVANTI",
           "name": "Facebook VSA Page Token"
         }
       },
