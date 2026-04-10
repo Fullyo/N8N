@@ -18,13 +18,30 @@ and never repeats the same diagnostic mistakes across sessions.
    workflows build a full credentials file from secrets at runtime. Never block on a missing
    local key.
 
-3. **Check the debug log before asking the user anything.** Every post attempt writes
+3. **`credentials.local.json` is GITIGNORED on GitHub.** It exists locally at
+   `/home/user/N8N/credentials.local.json` but is listed in `.gitignore` and is NOT
+   present in the GitHub repo. GitHub Actions cannot read it. NEVER write workflow steps
+   that `jq` or `cat` or `python3 open()` this file — they will fail.
+   - **MP and LUX tokens** are stored in `fb-tokens.json` which IS tracked by git.
+     Read them with: `jq -r '.facebook.moroccan_palace.accessToken' fb-tokens.json`
+   - SkyHouse and VSA tokens come from GitHub Secrets (`FB_TOKEN_SKYHOUSE`, `FB_TOKEN_CASASEMPREAVANTI`).
+
+4. **The GitHub PAT was already provided.** It is stored in `credentials.local.json` at
+   `.github.pat` (read it from there — do NOT ask the user for it again).
+   **CRITICAL:** This PAT has `actions` scope ONLY — NOT `secrets` scope.
+   - It CAN: trigger workflows, read workflow runs, read workflow logs
+   - It CANNOT: read or write GitHub Secrets (returns 403)
+   - Do NOT ask the user to provide the PAT again — it was already provided.
+   - Do NOT try to add secrets via GitHub API with this PAT — it will return 403.
+   - Adding new GitHub Secrets requires the user to visit GitHub UI manually OR upgrade PAT scope.
+
+5. **Check the debug log before asking the user anything.** Every post attempt writes
    `_post-debug.log` to the repo. Pull it first.
 
-4. **Photos are uploaded.** The user has already uploaded all property photos to Bunny CDN.
+6. **Photos are uploaded.** The user has already uploaded all property photos to Bunny CDN.
    Do not tell them folders are empty without verifying via API first.
 
-5. **Do not ask the user to do something you can do yourself.** Exhaust all available tools
+7. **Do not ask the user to do something you can do yourself.** Exhaust all available tools
    before involving the user. If you must ask, be 150% sure there is no other way.
 
 ---
@@ -69,6 +86,29 @@ and never repeats the same diagnostic mistakes across sessions.
 - **Bunny zones:**
   - Property photos: `skyhousesayulita` (folder: root)
   - Activity photos: `sayulitaandbeyond` (folder: category name)
+
+### The Moroccan Palace
+- **Facebook Page ID:** `954938847703306`
+- **Location:** El Sargento, Baja California Sur, Mexico (NOT Morocco — Moroccan-inspired architecture)
+- **Hosts:** Scott and Jewels (Jewels: 25+ years massage/acupuncture)
+- **Features:** 22-foot pool, rooftop sky bed, 3 glamping tents, Sea of Cortez views
+- **Nearby:** La Ventana kite school, whale sharks, sea lions, world-class diving
+- **Website:** themoroccanpalace.com
+- **Pending post file:** `pending-post-moroccanpalace.json`
+- **GitHub Action:** `.github/workflows/auto-post-moroccanpalace.yml`
+  - Triggers on push to `pending-post-moroccanpalace.json`
+  - Reads FB token from `fb-tokens.json` (NOT credentials.local.json)
+- **n8n workflow:** `moroccan-palace-social-poster.json`
+  - Schedule: Sun / Mon / Thu at 14:00 UTC
+- **Bunny zones:** No dedicated zone yet — uses Pexels for all photos (stock photos OK here)
+- **Facebook token storage:** `fb-tokens.json` in repo (not in GitHub Secrets — PAT lacks secrets scope)
+
+### LUX Property Management
+- **Facebook Page ID:** `999599493240965`
+- **Pending post file:** `pending-post-lux.json`
+- **GitHub Action:** `.github/workflows/auto-post-lux.yml`
+  - Reads FB token from `fb-tokens.json`
+- **Facebook token storage:** `fb-tokens.json` in repo (same reason as MP)
 
 ### Villas Sempre Avanti (Casa Sempre Avanti)
 - **Facebook Page ID:** `350547805544245`

@@ -29,11 +29,11 @@ jobs:
           python3 - <<'PYEOF'
           import json, os
 
-          # Read tokens stored in repo (MP and LUX tokens not in GitHub Secrets)
-          with open('credentials.local.json') as f:
+          # Read MP and LUX tokens from fb-tokens.json (tracked in repo, gitignored file not available)
+          with open('fb-tokens.json') as f:
               stored = json.load(f)
 
-          fb_pages = stored.get('facebook', {}).get('pages', {})
+          fb_pages = stored.get('facebook', {})
           fb_mp  = fb_pages.get('moroccan_palace', {}).get('accessToken', '')
           fb_lux = fb_pages.get('lux_property_management', {}).get('accessToken', '')
 

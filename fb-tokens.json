@@ -1,0 +1,12 @@
+{
+  "facebook": {
+    "moroccan_palace": {
+      "pageId": "954938847703306",
+      "accessToken": "EAALjAtKZBrhUBRE1HlO3rdF7rfBoj6BCZCdlYEo24ZCSy4qPrWrqjrDhwp0rxRHqPnzZAhM1ZAOKUNot0fgsaqpyMiJCJ61CYojcrR4WEhXZAJJUHnAiNr7RKTCkurQZAX4ViY4982bTJu2vCHwvxyGCjIfjGz3bRpPAsOcofKp2WHleUloZBkv5ZBhVd9tw2lFwVUQZDZD"
+    },
+    "lux_property_management": {
+      "pageId": "999599493240965",
+      "accessToken": "EAALjAtKZBrhUBRBnyssPzr0ghlu5SwzP9B3pDxYoobyPNd75QHldxH5EcOfoMLdTpL2dQQlhPzKy7X3udJCXmDd1hvi02oWYcfK500rLIB3OybCNVUizmZAM2y6coo3FHUtGQBGKxZBOWQT5QBo11ssZB1smPI721grmxye10fTREYX754YMP0BkCeEl89rNvAZDZD"
+    }
+  }
+}

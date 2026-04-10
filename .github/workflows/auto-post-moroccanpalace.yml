@@ -40,7 +40,7 @@ jobs:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
-          FB_MP=$(jq -r '.facebook.pages.moroccan_palace.accessToken' credentials.local.json)
+          FB_MP=$(jq -r '.facebook.moroccan_palace.accessToken' fb-tokens.json)
           jq -n \
             --arg fb_mp "$FB_MP" \
             --arg bunny_say "$BUNNY_SAYULITA_KEY" \

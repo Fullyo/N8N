@@ -40,17 +40,21 @@ jobs:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
-          # Tokens are already in credentials.local.json (committed to repo).
-          # Just inject the secrets that aren't stored there.
-          jq \
+          FB_LUX=$(jq -r '.facebook.lux_property_management.accessToken' fb-tokens.json)
+          jq -n \
+            --arg fb_lux "$FB_LUX" \
             --arg bunny_say "$BUNNY_SAYULITA_KEY" \
-            --arg pexels_key "$PEXELS_API_KEY" \
-            --arg tg_token "$TELEGRAM_BOT_TOKEN" \
-            '.bunny.sayulita_shared.storageApiKey = $bunny_say
-             | .pexels.apiKey = $pexels_key
-             | .telegram.botToken = $tg_token' \
-            credentials.local.json > credentials.tmp.json && \
-          mv credentials.tmp.json credentials.local.json
+            --arg pexels "$PEXELS_API_KEY" \
+            --arg tg "$TELEGRAM_BOT_TOKEN" \
+            '{
+              facebook: { pages: { lux_property_management: { pageId: "999599493240965", accessToken: $fb_lux } } },
+              bunny: {
+                storageRegionHostname: "la.storage.bunnycdn.com",
+                sayulita_shared: { storageZoneName: "sayulitaandbeyond", storageApiKey: $bunny_say, cdnHostname: "sayulitaandbeyond.b-cdn.net" }
+              },
+              pexels: { apiKey: $pexels },
+              telegram: { botToken: $tg, ownerChatId: "8609472348" }
+            }' > credentials.local.json
 
       - name: Post to Facebook
         if: steps.check.outputs.has_content == 'true'
