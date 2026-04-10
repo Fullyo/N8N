@@ -1,0 +1,380 @@
+{
+  "name": "The Moroccan Palace \u2014 Daily Social Post",
+  "nodes": [
+    {
+      "id": "mp-0001",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        460
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 14 * * 0,1,4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mp-0002",
+      "name": "Get Day Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const today = new Date();\nconst dayIndex = today.getDay();\n\nconst getWeekNumber = (d) => {\n  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));\n  const dayNum = date.getUTCDay() || 7;\n  date.setUTCDate(date.getUTCDate() + 4 - dayNum);\n  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));\n  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);\n};\nconst weekNum = getWeekNumber(today);\nconst isOddWeek = weekNum % 2 !== 0;\n\n// Mon/Thu/Sun posts \u2014 2 alternating content types per day\nconst configMap = {\n  1: isOddWeek\n    ? {\n        category: 'The Villa',\n        postType: 'property',\n        topic: 'The 4-level Moroccan-inspired villa \u2014 pool terrace, rooftop sky bed, glass accordion doors, sea views, Baja desert backdrop. A design that stops people mid-scroll.',\n        audience: 'Luxury travelers, architecture enthusiasts, design-conscious renters',\n        postStyle: 'Visual, architectural, sensory \u2014 make the property feel cinematic',\n        ctaStyle: 'Book at themoroccanpalace.com',\n        hookExample: 'Four levels. A 22-foot pool. The Sea of Cortez in every direction.',\n        pexelsQuery: 'luxury villa pool rooftop terrace Mexico Baja ocean view'\n      }\n    : {\n        category: 'Kite & Adventure',\n        postType: 'adventure',\n        topic: 'La Ventana kite school 5 minutes from the property \u2014 world-class consistent Baja winds, all levels, Sea of Cortez, desert mountains behind you.',\n        audience: 'Kite surfers, wind sports enthusiasts, adventure travelers',\n        postStyle: 'Energetic, kinetic, wind and water imagery',\n        ctaStyle: 'Stay at The Moroccan Palace, kite from La Ventana \u2014 themoroccanpalace.com',\n        hookExample: 'The wind starts at 9am. The kite school is 5 minutes south.',\n        pexelsQuery: 'kite surfing Mexico Pacific Baja wind adventure beach'\n      },\n  4: isOddWeek\n    ? {\n        category: 'Glamping',\n        postType: 'glamping',\n        topic: 'The 3 luxury glamping tents \u2014 soft rugs, ambient lighting, outdoor showers, desert stars. A different way to experience Baja.',\n        audience: 'Glamping lovers, festival-style travelers, groups with mixed accommodation preferences',\n        postStyle: 'Dreamy, sensory, softly adventurous',\n        ctaStyle: 'Glamping available \u2014 themoroccanpalace.com',\n        hookExample: 'The tent was silk rugs and warm light. Outside: silence and a sky full of stars.',\n        pexelsQuery: 'luxury glamping tent desert stars night sky outdoor ambient'\n      }\n    : {\n        category: 'Baja & Destination',\n        postType: 'destination',\n        topic: 'El Sargento and La Ventana \u2014 Sea of Cortez, Sierra de la Laguna mountains, Baja light, the raw beauty of the destination itself.',\n        audience: 'Baja explorers, Sea of Cortez travelers, destination seekers',\n        postStyle: 'Landscape-driven, evocative of raw Baja beauty',\n        ctaStyle: 'Make The Moroccan Palace your Baja base \u2014 themoroccanpalace.com',\n        hookExample: 'The Sea of Cortez from the terrace. The Sierra behind you. Baja at its best.',\n        pexelsQuery: 'Baja California Mexico Sea of Cortez beach sunset mountains landscape'\n      },\n  0: isOddWeek\n    ? {\n        category: 'Wellness',\n        postType: 'wellness',\n        topic: 'Jewels \u2014 25 years of therapeutic massage and acupuncture, on the terrace overlooking the sea. Yoga. Sound healing. A wellness stay unlike any resort.',\n        audience: 'Wellness seekers, burned-out professionals, retreat planners',\n        postStyle: 'Quiet, restorative, intentional \u2014 slow luxury',\n        ctaStyle: 'Wellness stays available \u2014 themoroccanpalace.com',\n        hookExample: 'The massage was on the terrace. The sea was in front. Nothing else needed.',\n        pexelsQuery: 'wellness massage yoga meditation spa terrace ocean luxury Mexico'\n      }\n    : {\n        category: 'Events & Celebrations',\n        postType: 'events',\n        topic: 'Weddings, bachelorettes, milestone birthdays, corporate retreats \u2014 the villa as a private venue with the Sea of Cortez as the backdrop.',\n        audience: 'Event planners, couples, celebration groups',\n        postStyle: 'Celebratory, intimate, emotionally rich',\n        ctaStyle: 'Inquire about events \u2014 themoroccanpalace.com',\n        hookExample: 'A rooftop ceremony. The Sea of Cortez at golden hour. Your whole group together.',\n        pexelsQuery: 'luxury outdoor wedding celebration terrace rooftop Mexico desert'\n      }\n};\n\nconst cfg = configMap[dayIndex] || configMap[1];\n\nreturn [{\n  json: {\n    dayIndex,\n    dayName: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dayIndex],\n    runDate: today.toISOString().split('T')[0],\n    weekNum,\n    category: cfg.category,\n    postType: cfg.postType,\n    topic: cfg.topic,\n    audience: cfg.audience,\n    postStyle: cfg.postStyle,\n    ctaStyle: cfg.ctaStyle,\n    hookExample: cfg.hookExample,\n    pexelsQuery: cfg.pexelsQuery\n  }\n}];"
+      }
+    },
+    {
+      "id": "mp-0003",
+      "name": "Fetch Pexels Photos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_PEXELS",
+          "name": "Pexels API"
+        }
+      },
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.pexels.com/v1/search?query=' + encodeURIComponent($json.pexelsQuery) + '&per_page=20&orientation=landscape' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "mp-0004",
+      "name": "Pick 3 Photos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const pexelsResp = $input.first().json;\nconst dayConfig = $('Get Day Config').first().json;\n\nconst photos = pexelsResp.photos || [];\nif (photos.length === 0) {\n  throw new Error('Pexels returned no photos for query: ' + dayConfig.pexelsQuery);\n}\n\nconst shuffled = [...photos].sort(() => Math.random() - 0.5);\nconst selected = shuffled.slice(0, Math.min(3, shuffled.length));\n\nreturn selected.map((photo, idx) => ({\n  json: {\n    photoIndex: idx,\n    cdnUrl: photo.src.large2x || photo.src.large || photo.src.original,\n    pexelsId: photo.id,\n    photographer: photo.photographer,\n    postType: dayConfig.postType,\n    dayIndex: dayConfig.dayIndex,\n    dayName: dayConfig.dayName,\n    runDate: dayConfig.runDate,\n    category: dayConfig.category,\n    topic: dayConfig.topic,\n    audience: dayConfig.audience,\n    postStyle: dayConfig.postStyle,\n    ctaStyle: dayConfig.ctaStyle,\n    hookExample: dayConfig.hookExample\n  }\n}));"
+      }
+    },
+    {
+      "id": "mp-0005",
+      "name": "Upload Photo to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FB_MOROCCANPALACE",
+          "name": "Facebook Moroccan Palace Token"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/954938847703306/photos",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.cdnUrl }}"
+            },
+            {
+              "name": "published",
+              "value": "false"
+            }
+          ]
+        },
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "mp-0006",
+      "name": "Collect Upload Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const uploads = $input.all();\nconst originalPhotos = $('Pick 3 Photos').all();\nconst dayConfig = $('Get Day Config').first().json;\n\nif (uploads.length === 0) {\n  throw new Error('No photos uploaded to Facebook. Check page token and permissions.');\n}\n\nconst fbPhotoIds = uploads.map(item => item.json.id || item.json.photo_id);\nconst cdnUrls = originalPhotos.map(item => item.json.cdnUrl);\n\nreturn [{\n  json: {\n    fbPhotoIds,\n    cdnUrls,\n    photoCount: fbPhotoIds.length,\n    dayIndex: dayConfig.dayIndex,\n    dayName: dayConfig.dayName,\n    runDate: dayConfig.runDate,\n    category: dayConfig.category,\n    postType: dayConfig.postType,\n    topic: dayConfig.topic,\n    audience: dayConfig.audience,\n    postStyle: dayConfig.postStyle,\n    ctaStyle: dayConfig.ctaStyle,\n    hookExample: dayConfig.hookExample\n  }\n}];"
+      }
+    },
+    {
+      "id": "mp-0007",
+      "name": "Build Claude Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\n\nconst systemPrompt = `You are the social media content creator for The Moroccan Palace, a luxury vacation rental in El Sargento, Baja California Sur, Mexico. Managed by LUX Property Management.\n\nPROPERTY FACTS \u2014 use only these, never invent:\n- Location: El Sargento, Baja California Sur, Mexico \u2014 Sea of Cortez shoreline\n- 4-level Moroccan-inspired villa with 3 additional luxury glamping tents\n- 22-foot ocean-view pool on main terrace level\n- Rooftop sky bed for stargazing, sunbathing, and sunset dinners\n- Panoramic views: Sea of Cortez + Sierra de la Laguna mountain range\n- Private gym: yoga props, free weights, mirrored wall\n- 3 glamping tents: soft rugs, ambient lighting, fans, outdoor showers\n- La Ventana Beach: 5 minutes south \u2014 world-class kite boarding destination\n- Consistent Baja winds (Nov\u2013Apr) for kite surfing and windsurfing\n- Hosts: Scott and Jewels\n- Jewels: 25+ years professional massage therapy and therapeutic acupuncture \u2014 available on request\n- Wellness on-site: massage, acupuncture, yoga, sound healing\n- Activities arranged: ATV and bike rentals, beach shuttles, tours, airport transfers\n- Multi-use: vacation rental, wellness retreat, wedding venue, private group events\n- Architecture: Moroccan-inspired \u2014 glass accordion doors, graceful arches, open indoor/outdoor flow\n- Website: themoroccanpalace.com\n- SJD airport (Los Cabos): approx. 1.5 hours\n\nABSOLUTE RULES:\n- Never claim private beach (it's a public beach area)\n- Never claim on-site spa facility (Jewels provides services, not a built spa)\n- Never mention rates or pricing\n- No markdown: no asterisks, no bold, no headers, no bullet points\n- Plain text only\n- 100-200 words excluding hashtags\n- Hashtags at the very end only\n\nBRAND VOICE:\n- Warm, soulful, owner-operated. \"Soulful luxury\" and \"sanctuary\" language fits.\n- Evoke the landscape: desert heat, Sea of Cortez blue, mountain silhouettes, Baja light.\n- Second person or intimate third person. Never first person (\"I\" or \"we\").\n- Lead with a moment or image \u2014 never \"Welcome to\" or \"Introducing.\"\n- Transformative, restorative tone \u2014 this is a place apart.\n\nPOST STRUCTURE:\n1. Hook (1-2 lines): Cinematic, scroll-stopping. Specific to today's content.\n2. Body (2-3 paragraphs): Sensory, experiential, grounded in real property details.\n3. CTA: Soft, warm \u2014 never pushy.\n4. Hashtags: last, relevant, 4-6 only.\n\nHASHTAGS TO DRAW FROM: #TheMoroccanPalace #BajaCaliforniaSur #SeaOfCortez #LaVentana #ElSargento #LuxuryVilla #BajaVilla #MexicoTravel #KiteSurfing #WellnessRetreat #BajaLife #DesertLuxury #GlampingMexico #LUXPropertyManagement`;\n\nconst userPrompt = `Generate a Facebook post for The Moroccan Palace.\n\nToday's category: ${item.json.category}\nPost type: ${item.json.postType}\nTopic focus: ${item.json.topic}\nAudience: ${item.json.audience}\nPost style: ${item.json.postStyle}\nCTA: ${item.json.ctaStyle}\nHook reference (adapt freely, don't copy): ${item.json.hookExample}\n\nPlain text only. No markdown. 100-200 words. Hashtags at end only. Output the post and nothing else.`;\n\nreturn [{\n  json: {\n    ...item.json,\n    claudeRequestBody: JSON.stringify({\n      model: 'claude-opus-4-6',\n      max_tokens: 1024,\n      system: systemPrompt,\n      messages: [{ role: 'user', content: userPrompt }]\n    })\n  }\n}];"
+      }
+    },
+    {
+      "id": "mp-0008",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_ANTHROPIC",
+          "name": "Anthropic API"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.claudeRequestBody }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "mp-0009",
+      "name": "Parse & Validate Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst prevData = $('Collect Upload Results').first().json;\n\nlet postText = '';\nif (item.json.content && Array.isArray(item.json.content) && item.json.content.length > 0) {\n  postText = item.json.content[0].text || '';\n}\nif (!postText.trim()) {\n  throw new Error('Claude returned empty post text. Check API key and request format.');\n}\n\nconst wordCount = postText.trim().split(/\\s+/).length;\nconst warnings = [];\nif (wordCount < 60) warnings.push(`Post short: ${wordCount} words`);\nif (wordCount > 280) warnings.push(`Post long: ${wordCount} words`);\nif (/\\*\\*|\\*[^*]/.test(postText)) warnings.push('Markdown detected');\n\nreturn [{\n  json: {\n    postText: postText.trim(),\n    wordCount,\n    warnings: warnings.join(' | ') || 'None',\n    fbPhotoIds: prevData.fbPhotoIds,\n    cdnUrls: prevData.cdnUrls,\n    dayName: prevData.dayName,\n    audience: prevData.audience,\n    runDate: prevData.runDate,\n    category: prevData.category\n  }\n}];"
+      }
+    },
+    {
+      "id": "mp-0010",
+      "name": "Build Facebook Post Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst fbPostBody = {\n  message: item.json.postText,\n  attached_media: item.json.fbPhotoIds.map(id => ({ media_fbid: id }))\n};\nreturn [{ json: { ...item.json, fbPostBodyJson: JSON.stringify(fbPostBody) } }];"
+      }
+    },
+    {
+      "id": "mp-0011",
+      "name": "Post to Facebook Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2440,
+        460
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FB_MOROCCANPALACE",
+          "name": "Facebook Moroccan Palace Token"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/954938847703306/feed",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.fbPostBodyJson }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth"
+      }
+    },
+    {
+      "id": "mp-0012",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        700
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "mp-0013",
+      "name": "Log Error to Console",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        700
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const errorData = $input.first().json;\nconsole.error('Moroccan Palace workflow error:', JSON.stringify({\n  date: new Date().toISOString(),\n  workflow: 'The Moroccan Palace \u2014 Daily Social Post',\n  error: errorData.error && errorData.error.message,\n  node: errorData.error && errorData.error.node && errorData.error.node.name,\n  executionId: errorData.execution && errorData.execution.id\n}));\nreturn $input.all();"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Day Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Day Config": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pexels Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pexels Photos": {
+      "main": [
+        [
+          {
+            "node": "Pick 3 Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick 3 Photos": {
+      "main": [
+        [
+          {
+            "node": "Upload Photo to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Photo to Facebook": {
+      "main": [
+        [
+          {
+            "node": "Collect Upload Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Upload Results": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Request": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Post": {
+      "main": [
+        [
+          {
+            "node": "Build Facebook Post Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Facebook Post Body": {
+      "main": [
+        [
+          {
+            "node": "Post to Facebook Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Log Error to Console",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

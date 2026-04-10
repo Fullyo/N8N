@@ -287,18 +287,13 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
       "Land Adventures")       PEXELS_QUERY="ATV adventure Mexico jungle coastal" ;;
       "Weddings")              PEXELS_QUERY="beach wedding ceremony Mexico tropical" ;;
       "Chef")                  PEXELS_QUERY="private chef cooking Mexican cuisine beachfront" ;;
-      # Moroccan Palace categories
-      "Riad")                  PEXELS_QUERY="luxury riad Morocco courtyard pool architecture" ;;
-      "Pool")                  PEXELS_QUERY="luxury pool Morocco riad villa rooftop" ;;
-      "Rooftop")               PEXELS_QUERY="Morocco rooftop terrace view sunset luxury" ;;
-      "Interiors")             PEXELS_QUERY="Morocco interior luxury riad decor tiles" ;;
-      "Medina")                PEXELS_QUERY="Marrakech medina Morocco souk architecture" ;;
-      "Hammam")                PEXELS_QUERY="Morocco hammam spa wellness luxury" ;;
-      "Moroccan Food")         PEXELS_QUERY="Moroccan cuisine tagine food traditional" ;;
-      "Desert")                PEXELS_QUERY="Sahara desert Morocco dunes camel sunset" ;;
-      "Atlas Mountains")       PEXELS_QUERY="Atlas Mountains Morocco hiking landscape" ;;
-      "Morocco Surf")          PEXELS_QUERY="surfing Morocco Atlantic waves beach" ;;
-      "Morocco Culture")       PEXELS_QUERY="Morocco culture festival traditional music market" ;;
+      # Moroccan Palace categories (El Sargento, Baja California Sur, Mexico)
+      "The Villa")             PEXELS_QUERY="luxury villa pool rooftop terrace Baja Mexico Sea of Cortez" ;;
+      "Kite & Adventure")      PEXELS_QUERY="kite surfing Mexico Pacific Baja wind beach adventure" ;;
+      "Glamping")              PEXELS_QUERY="luxury glamping tent desert stars night sky outdoor" ;;
+      "Baja & Destination")    PEXELS_QUERY="Baja California Mexico Sea of Cortez beach mountains sunset" ;;
+      "Wellness")              PEXELS_QUERY="wellness massage yoga meditation spa terrace ocean Mexico" ;;
+      "Events & Celebrations") PEXELS_QUERY="luxury outdoor celebration wedding terrace rooftop Mexico" ;;
       # LUX Property Management categories
       "Portfolio")             PEXELS_QUERY="luxury villa portfolio property management ocean" ;;
       "Brand")                 PEXELS_QUERY="luxury property management lifestyle concierge" ;;
