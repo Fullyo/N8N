@@ -36,36 +36,21 @@ jobs:
       - name: Build credentials file
         if: steps.check.outputs.has_content == 'true'
         env:
-          FB_TOKEN_MOROCCANPALACE: ${{ secrets.FB_TOKEN_MOROCCANPALACE }}
           BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
-          jq -n \
-            --arg fb_mp "$FB_TOKEN_MOROCCANPALACE" \
+          # Tokens are already in credentials.local.json (committed to repo).
+          # Just inject the secrets that aren't stored there.
+          jq \
             --arg bunny_say "$BUNNY_SAYULITA_KEY" \
             --arg pexels_key "$PEXELS_API_KEY" \
             --arg tg_token "$TELEGRAM_BOT_TOKEN" \
-            '{
-              facebook: {
-                pages: {
-                  moroccan_palace: {
-                    pageId: "954938847703306",
-                    accessToken: $fb_mp
-                  }
-                }
-              },
-              bunny: {
-                storageRegionHostname: "la.storage.bunnycdn.com",
-                sayulita_shared: {
-                  storageZoneName: "sayulitaandbeyond",
-                  storageApiKey: $bunny_say,
-                  cdnHostname: "sayulitaandbeyond.b-cdn.net"
-                }
-              },
-              telegram: { botToken: $tg_token, ownerChatId: "8609472348" },
-              pexels: { apiKey: $pexels_key }
-            }' > credentials.local.json
+            '.bunny.sayulita_shared.storageApiKey = $bunny_say
+             | .pexels.apiKey = $pexels_key
+             | .telegram.botToken = $tg_token' \
+            credentials.local.json > credentials.tmp.json && \
+          mv credentials.tmp.json credentials.local.json
 
       - name: Post to Facebook
         if: steps.check.outputs.has_content == 'true'
