@@ -100,7 +100,12 @@ and never repeats the same diagnostic mistakes across sessions.
   - Reads FB token from `fb-tokens.json` (NOT credentials.local.json)
 - **n8n workflow:** `moroccan-palace-social-poster.json`
   - Schedule: Sun / Mon / Thu at 14:00 UTC
-- **Bunny zones:** No dedicated zone yet — uses Pexels for all photos (stock photos OK here)
+- **Bunny zone:** `themoroccanpalace` — CDN: `themoroccanpalace.b-cdn.net`
+  - Property folders (direct): `Pool/`, `Rooftop/`, `Riad/`, `Interiors/`, `Glamping/`, `Villa/`
+  - La Ventana activity folders (under subfolder): `La Ventana/Diving/`, `La Ventana/Kite Surfing/`, etc.
+  - Pexels fallback photos are saved to `La Ventana/<category>/` for reuse
+- **Bunny key storage:** `fb-tokens.json` in repo under `bunny.themoroccanpalace.storageApiKey`
+  (GitHub Secret `BUNNY_MOROCCANPALACE_KEY` takes priority if set)
 - **Facebook token storage:** `fb-tokens.json` in repo (not in GitHub Secrets — PAT lacks secrets scope)
 
 ### LUX Property Management
@@ -137,6 +142,7 @@ and never repeats the same diagnostic mistakes across sessions.
 | `skyhousesayulita` | `SkyhouseSayulita.b-cdn.net` | SkyHouse property photos |
 | `sayulitaandbeyond` | `sayulitaandbeyond.b-cdn.net` | Shared activity photos (Surf, Yoga, etc.) |
 | `villassempreavanti` | `VillasSempreAvanti.b-cdn.net` | VSA property photos |
+| `themoroccanpalace` | `themoroccanpalace.b-cdn.net` | MP property + La Ventana activity photos |
 
 **Storage API:** `https://la.storage.bunnycdn.com`
 

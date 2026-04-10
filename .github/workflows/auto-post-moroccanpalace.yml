@@ -36,21 +36,24 @@ jobs:
       - name: Build credentials file
         if: steps.check.outputs.has_content == 'true'
         env:
-          BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
+          BUNNY_MOROCCANPALACE_KEY: ${{ secrets.BUNNY_MOROCCANPALACE_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           FB_MP=$(jq -r '.facebook.moroccan_palace.accessToken' fb-tokens.json)
+          # Key from GitHub Secret takes priority; fall back to fb-tokens.json
+          BUNNY_MP_FROM_FILE=$(jq -r '.bunny.themoroccanpalace.storageApiKey // empty' fb-tokens.json)
+          BUNNY_MP="${BUNNY_MOROCCANPALACE_KEY:-$BUNNY_MP_FROM_FILE}"
           jq -n \
             --arg fb_mp "$FB_MP" \
-            --arg bunny_say "$BUNNY_SAYULITA_KEY" \
+            --arg bunny_mp "$BUNNY_MP" \
             --arg pexels "$PEXELS_API_KEY" \
             --arg tg "$TELEGRAM_BOT_TOKEN" \
             '{
               facebook: { pages: { moroccan_palace: { pageId: "954938847703306", accessToken: $fb_mp } } },
               bunny: {
                 storageRegionHostname: "la.storage.bunnycdn.com",
-                sayulita_shared: { storageZoneName: "sayulitaandbeyond", storageApiKey: $bunny_say, cdnHostname: "sayulitaandbeyond.b-cdn.net" }
+                themoroccanpalace: { storageZoneName: "themoroccanpalace", storageApiKey: $bunny_mp, cdnHostname: "themoroccanpalace.b-cdn.net" }
               },
               pexels: { apiKey: $pexels },
               telegram: { botToken: $tg, ownerChatId: "8609472348" }

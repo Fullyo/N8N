@@ -23,19 +23,24 @@ jobs:
           BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
           BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
           BUNNY_SEMPREAVANTI_KEY: ${{ secrets.BUNNY_SEMPREAVANTI_KEY }}
+          BUNNY_MOROCCANPALACE_KEY: ${{ secrets.BUNNY_MOROCCANPALACE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
           python3 - <<'PYEOF'
           import json, os
 
-          # Read MP and LUX tokens from fb-tokens.json (tracked in repo, gitignored file not available)
+          # Read MP/LUX FB tokens and Bunny MP key from fb-tokens.json (tracked in repo)
           with open('fb-tokens.json') as f:
               stored = json.load(f)
 
           fb_pages = stored.get('facebook', {})
           fb_mp  = fb_pages.get('moroccan_palace', {}).get('accessToken', '')
           fb_lux = fb_pages.get('lux_property_management', {}).get('accessToken', '')
+
+          # Bunny MP key: GitHub Secret takes priority, fb-tokens.json as fallback
+          bunny_mp_fallback = stored.get('bunny', {}).get('themoroccanpalace', {}).get('storageApiKey', '')
+          bunny_mp = os.environ.get('BUNNY_MOROCCANPALACE_KEY', '') or bunny_mp_fallback
 
           creds = {
             "facebook": {
@@ -50,9 +55,10 @@ jobs:
             "anthropic": {"apiKey": os.environ["ANTHROPIC_API_KEY"]},
             "bunny": {
               "storageRegionHostname": "la.storage.bunnycdn.com",
-              "skyhouse":        {"storageZoneName": "skyhousesayulita",    "storageApiKey": os.environ["BUNNY_SKYHOUSE_KEY"],    "cdnHostname": "SkyhouseSayulita.b-cdn.net"},
-              "sayulita_shared": {"storageZoneName": "sayulitaandbeyond",   "storageApiKey": os.environ["BUNNY_SAYULITA_KEY"],    "cdnHostname": "sayulitaandbeyond.b-cdn.net"},
-              "casasempreavanti":{"storageZoneName": "villassempreavanti",  "storageApiKey": os.environ["BUNNY_SEMPREAVANTI_KEY"],"cdnHostname": "VillasSempreAvanti.b-cdn.net"}
+              "skyhouse":          {"storageZoneName": "skyhousesayulita",    "storageApiKey": os.environ["BUNNY_SKYHOUSE_KEY"],    "cdnHostname": "SkyhouseSayulita.b-cdn.net"},
+              "sayulita_shared":   {"storageZoneName": "sayulitaandbeyond",   "storageApiKey": os.environ["BUNNY_SAYULITA_KEY"],    "cdnHostname": "sayulitaandbeyond.b-cdn.net"},
+              "casasempreavanti":  {"storageZoneName": "villassempreavanti",  "storageApiKey": os.environ["BUNNY_SEMPREAVANTI_KEY"],"cdnHostname": "VillasSempreAvanti.b-cdn.net"},
+              "themoroccanpalace": {"storageZoneName": "themoroccanpalace",   "storageApiKey": bunny_mp,                            "cdnHostname": "themoroccanpalace.b-cdn.net"}
             },
             "telegram": {"botToken": os.environ["TELEGRAM_BOT_TOKEN"], "ownerChatId": "8609472348"},
             "pexels": {"apiKey": os.environ["PEXELS_API_KEY"]}

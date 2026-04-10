@@ -109,7 +109,7 @@ case "$PROPERTY" in
   "moroccan_palace"|"the_moroccan_palace")
     FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.moroccan_palace.accessToken' "$CREDS_FILE")
     FB_PAGE_ID=$(jq -r '.facebook.pages.moroccan_palace.pageId' "$CREDS_FILE")
-    BUNNY_SAY_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey // empty' "$CREDS_FILE")
+    BUNNY_MP_KEY=$(jq -r '.bunny.themoroccanpalace.storageApiKey // empty' "$CREDS_FILE")
     PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
     PAGE_TOKEN=$(exchange_for_page_token "$FB_ACCESS_TOKEN" "$FB_PAGE_ID")
     if [ -n "$PAGE_TOKEN" ]; then
@@ -118,22 +118,22 @@ case "$PROPERTY" in
     else
       echo "  ⚠ Could not get page token — using stored token as-is"
     fi
-    # Property-specific folders: use moroccanpalace zone if key available, else Pexels
-    # Activity/Pexels photos: cache in sayulita_shared zone under moroccan-palace/ subfolder
+    # Property folders → themoroccanpalace zone, direct subfolder
+    # La Ventana / Baja activity folders → themoroccanpalace zone, under "La Ventana/" subfolder
     case "$PHOTO_FOLDER" in
-      "Riad"|"Pool"|"Rooftop"|"Interiors"|"The Moroccan Palace")
+      "Riad"|"Pool"|"Rooftop"|"Interiors"|"The Moroccan Palace"|"Glamping"|"Villa")
         IS_PROPERTY_FOLDER=true
-        BUNNY_ZONE="moroccanpalace"
-        BUNNY_KEY="${BUNNY_MP_KEY:-}"
-        BUNNY_CDN_HOST="MoroccanPalace.b-cdn.net"
+        BUNNY_ZONE="themoroccanpalace"
+        BUNNY_KEY="$BUNNY_MP_KEY"
+        BUNNY_CDN_HOST="themoroccanpalace.b-cdn.net"
         BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
         ;;
       *)
-        # No dedicated MP zone yet — cache Pexels photos in sayulita_shared
-        BUNNY_ZONE="sayulitaandbeyond"
-        BUNNY_KEY="$BUNNY_SAY_KEY"
-        BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
-        BUNNY_SUBFOLDER="moroccan-palace/$PHOTO_FOLDER/"
+        # Baja/La Ventana activities — cached under La Ventana/ subfolder
+        BUNNY_ZONE="themoroccanpalace"
+        BUNNY_KEY="$BUNNY_MP_KEY"
+        BUNNY_CDN_HOST="themoroccanpalace.b-cdn.net"
+        BUNNY_SUBFOLDER="La Ventana/$PHOTO_FOLDER/"
         ;;
     esac
     BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
