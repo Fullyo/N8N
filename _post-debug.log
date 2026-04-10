@@ -10,5 +10,5 @@
 --- Selecting 5 photos from Bunny ---
 
 --- Uploading to Facebook (page: 350547805544245) ---
-  → chillo.jpg
-  ERROR: {"error":{"message":"Error validating access token: Session has expired on Thursday, 09-Apr-26 16:00:00 PDT. The current time is Thursday, 09-Apr-26 17:07:09 PDT.","type":"OAuthException","code":190,"error_subcode":463,"fbtrace_id":"AwxEm0OJjQMt6uCztvyjl4E"}}
+  → vary2.jpeg
+  ERROR: {"error":{"message":"(#200) Unpublished posts must be posted to a page as the page itself.","type":"OAuthException","code":200,"fbtrace_id":"AXq5tLw7TfN9qPT4HW0u0sk"}}
