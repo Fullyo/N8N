@@ -98,7 +98,15 @@ jobs:
         if: steps.check.outputs.has_content == 'true'
         env:
           PENDING_FILE: pending-post-casasempreavanti.json
-        run: bash post-to-facebook.sh
+        run: |
+          bash post-to-facebook.sh 2>&1 | tee _post-debug.log
+          EXIT=${PIPESTATUS[0]}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _post-debug.log
+          git commit -m "debug: post script output" || true
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG || true
+          exit $EXIT
 
       - name: Clear pending post
         if: steps.check.outputs.has_content == 'true'
