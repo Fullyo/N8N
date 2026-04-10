@@ -1,0 +1,48 @@
+=== Facebook Post Creator ===
+  Property:  moroccan_palace
+  Category:  Diving
+  Photos:    5
+  Caption:   Most people know La Ventana for the wind.
+
+From June through October, the wind s...
+
+  ⚠ Could not get page token — using stored token as-is
+--- Scanning Bunny CDN (moroccanpalace/Diving/) ---
+  Found 0 images in Bunny CDN
+
+--- Pexels fallback: "Sea of Cortez diving Baja California whale sharks sea lions snorkeling Mexico" ---
+  Found 20 Pexels photos
+
+--- Downloading from Pexels → saving to Bunny CDN ---
+  Zone: moroccanpalace/Diving/
+
+  Downloading pexels-15739643 ...
+  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
+  Downloading pexels-5967796 ...
+  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
+  Downloading pexels-7001499 ...
+  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
+  Downloading pexels-10154784 ...
+  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
+  Downloading pexels-1631768 ...
+  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
+
+⚠️  Pexels used — photos now saved in Bunny for future reuse.
+
+--- Uploading to Facebook (page: 954938847703306) ---
+  → pexels-photo-15739643.jpeg?auto=compress&cs=tinysrgb&dpr=2&h
+  ✓ ID: 122119846281229271
+  → pexels-photo-5967796.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=
+  ✓ ID: 122119846329229271
+  → pexels-photo-7001499.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=
+  ✓ ID: 122119846377229271
+  → pexels-photo-10154784.jpeg?auto=compress&cs=tinysrgb&dpr=2&h
+  ✓ ID: 122119846425229271
+  → pexels-photo-1631768.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=
+  ✓ ID: 122119846479229271
+
+--- Publishing post ---
+
+✓ Published! Post ID: 954938847703306_122119846533229271
+  📦 5 photos saved to moroccanpalace/Diving/ for reuse
+=== DONE ===
