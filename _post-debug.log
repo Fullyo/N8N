@@ -1,0 +1,14 @@
+=== Facebook Post Creator ===
+  Property:  casasempreavanti
+  Category:  Surf
+  Photos:    5
+  Caption:   La Lancha fires best at dawn, when the offshore wind is still light and the line...
+
+--- Scanning Bunny CDN (sayulitaandbeyond/Surf/) ---
+  Found 11 images in Bunny CDN
+
+--- Selecting 5 photos from Bunny ---
+
+--- Uploading to Facebook (page: 350547805544245) ---
+  → chillo.jpg
+  ERROR: {"error":{"message":"Error validating access token: Session has expired on Thursday, 09-Apr-26 16:00:00 PDT. The current time is Thursday, 09-Apr-26 17:07:09 PDT.","type":"OAuthException","code":190,"error_subcode":463,"fbtrace_id":"AwxEm0OJjQMt6uCztvyjl4E"}}
