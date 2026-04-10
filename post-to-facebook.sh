@@ -49,6 +49,21 @@ echo ""
 FB_API="https://graph.facebook.com/v19.0"
 BUNNY_STORAGE_API="https://la.storage.bunnycdn.com"
 
+# ── Exchange user token for page token ───────────────────────
+# If the stored token is a long-lived USER token, /me/accounts returns
+# permanent PAGE tokens. Page tokens are required for published=false uploads.
+exchange_for_page_token() {
+  local user_token="$1"
+  local page_id="$2"
+  local resp
+  resp=$(curl -s --max-time 10 \
+    "$FB_API/me/accounts?access_token=$user_token")
+  local page_token
+  page_token=$(echo "$resp" | jq -r --arg id "$page_id" \
+    '.data[]? | select(.id == $id) | .access_token // empty' 2>/dev/null || true)
+  echo "$page_token"
+}
+
 # ── Property routing ──────────────────────────────────────────
 IS_SKYHOUSE=false
 IS_PROPERTY_FOLDER=false
@@ -60,6 +75,14 @@ case "$PROPERTY" in
     FB_PAGE_ID=$(jq -r '.facebook.pages.casasempreavanti.pageId' "$CREDS_FILE")
     BUNNY_CSA_KEY=$(jq -r '.bunny.casasempreavanti.storageApiKey' "$CREDS_FILE")
     BUNNY_SAY_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+    # Auto-exchange user token → page token (required for unpublished photo uploads)
+    PAGE_TOKEN=$(exchange_for_page_token "$FB_ACCESS_TOKEN" "$FB_PAGE_ID")
+    if [ -n "$PAGE_TOKEN" ]; then
+      echo "  ✓ Exchanged user token for page token"
+      FB_ACCESS_TOKEN="$PAGE_TOKEN"
+    else
+      echo "  ⚠ Could not get page token — using stored token as-is"
+    fi
     PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
 
     # Villa-specific folders → use villassempreavanti zone; hard fail if empty
@@ -90,6 +113,14 @@ case "$PROPERTY" in
     BUNNY_SKYHOUSE_KEY=$(jq -r '.bunny.skyhouse.storageApiKey' "$CREDS_FILE")
     BUNNY_SAYULITA_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
     PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
+    # Auto-exchange user token → page token
+    PAGE_TOKEN=$(exchange_for_page_token "$FB_ACCESS_TOKEN" "$FB_PAGE_ID")
+    if [ -n "$PAGE_TOKEN" ]; then
+      echo "  ✓ Exchanged user token for page token"
+      FB_ACCESS_TOKEN="$PAGE_TOKEN"
+    else
+      echo "  ⚠ Could not get page token — using stored token as-is"
+    fi
 
     if [ "$PHOTO_FOLDER" = "SkyHouse" ]; then
       BUNNY_ZONE="skyhousesayulita"
