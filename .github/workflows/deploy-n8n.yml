@@ -26,12 +26,9 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
-          # FB tokens for all pages are already in the committed credentials.local.json.
-          # Only inject secrets that change per environment (Bunny keys, n8n key, etc).
           FB_MP=$(jq -r '.facebook.pages.moroccan_palace.accessToken' credentials.local.json)
           FB_LUX=$(jq -r '.facebook.pages.lux_property_management.accessToken' credentials.local.json)
-
-          jq \
+          jq -n \
             --arg n8n_key "$N8N_API_KEY" \
             --arg fb_sky "$FB_TOKEN_SKYHOUSE" \
             --arg fb_vsa "$FB_TOKEN_CASASEMPREAVANTI" \
@@ -43,20 +40,27 @@ jobs:
             --arg bunny_csa "$BUNNY_SEMPREAVANTI_KEY" \
             --arg tg_token "$TELEGRAM_BOT_TOKEN" \
             --arg pexels_key "$PEXELS_API_KEY" \
-            '.n8n.apiKey = $n8n_key
-             | .facebook.pages.skyhouse_sayulita.accessToken = $fb_sky
-             | .facebook.pages.casasempreavanti.accessToken = $fb_vsa
-             | .facebook.pages.moroccan_palace.accessToken = $fb_mp
-             | .facebook.pages.lux_property_management.accessToken = $fb_lux
-             | .anthropic.apiKey = $anthropic_key
-             | .bunny.skyhouse.storageApiKey = $bunny_sky
-             | .bunny.sayulita_shared.storageApiKey = $bunny_say
-             | .bunny.casasempreavanti.storageApiKey = $bunny_csa
-             | .telegram.botToken = $tg_token
-             | .pexels.apiKey = $pexels_key' \
-            credentials.local.json > credentials.tmp.json && \
-          mv credentials.tmp.json credentials.local.json
-          echo "credentials.local.json updated"
+            '{
+              facebook: {
+                pages: {
+                  skyhouse_sayulita: { pageId: "1004908006045909", accessToken: $fb_sky },
+                  casasempreavanti: { pageId: "350547805544245", accessToken: $fb_vsa },
+                  moroccan_palace: { pageId: "954938847703306", accessToken: $fb_mp },
+                  lux_property_management: { pageId: "999599493240965", accessToken: $fb_lux }
+                }
+              },
+              n8n: { instanceUrl: "https://fullyo.app.n8n.cloud", apiKey: $n8n_key },
+              anthropic: { apiKey: $anthropic_key },
+              bunny: {
+                storageRegionHostname: "la.storage.bunnycdn.com",
+                skyhouse: { storageZoneName: "skyhousesayulita", storageApiKey: $bunny_sky, cdnHostname: "SkyhouseSayulita.b-cdn.net" },
+                sayulita_shared: { storageZoneName: "sayulitaandbeyond", storageApiKey: $bunny_say, cdnHostname: "sayulitaandbeyond.b-cdn.net" },
+                casasempreavanti: { storageZoneName: "villassempreavanti", storageApiKey: $bunny_csa, cdnHostname: "VillasSempreAvanti.b-cdn.net" }
+              },
+              telegram: { botToken: $tg_token, ownerChatId: "8609472348" },
+              pexels: { apiKey: $pexels_key }
+            }' > credentials.local.json
+          echo "credentials.local.json created"
 
       - name: Run deploy script
         run: bash deploy-to-n8n.sh
