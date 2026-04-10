@@ -1,0 +1,92 @@
+name: Auto Post — The Moroccan Palace
+
+on:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - 'pending-post-moroccanpalace.json'
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check pending post has content
+        id: check
+        run: |
+          CAPTION=$(jq -r '.caption' pending-post-moroccanpalace.json)
+          FOLDER=$(jq -r '.photo_folder' pending-post-moroccanpalace.json)
+          if [ -z "$CAPTION" ] || [ "$CAPTION" = "null" ] || [ -z "$FOLDER" ] || [ "$FOLDER" = "null" ]; then
+            echo "pending-post-moroccanpalace.json is empty — nothing to post"
+            echo "has_content=false" >> $GITHUB_OUTPUT
+          else
+            echo "Posting: ${CAPTION:0:60}..."
+            echo "Folder: $FOLDER"
+            echo "has_content=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build credentials file
+        if: steps.check.outputs.has_content == 'true'
+        env:
+          FB_TOKEN_MOROCCANPALACE: ${{ secrets.FB_TOKEN_MOROCCANPALACE }}
+          BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          jq -n \
+            --arg fb_mp "$FB_TOKEN_MOROCCANPALACE" \
+            --arg bunny_say "$BUNNY_SAYULITA_KEY" \
+            --arg pexels_key "$PEXELS_API_KEY" \
+            --arg tg_token "$TELEGRAM_BOT_TOKEN" \
+            '{
+              facebook: {
+                pages: {
+                  moroccan_palace: {
+                    pageId: "954938847703306",
+                    accessToken: $fb_mp
+                  }
+                }
+              },
+              bunny: {
+                storageRegionHostname: "la.storage.bunnycdn.com",
+                sayulita_shared: {
+                  storageZoneName: "sayulitaandbeyond",
+                  storageApiKey: $bunny_say,
+                  cdnHostname: "sayulitaandbeyond.b-cdn.net"
+                }
+              },
+              telegram: { botToken: $tg_token, ownerChatId: "8609472348" },
+              pexels: { apiKey: $pexels_key }
+            }' > credentials.local.json
+
+      - name: Post to Facebook
+        if: steps.check.outputs.has_content == 'true'
+        env:
+          PENDING_FILE: pending-post-moroccanpalace.json
+        run: |
+          bash post-to-facebook.sh 2>&1 | tee _post-debug-moroccanpalace.log
+          EXIT=${PIPESTATUS[0]}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _post-debug-moroccanpalace.log
+          git commit -m "debug: moroccan palace post output" || true
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG || true
+          exit $EXIT
+
+      - name: Clear pending post
+        if: steps.check.outputs.has_content == 'true'
+        run: |
+          jq -n '{"caption": "", "photo_folder": "", "num_photos": 3, "property": "moroccan_palace"}' > pending-post-moroccanpalace.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pending-post-moroccanpalace.json
+          git commit -m "clear: post published to Facebook (The Moroccan Palace)"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG

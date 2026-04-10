@@ -106,6 +106,69 @@ case "$PROPERTY" in
     BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
     ;;
 
+  "moroccan_palace"|"the_moroccan_palace")
+    FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.moroccan_palace.accessToken' "$CREDS_FILE")
+    FB_PAGE_ID=$(jq -r '.facebook.pages.moroccan_palace.pageId' "$CREDS_FILE")
+    BUNNY_MP_KEY=$(jq -r '.bunny.moroccan_palace.storageApiKey // empty' "$CREDS_FILE")
+    PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
+    PAGE_TOKEN=$(exchange_for_page_token "$FB_ACCESS_TOKEN" "$FB_PAGE_ID")
+    if [ -n "$PAGE_TOKEN" ]; then
+      echo "  ✓ Exchanged user token for page token"
+      FB_ACCESS_TOKEN="$PAGE_TOKEN"
+    else
+      echo "  ⚠ Could not get page token — using stored token as-is"
+    fi
+    # Property-specific folders use moroccanpalace zone; activities use Pexels until zone is ready
+    case "$PHOTO_FOLDER" in
+      "Riad"|"Pool"|"Rooftop"|"Interiors"|"The Moroccan Palace")
+        IS_PROPERTY_FOLDER=true
+        BUNNY_ZONE="moroccanpalace"
+        BUNNY_KEY="$BUNNY_MP_KEY"
+        BUNNY_CDN_HOST="MoroccanPalace.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+      *)
+        BUNNY_ZONE="moroccanpalace"
+        BUNNY_KEY="$BUNNY_MP_KEY"
+        BUNNY_CDN_HOST="MoroccanPalace.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+    esac
+    BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
+    ;;
+
+  "lux"|"lux_property_management")
+    FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.lux_property_management.accessToken' "$CREDS_FILE")
+    FB_PAGE_ID=$(jq -r '.facebook.pages.lux_property_management.pageId' "$CREDS_FILE")
+    BUNNY_LUX_KEY=$(jq -r '.bunny.lux.storageApiKey // empty' "$CREDS_FILE")
+    BUNNY_SAY_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+    PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
+    PAGE_TOKEN=$(exchange_for_page_token "$FB_ACCESS_TOKEN" "$FB_PAGE_ID")
+    if [ -n "$PAGE_TOKEN" ]; then
+      echo "  ✓ Exchanged user token for page token"
+      FB_ACCESS_TOKEN="$PAGE_TOKEN"
+    else
+      echo "  ⚠ Could not get page token — using stored token as-is"
+    fi
+    # LUX uses sayulitaandbeyond for Sayulita content; lux zone for brand content when ready
+    case "$PHOTO_FOLDER" in
+      "Brand"|"Portfolio"|"Team")
+        IS_PROPERTY_FOLDER=true
+        BUNNY_ZONE="luxpropertymanagement"
+        BUNNY_KEY="${BUNNY_LUX_KEY:-}"
+        BUNNY_CDN_HOST="LuxPropertyManagement.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+      *)
+        BUNNY_ZONE="sayulitaandbeyond"
+        BUNNY_KEY="$BUNNY_SAY_KEY"
+        BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+    esac
+    BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
+    ;;
+
   *)  # Default: SkyHouse Sayulita
     IS_SKYHOUSE=true
     FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.skyhouse_sayulita.accessToken' "$CREDS_FILE")
@@ -224,7 +287,22 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
       "Land Adventures")       PEXELS_QUERY="ATV adventure Mexico jungle coastal" ;;
       "Weddings")              PEXELS_QUERY="beach wedding ceremony Mexico tropical" ;;
       "Chef")                  PEXELS_QUERY="private chef cooking Mexican cuisine beachfront" ;;
-      *)                       PEXELS_QUERY="$PHOTO_FOLDER Mexico travel Riviera Nayarit" ;;
+      # Moroccan Palace categories
+      "Riad")                  PEXELS_QUERY="luxury riad Morocco courtyard pool architecture" ;;
+      "Pool")                  PEXELS_QUERY="luxury pool Morocco riad villa rooftop" ;;
+      "Rooftop")               PEXELS_QUERY="Morocco rooftop terrace view sunset luxury" ;;
+      "Interiors")             PEXELS_QUERY="Morocco interior luxury riad decor tiles" ;;
+      "Medina")                PEXELS_QUERY="Marrakech medina Morocco souk architecture" ;;
+      "Hammam")                PEXELS_QUERY="Morocco hammam spa wellness luxury" ;;
+      "Moroccan Food")         PEXELS_QUERY="Moroccan cuisine tagine food traditional" ;;
+      "Desert")                PEXELS_QUERY="Sahara desert Morocco dunes camel sunset" ;;
+      "Atlas Mountains")       PEXELS_QUERY="Atlas Mountains Morocco hiking landscape" ;;
+      "Morocco Surf")          PEXELS_QUERY="surfing Morocco Atlantic waves beach" ;;
+      "Morocco Culture")       PEXELS_QUERY="Morocco culture festival traditional music market" ;;
+      # LUX Property Management categories
+      "Portfolio")             PEXELS_QUERY="luxury villa portfolio property management ocean" ;;
+      "Brand")                 PEXELS_QUERY="luxury property management lifestyle concierge" ;;
+      *)                       PEXELS_QUERY="$PHOTO_FOLDER luxury travel lifestyle" ;;
     esac
   fi
 
