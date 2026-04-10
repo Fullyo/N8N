@@ -1,44 +1,44 @@
 === Facebook Post Creator ===
   Property:  moroccan_palace
-  Category:  Diving
+  Category:  Kite Surfing
   Photos:    4
-  Caption:   The wind drops in June and the Sea of Cortez transforms.
+  Caption:   La Ventana is one of the best kite surfing destinations in the world.
 
-Flat water. Visibility...
+From Nove...
 
   ⚠ Could not get page token — using stored token as-is
---- Scanning Bunny CDN (themoroccanpalace/La Ventana/Diving/) ---
+--- Scanning Bunny CDN (themoroccanpalace/La Ventana/Kite Surfing/) ---
   Found 0 images in Bunny CDN
 
---- Pexels fallback: "scuba diving Sea of Cortez Baja California whale sharks clear blue water Mexico" ---
+--- Pexels fallback: "kite surfing Baja California Mexico wind beach sea" ---
   Found 20 Pexels photos
 
 --- Downloading from Pexels → saving to Bunny CDN ---
-  Zone: themoroccanpalace/La Ventana/Diving/
+  Zone: themoroccanpalace/La Ventana/Kite Surfing/
 
-  Downloading pexels-15848619 ...
-  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
-  Downloading pexels-7905793 ...
-  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
-  Downloading pexels-4777688 ...
-  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
-  Downloading pexels-5967796 ...
-  ✗ Bunny upload failed (HTTP 401) — using Pexels URL directly
+  Downloading pexels-13176903 ...
+  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-13176903.jpg (HTTP 201)
+  Downloading pexels-18553964 ...
+  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-18553964.jpg (HTTP 201)
+  Downloading pexels-19059873 ...
+  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-19059873.jpg (HTTP 201)
+  Downloading pexels-16684231 ...
+  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-16684231.jpg (HTTP 201)
 
 ⚠️  Pexels used — photos now saved in Bunny for future reuse.
 
 --- Uploading to Facebook (page: 954938847703306) ---
-  → pexels-photo-15848619.jpeg?auto=compress&cs=tinysrgb&dpr=2&h
-  ✓ ID: 122119931793229271
-  → pexels-photo-7905793.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=
-  ✓ ID: 122119931847229271
-  → pexels-photo-4777688.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=
-  ✓ ID: 122119931889229271
-  → pexels-photo-5967796.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=
-  ✓ ID: 122119931943229271
+  → pexels-13176903.jpg
+  ✓ ID: 122119932363229271
+  → pexels-18553964.jpg
+  ✓ ID: 122119932417229271
+  → pexels-19059873.jpg
+  ✓ ID: 122119932471229271
+  → pexels-16684231.jpg
+  ✓ ID: 122119932519229271
 
 --- Publishing post ---
 
-✓ Published! Post ID: 954938847703306_122119931979229271
-  📦 4 photos saved to themoroccanpalace/La Ventana/Diving/ for reuse
+✓ Published! Post ID: 954938847703306_122119932555229271
+  📦 4 photos saved to themoroccanpalace/La Ventana/Kite Surfing/ for reuse
 === DONE ===
