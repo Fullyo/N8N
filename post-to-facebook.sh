@@ -109,7 +109,7 @@ case "$PROPERTY" in
   "moroccan_palace"|"the_moroccan_palace")
     FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.moroccan_palace.accessToken' "$CREDS_FILE")
     FB_PAGE_ID=$(jq -r '.facebook.pages.moroccan_palace.pageId' "$CREDS_FILE")
-    BUNNY_MP_KEY=$(jq -r '.bunny.moroccan_palace.storageApiKey // empty' "$CREDS_FILE")
+    BUNNY_SAY_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey // empty' "$CREDS_FILE")
     PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
     PAGE_TOKEN=$(exchange_for_page_token "$FB_ACCESS_TOKEN" "$FB_PAGE_ID")
     if [ -n "$PAGE_TOKEN" ]; then
@@ -118,20 +118,22 @@ case "$PROPERTY" in
     else
       echo "  ⚠ Could not get page token — using stored token as-is"
     fi
-    # Property-specific folders use moroccanpalace zone; activities use Pexels until zone is ready
+    # Property-specific folders: use moroccanpalace zone if key available, else Pexels
+    # Activity/Pexels photos: cache in sayulita_shared zone under moroccan-palace/ subfolder
     case "$PHOTO_FOLDER" in
       "Riad"|"Pool"|"Rooftop"|"Interiors"|"The Moroccan Palace")
         IS_PROPERTY_FOLDER=true
         BUNNY_ZONE="moroccanpalace"
-        BUNNY_KEY="$BUNNY_MP_KEY"
+        BUNNY_KEY="${BUNNY_MP_KEY:-}"
         BUNNY_CDN_HOST="MoroccanPalace.b-cdn.net"
         BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
         ;;
       *)
-        BUNNY_ZONE="moroccanpalace"
-        BUNNY_KEY="$BUNNY_MP_KEY"
-        BUNNY_CDN_HOST="MoroccanPalace.b-cdn.net"
-        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        # No dedicated MP zone yet — cache Pexels photos in sayulita_shared
+        BUNNY_ZONE="sayulitaandbeyond"
+        BUNNY_KEY="$BUNNY_SAY_KEY"
+        BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+        BUNNY_SUBFOLDER="moroccan-palace/$PHOTO_FOLDER/"
         ;;
     esac
     BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
