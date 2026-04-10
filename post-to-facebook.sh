@@ -137,6 +137,8 @@ case "$PROPERTY" in
         ;;
     esac
     BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
+    # themoroccanpalace zone is in the default region (Frankfurt), not LA
+    BUNNY_STORAGE_API="https://storage.bunnycdn.com"
     ;;
 
   "lux"|"lux_property_management")
