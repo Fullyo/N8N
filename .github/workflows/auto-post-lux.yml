@@ -37,6 +37,7 @@ jobs:
         if: steps.check.outputs.has_content == 'true'
         env:
           BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
+          BUNNY_SEMPREAVANTI_KEY: ${{ secrets.BUNNY_SEMPREAVANTI_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
@@ -44,13 +45,15 @@ jobs:
           jq -n \
             --arg fb_lux "$FB_LUX" \
             --arg bunny_say "$BUNNY_SAYULITA_KEY" \
+            --arg bunny_csa "$BUNNY_SEMPREAVANTI_KEY" \
             --arg pexels "$PEXELS_API_KEY" \
             --arg tg "$TELEGRAM_BOT_TOKEN" \
             '{
               facebook: { pages: { lux_property_management: { pageId: "999599493240965", accessToken: $fb_lux } } },
               bunny: {
                 storageRegionHostname: "la.storage.bunnycdn.com",
-                sayulita_shared: { storageZoneName: "sayulitaandbeyond", storageApiKey: $bunny_say, cdnHostname: "sayulitaandbeyond.b-cdn.net" }
+                sayulita_shared: { storageZoneName: "sayulitaandbeyond", storageApiKey: $bunny_say, cdnHostname: "sayulitaandbeyond.b-cdn.net" },
+                casasempreavanti: { storageZoneName: "villassempreavanti", storageApiKey: $bunny_csa, cdnHostname: "VillasSempreAvanti.b-cdn.net" }
               },
               pexels: { apiKey: $pexels },
               telegram: { botToken: $tg, ownerChatId: "8609472348" }

@@ -144,8 +144,8 @@ case "$PROPERTY" in
   "lux"|"lux_property_management")
     FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.lux_property_management.accessToken' "$CREDS_FILE")
     FB_PAGE_ID=$(jq -r '.facebook.pages.lux_property_management.pageId' "$CREDS_FILE")
-    BUNNY_LUX_KEY=$(jq -r '.bunny.lux.storageApiKey // empty' "$CREDS_FILE")
     BUNNY_SAY_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+    BUNNY_CSA_KEY=$(jq -r '.bunny.casasempreavanti.storageApiKey // empty' "$CREDS_FILE")
     PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
     PAGE_TOKEN=$(exchange_for_page_token "$FB_ACCESS_TOKEN" "$FB_PAGE_ID")
     if [ -n "$PAGE_TOKEN" ]; then
@@ -154,12 +154,31 @@ case "$PROPERTY" in
     else
       echo "  ⚠ Could not get page token — using stored token as-is"
     fi
-    # LUX is B2B/owner-facing — stock photos are fine for all categories
-    # Use sayulitaandbeyond zone to cache Pexels photos, lux/ subfolder
-    BUNNY_ZONE="sayulitaandbeyond"
-    BUNNY_KEY="$BUNNY_SAY_KEY"
-    BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
-    BUNNY_SUBFOLDER="lux/$PHOTO_FOLDER/"
+    # LUX showcases managed properties — use real property photos from existing zones
+    # Villa/property folders → villassempreavanti zone (real villa photos)
+    # Destination/activity folders → sayulitaandbeyond zone (real Sayulita area photos)
+    # Conceptual B2B content → sayulitaandbeyond zone, lux/ subfolder (Pexels fallback OK)
+    case "$PHOTO_FOLDER" in
+      "Villa Luisa"|"Villa Pietro"|"Villas Sempre Avanti"|"Villa")
+        BUNNY_ZONE="villassempreavanti"
+        BUNNY_KEY="$BUNNY_CSA_KEY"
+        BUNNY_CDN_HOST="VillasSempreAvanti.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+      "Surf"|"Yoga"|"Restaurants"|"Beaches"|"Riviera Nayarit"|"Sayulita"|"San Pancho")
+        BUNNY_ZONE="sayulitaandbeyond"
+        BUNNY_KEY="$BUNNY_SAY_KEY"
+        BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
+        ;;
+      *)
+        # Conceptual content (Revenue, Transparency, etc.) — Pexels fallback OK
+        BUNNY_ZONE="sayulitaandbeyond"
+        BUNNY_KEY="$BUNNY_SAY_KEY"
+        BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+        BUNNY_SUBFOLDER="lux/$PHOTO_FOLDER/"
+        ;;
+    esac
     BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
     ;;
 
