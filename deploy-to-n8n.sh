@@ -12,6 +12,7 @@ SKYHOUSE_WORKFLOW="$SCRIPT_DIR/skyhouse-sayulita-social-poster.json"
 TELEGRAM_WORKFLOW="$SCRIPT_DIR/telegram-assistant.json"
 VSA_WORKFLOW="$SCRIPT_DIR/villas-sempre-avanti-social-poster.json"
 MP_WORKFLOW="$SCRIPT_DIR/moroccan-palace-social-poster.json"
+LUX_WORKFLOW="$SCRIPT_DIR/lux-property-management-social-poster.json"
 
 # ── Read credentials ─────────────────────────────────────────
 N8N_BASE_URL="https://fullyo.app.n8n.cloud"
@@ -19,6 +20,7 @@ N8N_API_KEY=$(jq -r '.n8n.apiKey' "$CREDS_FILE")
 FB_ACCESS_TOKEN=$(jq -r '.facebook.pages.skyhouse_sayulita.accessToken' "$CREDS_FILE")
 FB_VSA_TOKEN=$(jq -r '.facebook.pages.casasempreavanti.accessToken' "$CREDS_FILE")
 FB_MP_TOKEN=$(jq -r '.facebook.pages.moroccan_palace.accessToken' "$CREDS_FILE")
+FB_LUX_TOKEN=$(jq -r '.facebook.pages.lux_property_management.accessToken' "$CREDS_FILE")
 ANTHROPIC_API_KEY=$(jq -r '.anthropic.apiKey' "$CREDS_FILE")
 BUNNY_SKYHOUSE_KEY=$(jq -r '.bunny.skyhouse.storageApiKey' "$CREDS_FILE")
 BUNNY_SAYULITA_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
@@ -109,6 +111,10 @@ CRED_ID_FB_MOROCCANPALACE=$(get_or_create_cred \
   "Facebook Moroccan Palace Token" "httpHeaderAuth" \
   "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_MP_TOKEN\"}")
 
+CRED_ID_FB_LUX=$(get_or_create_cred \
+  "Facebook LUX Token" "httpHeaderAuth" \
+  "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_LUX_TOKEN\"}")
+
 CRED_ID_PEXELS=$(get_or_create_cred \
   "Pexels API" "httpHeaderAuth" \
   "{\"name\":\"Authorization\",\"value\":\"$PEXELS_API_KEY\"}")
@@ -132,7 +138,8 @@ deploy_workflow() {
     -e "s/CRED_ID_BUNNY_SAYULITA/$CRED_ID_BUNNY_SAYULITA/g" \
     -e "s/CRED_ID_TELEGRAM/$CRED_ID_TELEGRAM/g" \
     -e "s/CRED_ID_FB_CASASEMPREAVANTI/$CRED_ID_FB_CASASEMPREAVANTI/g" \
-    -e "s/CRED_ID_BUNNY_CASASEMPREAVANTI/$CRED_ID_BUNNY_CASASEMPREAVANTI/g")
+    -e "s/CRED_ID_BUNNY_CASASEMPREAVANTI/$CRED_ID_BUNNY_CASASEMPREAVANTI/g" \
+    -e "s/CRED_ID_FB_LUX/$CRED_ID_FB_LUX/g")
 
   # Remove 'active' field — managed separately
   json=$(echo "$json" | jq 'del(.active)')
@@ -189,6 +196,7 @@ deploy_workflow() {
 SKYHOUSE_ID=$(deploy_workflow "SkyHouse Sayulita — Daily Social Post" "$SKYHOUSE_WORKFLOW")
 VSA_ID=$(deploy_workflow "Villas Sempre Avanti — Daily Social Post" "$VSA_WORKFLOW")
 MP_ID=$(deploy_workflow "The Moroccan Palace — Daily Social Post" "$MP_WORKFLOW")
+LUX_ID=$(deploy_workflow "LUX Property Management — Daily Social Post" "$LUX_WORKFLOW")
 TELEGRAM_ID="(managed separately — not redeployed)"
 echo ""
 
@@ -199,10 +207,12 @@ UPDATED=$(jq \
   --arg wsky "$SKYHOUSE_ID" \
   --arg wvsa "$VSA_ID" \
   --arg wmp "$MP_ID" \
+  --arg wlux "$LUX_ID" \
   --arg wtg "$TELEGRAM_ID" \
   --arg fb "$CRED_ID_FACEBOOK" \
   --arg fbvsa "$CRED_ID_FB_CASASEMPREAVANTI" \
   --arg fbmp "$CRED_ID_FB_MOROCCANPALACE" \
+  --arg fblux "$CRED_ID_FB_LUX" \
   --arg ant "$CRED_ID_ANTHROPIC" \
   --arg bsky "$CRED_ID_BUNNY_SKYHOUSE" \
   --arg bsay "$CRED_ID_BUNNY_SAYULITA" \
@@ -212,10 +222,12 @@ UPDATED=$(jq \
   '.n8n.workflowIds.skyhouse = $wsky
    | .n8n.workflowIds.villasSempreAvanti = $wvsa
    | .n8n.workflowIds.moroccanPalace = $wmp
+   | .n8n.workflowIds.lux = $wlux
    | .n8n.workflowIds.telegramAssistant = $wtg
    | .n8n.credentialIds.facebookSkyhouse = $fb
    | .n8n.credentialIds.facebookVSA = $fbvsa
    | .n8n.credentialIds.facebookMoroccanPalace = $fbmp
+   | .n8n.credentialIds.facebookLux = $fblux
    | .n8n.credentialIds.anthropic = $ant
    | .n8n.credentialIds.bunnySkyhouse = $bsky
    | .n8n.credentialIds.bunnySayulita = $bsay

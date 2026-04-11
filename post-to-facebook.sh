@@ -154,22 +154,12 @@ case "$PROPERTY" in
     else
       echo "  ⚠ Could not get page token — using stored token as-is"
     fi
-    # LUX uses sayulitaandbeyond for Sayulita content; lux zone for brand content when ready
-    case "$PHOTO_FOLDER" in
-      "Brand"|"Portfolio"|"Team")
-        IS_PROPERTY_FOLDER=true
-        BUNNY_ZONE="luxpropertymanagement"
-        BUNNY_KEY="${BUNNY_LUX_KEY:-}"
-        BUNNY_CDN_HOST="LuxPropertyManagement.b-cdn.net"
-        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
-        ;;
-      *)
-        BUNNY_ZONE="sayulitaandbeyond"
-        BUNNY_KEY="$BUNNY_SAY_KEY"
-        BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
-        BUNNY_SUBFOLDER="$PHOTO_FOLDER/"
-        ;;
-    esac
+    # LUX is B2B/owner-facing — stock photos are fine for all categories
+    # Use sayulitaandbeyond zone to cache Pexels photos, lux/ subfolder
+    BUNNY_ZONE="sayulitaandbeyond"
+    BUNNY_KEY="$BUNNY_SAY_KEY"
+    BUNNY_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+    BUNNY_SUBFOLDER="lux/$PHOTO_FOLDER/"
     BUNNY_SUBFOLDER_ENC="${BUNNY_SUBFOLDER// /%20}"
     ;;
 

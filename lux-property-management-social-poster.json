@@ -1,0 +1,216 @@
+{
+  "name": "LUX Property Management \u2014 Daily Social Post",
+  "nodes": [
+    {
+      "id": "lux-0001",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 460],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 17 * * 1,3,5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "lux-0002",
+      "name": "Get Day Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const today = new Date();\nconst dayIndex = today.getDay();\n\nconst getWeekNumber = (d) => {\n  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));\n  const dayNum = date.getUTCDay() || 7;\n  date.setUTCDate(date.getUTCDate() + 4 - dayNum);\n  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));\n  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);\n};\nconst weekNum = getWeekNumber(today);\nconst isOddWeek = weekNum % 2 !== 0;\n\n// Mon/Wed/Fri posts — 2 alternating content types per day\nconst configMap = {\n  1: isOddWeek\n    ? {\n        category: 'Why Professional Management',\n        postType: 'education',\n        topic: 'Most luxury villa owners in Riviera Nayarit leave significant revenue on the table. Not because of bad properties — but because managing guests, staff, and bookings is a full-time job that most owners cannot do from a distance.',\n        audience: 'Luxury property owners in Punta de Mita, Sayulita, San Pancho',\n        postStyle: 'Insightful, direct, speaks to pain points — long-distance ownership, missed bookings, staff issues',\n        ctaStyle: 'DM us or message on WhatsApp to learn how LUX can manage your property',\n        hookExample: 'Owning a luxury villa in Riviera Nayarit should feel like an asset. Not a second job.',\n        pexelsQuery: 'luxury villa pool infinity Mexico Riviera Nayarit Pacific ocean'\n      }\n    : {\n        category: 'Revenue Optimization',\n        postType: 'revenue',\n        topic: 'LUX owners consistently outperform the market. Direct booking channels, strategic pricing, premium concierge that drives 5-star reviews, and the right guest profile. Every decision we make is oriented around your return.',\n        audience: 'Property owners who want to maximize rental income',\n        postStyle: 'Confident, data-implied, business-minded but not cold',\n        ctaStyle: 'Ask us about revenue potential for your property — DM or WhatsApp',\n        hookExample: 'Your villa generates revenue while you sleep. That is what proper management looks like.',\n        pexelsQuery: 'luxury villa rental income investment property Mexico Pacific'\n      },\n  3: isOddWeek\n    ? {\n        category: 'Full-Service Staffing',\n        postType: 'services',\n        topic: 'LUX handles everything: private chefs, professional housekeepers, concierge, airport transfers, activity bookings. The staff we bring in are vetted, trained, and represent your property as their own. Guests feel it immediately.',\n        audience: 'Property owners tired of managing staff or dealing with guest complaints',\n        postStyle: 'Reassuring, operational, shows depth of service',\n        ctaStyle: 'Learn how we staff and operate your property — DM or WhatsApp',\n        hookExample: 'A private chef. A concierge who knows every restaurant in Sayulita. Housekeeping that leaves a review.',\n        pexelsQuery: 'private chef luxury villa Mexico service concierge butler resort'\n      }\n    : {\n        category: 'Direct Booking Advantage',\n        postType: 'strategy',\n        topic: 'Every booking through Airbnb or VRBO costs your property 15–20% in platform fees. LUX builds and manages direct booking websites for your property, retains repeat guests, and builds the brand around your villa — not the platform.',\n        audience: 'Property owners frustrated with OTA fees and lack of control',\n        postStyle: 'Strategic, slightly provocative, positions LUX as forward-thinking',\n        ctaStyle: 'Ask us how we reduce OTA dependency — DM or WhatsApp',\n        hookExample: 'Airbnb and VRBO take up to 20% of your revenue. There is a better way.',\n        pexelsQuery: 'luxury villa website booking direct travel Mexico estate pool'\n      },\n  5: isOddWeek\n    ? {\n        category: 'Riviera Nayarit Luxury Market',\n        postType: 'market',\n        topic: 'Punta de Mita, Sayulita, and San Pancho are among the fastest-growing luxury destinations in Latin America. International demand for high-end villa rentals is accelerating. Owners who invest in professional management now are building long-term asset value.',\n        audience: 'Property owners and investors interested in the Riviera Nayarit market',\n        postStyle: 'Market-informed, aspirational, positions LUX as the insider',\n        ctaStyle: 'Talk to us about your property — DM or WhatsApp',\n        hookExample: 'Riviera Nayarit is not a trend. It is one of Mexico\\'s most sought-after luxury markets.',\n        pexelsQuery: 'Punta Mita Sayulita Riviera Nayarit Mexico luxury beach resort Pacific'\n      }\n    : {\n        category: 'Owner Transparency',\n        postType: 'technology',\n        topic: 'LUX owners have full visibility into their property at all times — booking calendar, revenue dashboard, maintenance logs, guest reviews. No surprises. No mystery. Just a clear picture of how your asset is performing.',\n        audience: 'Property owners who value accountability and visibility',\n        postStyle: 'Trust-building, professional, positions LUX as reliable and accountable',\n        ctaStyle: 'See how our owner dashboard works — DM or WhatsApp',\n        hookExample: 'You should know exactly what is happening at your property. Always.',\n        pexelsQuery: 'property management dashboard technology transparency luxury real estate'\n      }\n};\n\nconst cfg = configMap[dayIndex] || configMap[1];\n\nreturn [{\n  json: {\n    dayIndex,\n    dayName: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dayIndex],\n    runDate: today.toISOString().split('T')[0],\n    weekNum,\n    category: cfg.category,\n    postType: cfg.postType,\n    topic: cfg.topic,\n    audience: cfg.audience,\n    postStyle: cfg.postStyle,\n    ctaStyle: cfg.ctaStyle,\n    hookExample: cfg.hookExample,\n    pexelsQuery: cfg.pexelsQuery\n  }\n}];"
+      }
+    },
+    {
+      "id": "lux-0003",
+      "name": "Fetch Pexels Photos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 460],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_PEXELS",
+          "name": "Pexels API"
+        }
+      },
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.pexels.com/v1/search?query={{ encodeURIComponent($json.pexelsQuery) }}&per_page=15&orientation=landscape",
+        "options": {}
+      }
+    },
+    {
+      "id": "lux-0004",
+      "name": "Pick 3 Photos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const prev = $input.first();\nconst photos = prev.json.photos || [];\n\nif (photos.length === 0) {\n  throw new Error('No Pexels photos returned for query: ' + prev.json.pexelsQuery);\n}\n\nconst shuffled = photos.sort(() => Math.random() - 0.5);\nconst selected = shuffled.slice(0, 3);\n\nconst dayConfig = $('Get Day Config').first().json;\n\nreturn selected.map((p, i) => ({\n  json: {\n    ...dayConfig,\n    photoIndex: i,\n    photoUrl: p.src.large2x || p.src.large,\n    photoId: p.id,\n    photographer: p.photographer\n  }\n}));"
+      }
+    },
+    {
+      "id": "lux-0005",
+      "name": "Upload Photo to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 460],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FB_LUX",
+          "name": "Facebook LUX Token"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/999599493240965/photos",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "url", "value": "={{ $json.photoUrl }}" },
+            { "name": "published", "value": "false" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "lux-0006",
+      "name": "Collect Upload Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst photoIds = items.map(i => i.json.id).filter(Boolean);\n\nif (photoIds.length === 0) {\n  throw new Error('No photos uploaded to Facebook successfully');\n}\n\nconst dayConfig = $('Get Day Config').first().json;\n\nreturn [{ json: { ...dayConfig, photoIds } }];"
+      }
+    },
+    {
+      "id": "lux-0007",
+      "name": "Build Claude Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\n\nconst systemPrompt = `You are the social media content creator for LUX Property Management, a full-service luxury property management company operating in Riviera Nayarit, Mexico — Punta de Mita, Sayulita, and San Pancho.\n\nABOUT LUX PROPERTY MANAGEMENT:\n- Full-service management for luxury villas and estates in Riviera Nayarit\n- Services: professional staffing (concierge, private chefs, housekeepers, cleaning crews), direct booking website creation and management, strategic revenue optimization, premium concierge service, top-of-the-line property management system with full owner transparency\n- Focus on luxury properties, large groups, high-end guest experiences\n- Region: Punta de Mita, Sayulita, San Pancho, Riviera Nayarit, Nayarit, Mexico — one of Latin America's fastest-growing luxury destinations\n- Managed properties include luxury villas and estates with pools, ocean views, private chefs, and concierge services\n\nTARGET AUDIENCE: Luxury property owners in Riviera Nayarit who want to maximize their rental income, reduce the stress of remote management, and work with a trusted local partner.\n\nCONTENT GOAL: Generate leads — property owners should feel understood, see the value of professional management, and want to reach out to LUX for a conversation.\n\nCTA: Invite them to DM on Facebook or contact via WhatsApp. No website yet.\n\nABSOLUTE RULES:\n- Owner-facing only — never write from a guest booking perspective\n- No markdown: no asterisks, no bold, no headers, no bullet points\n- Plain text only\n- 100-200 words excluding hashtags\n- Hashtags at the very end only\n- Never mention specific commission rates or pricing\n- Never claim services LUX does not offer\n\nBRAND VOICE:\n- Professional, knowledgeable, warm — a trusted local partner, not a corporate vendor\n- Confident about the Riviera Nayarit market and what premium management delivers\n- Speak directly to the property owner: ROI, peace of mind, quality guests, zero headaches\n- Lead with a sharp insight, question, or statement that resonates with luxury property owners\n- Understands the difference between owning a property and operating one\n\nPOST STRUCTURE:\n1. Hook (1-2 lines): A question, sharp insight, or provocative statement aimed at luxury property owners\n2. Body (2-3 paragraphs): Value-driven, specific to today's category, grounded in real LUX capabilities\n3. CTA: Invite them to DM or WhatsApp — soft, professional, not pushy\n4. Hashtags: 5-7 relevant ones at the very end\n\nHASHTAGS TO DRAW FROM: #LUXPropertyManagement #RivieraNayarit #PuntaDeMita #Sayulita #SanPancho #LuxuryVillaManagement #PropertyManagement #MexicoVilla #VacationRentalManagement #DirectBooking #VillaManagement #LuxuryTravel #NayaritMexico #VillaOwner`;\n\nconst userPrompt = `Generate a Facebook post for LUX Property Management.\n\nToday's category: ${item.json.category}\nPost type: ${item.json.postType}\nTopic focus: ${item.json.topic}\nAudience: ${item.json.audience}\nPost style: ${item.json.postStyle}\nCTA: ${item.json.ctaStyle}\nHook reference (adapt freely, don't copy): ${item.json.hookExample}\n\nPlain text only. No markdown. 100-200 words. Hashtags at end only. Output the post and nothing else.`;\n\nreturn [{\n  json: {\n    ...item.json,\n    claudeRequestBody: JSON.stringify({\n      model: 'claude-opus-4-6',\n      max_tokens: 1024,\n      system: systemPrompt,\n      messages: [{ role: 'user', content: userPrompt }]\n    })\n  }\n}];"
+      }
+    },
+    {
+      "id": "lux-0008",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 460],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_ANTHROPIC",
+          "name": "Anthropic API"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.claudeRequestBody }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "lux-0009",
+      "name": "Parse & Validate Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst content = item.json.content;\n\nif (!content || !Array.isArray(content) || content.length === 0) {\n  throw new Error('Claude returned empty content: ' + JSON.stringify(item.json));\n}\n\nconst caption = content[0].text?.trim();\nif (!caption || caption.length < 50) {\n  throw new Error('Caption too short or missing: ' + caption);\n}\n\nconst prevData = $('Collect Upload Results').first().json;\n\nreturn [{\n  json: {\n    ...prevData,\n    caption\n  }\n}];"
+      }
+    },
+    {
+      "id": "lux-0010",
+      "name": "Build Facebook Post Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\n\nconst attachedMedia = item.json.photoIds.map(id => ({ media_fbid: id }));\n\nconst postBody = {\n  message: item.json.caption,\n  attached_media: attachedMedia,\n  published: true\n};\n\nreturn [{\n  json: {\n    ...item.json,\n    postBody: JSON.stringify(postBody)\n  }\n}];"
+      }
+    },
+    {
+      "id": "lux-0011",
+      "name": "Post to Facebook Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2440, 460],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CRED_ID_FB_LUX",
+          "name": "Facebook LUX Token"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/999599493240965/feed",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.postBody }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "lux-err",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 680],
+      "parameters": {}
+    },
+    {
+      "id": "lux-log",
+      "name": "Log Error to Console",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 680],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const err = $input.first().json;\nconsole.error('LUX Social Post Error:', JSON.stringify(err, null, 2));\nreturn $input.all();"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule": { "main": [[{ "node": "Get Day Config", "type": "main", "index": 0 }]] },
+    "Get Day Config":  { "main": [[{ "node": "Fetch Pexels Photos", "type": "main", "index": 0 }]] },
+    "Fetch Pexels Photos": { "main": [[{ "node": "Pick 3 Photos", "type": "main", "index": 0 }]] },
+    "Pick 3 Photos":   { "main": [[{ "node": "Upload Photo to Facebook", "type": "main", "index": 0 }]] },
+    "Upload Photo to Facebook": { "main": [[{ "node": "Collect Upload Results", "type": "main", "index": 0 }]] },
+    "Collect Upload Results": { "main": [[{ "node": "Build Claude Request", "type": "main", "index": 0 }]] },
+    "Build Claude Request": { "main": [[{ "node": "Call Claude API", "type": "main", "index": 0 }]] },
+    "Call Claude API": { "main": [[{ "node": "Parse & Validate Post", "type": "main", "index": 0 }]] },
+    "Parse & Validate Post": { "main": [[{ "node": "Build Facebook Post Body", "type": "main", "index": 0 }]] },
+    "Build Facebook Post Body": { "main": [[{ "node": "Post to Facebook Page", "type": "main", "index": 0 }]] },
+    "Error Trigger":   { "main": [[{ "node": "Log Error to Console", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
