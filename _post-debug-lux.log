@@ -1,0 +1,37 @@
+=== Facebook Post Creator ===
+  Property:  lux_property_management
+  Category:  Riviera Nayarit
+  Photos:    3
+  Caption:   Owning a luxury villa in Riviera Nayarit should feel like an asset. Not a second...
+
+  ⚠ Could not get page token — using stored token as-is
+--- Scanning Bunny CDN (sayulitaandbeyond/lux/Riviera Nayarit/) ---
+  Found 0 images in Bunny CDN
+
+--- Pexels fallback: "luxury villa pool infinity ocean view Mexico Riviera Nayarit Pacific" ---
+  Found 20 Pexels photos
+
+--- Downloading from Pexels → saving to Bunny CDN ---
+  Zone: sayulitaandbeyond/lux/Riviera Nayarit/
+
+  Downloading pexels-photo-20122034.jpeg?auto=compress&cs=tinysr ...
+  ✓ Saved to Bunny: lux/Riviera Nayarit/pexels-20122034.jpg (HTTP 201)
+  Downloading pexels-photo-221457.jpeg?auto=compress&cs=tinysrgb ...
+  ✓ Saved to Bunny: lux/Riviera Nayarit/pexels-221457.jpg (HTTP 201)
+  Downloading pexels-photo-6380681.jpeg?auto=compress&cs=tinysrg ...
+  ✓ Saved to Bunny: lux/Riviera Nayarit/pexels-6380681.jpg (HTTP 201)
+
+⚠️  Pexels used — photos now saved in Bunny for future reuse.
+
+--- Uploading to Facebook (page: 999599493240965) ---
+  → pexels-20122034.jpg
+  ✓ ID: 122108232194955448
+  → pexels-221457.jpg
+  ✓ ID: 122108232236955448
+  → pexels-6380681.jpg
+  ✓ ID: 122108232290955448
+
+--- Publishing post ---
+
+✓ Published! Post ID: 999599493240965_122108232326955448
+post-to-facebook.sh: line 470: PEXELS_USED: unbound variable
