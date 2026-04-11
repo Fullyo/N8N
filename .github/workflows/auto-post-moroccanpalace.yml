@@ -39,9 +39,9 @@ jobs:
           BUNNY_MOROCCANPALACE_KEY: ${{ secrets.BUNNY_MOROCCANPALACE_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
         run: |
           FB_MP=$(jq -r '.facebook.moroccan_palace.accessToken' fb-tokens.json)
-          # Key from GitHub Secret takes priority; fall back to fb-tokens.json
           BUNNY_MP_FROM_FILE=$(jq -r '.bunny.themoroccanpalace.storageApiKey // empty' fb-tokens.json)
           BUNNY_MP="${BUNNY_MOROCCANPALACE_KEY:-$BUNNY_MP_FROM_FILE}"
           jq -n \
@@ -49,6 +49,7 @@ jobs:
             --arg bunny_mp "$BUNNY_MP" \
             --arg pexels "$PEXELS_API_KEY" \
             --arg tg "$TELEGRAM_BOT_TOKEN" \
+            --arg google_key "$GOOGLE_SEARCH_API_KEY" \
             '{
               facebook: { pages: { moroccan_palace: { pageId: "954938847703306", accessToken: $fb_mp } } },
               bunny: {
@@ -56,6 +57,7 @@ jobs:
                 themoroccanpalace: { storageZoneName: "themoroccanpalace", storageApiKey: $bunny_mp, cdnHostname: "themoroccanpalace.b-cdn.net" }
               },
               pexels: { apiKey: $pexels },
+              google: { searchApiKey: $google_key },
               telegram: { botToken: $tg, ownerChatId: "8609472348" }
             }' > credentials.local.json
 

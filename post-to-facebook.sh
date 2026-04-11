@@ -241,8 +241,10 @@ BUNNY_COUNT=0
 BUNNY_COUNT=${BUNNY_COUNT:-0}
 echo "  Found $BUNNY_COUNT images in Bunny CDN"
 
-# ── Step 2: Pexels fallback — fetch AND save to Bunny ─────────
-PEXELS_USED=false
+# ── Step 2: Internet fallback (Google Images → Pexels) ───────────
+INTERNET_USED=false
+SOURCE_LABEL=""
+
 if [ "$BUNNY_COUNT" -eq 0 ]; then
 
   # Hard stop for property-specific folders — never use stock photos for actual villa
@@ -258,91 +260,131 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
     exit 1
   fi
 
-  if [ -z "$PEXELS_API_KEY" ]; then
-    echo "ERROR: Bunny CDN empty and PEXELS_API_KEY not set."
-    echo "Add it to GitHub → Settings → Secrets → PEXELS_API_KEY"
-    exit 1
-  fi
-
-  # Build search query
+  # ── Build search query ──────────────────────────────────────────
   if [ -n "$PEXELS_QUERY_OVERRIDE" ]; then
-    PEXELS_QUERY="$PEXELS_QUERY_OVERRIDE"
+    SEARCH_QUERY="$PEXELS_QUERY_OVERRIDE"
   else
     case "$PHOTO_FOLDER" in
       # VSA-specific categories
-      "Villa Luisa")           PEXELS_QUERY="luxury beachfront villa pool Mexico tropical" ;;
-      "Villa Pietro")          PEXELS_QUERY="luxury villa ocean view Mexico intimate pool" ;;
-      "Villas Sempre Avanti")  PEXELS_QUERY="luxury estate beachfront Mexico Riviera Nayarit" ;;
+      "Villa Luisa")           SEARCH_QUERY="luxury beachfront villa pool Mexico tropical" ;;
+      "Villa Pietro")          SEARCH_QUERY="luxury villa ocean view Mexico intimate pool" ;;
+      "Villas Sempre Avanti")  SEARCH_QUERY="luxury estate beachfront Mexico Riviera Nayarit" ;;
       # Shared Sayulita/Riviera Nayarit categories
-      "Surf")                  PEXELS_QUERY="surfing Mexico Pacific waves beach" ;;
-      "Yoga")                  PEXELS_QUERY="yoga beach sunrise Mexico tropical" ;;
-      "Restaurants")           PEXELS_QUERY="Mexican food tacos street food" ;;
-      "Marieta Islands")       PEXELS_QUERY="Marieta Islands hidden beach Mexico" ;;
-      "Monkey Mountain")       PEXELS_QUERY="jungle hiking Mexico wildlife monkeys" ;;
-      "Golf")                  PEXELS_QUERY="golf course tropical Mexico ocean" ;;
-      "Fishing Charter")       PEXELS_QUERY="deep sea fishing Mexico Pacific" ;;
-      "Whale Tours")           PEXELS_QUERY="humpback whale ocean Mexico Pacific" ;;
-      "SUP")                   PEXELS_QUERY="stand up paddleboard ocean tropical" ;;
-      "Ally Cat")              PEXELS_QUERY="sailing catamaran Mexico Pacific sunset" ;;
-      "CachaSol")              PEXELS_QUERY="Mexico agave tequila distillery farm" ;;
-      "Local Cultural")        PEXELS_QUERY="Mexico culture festival artisan market" ;;
-      "Wellness")              PEXELS_QUERY="wellness yoga sound healing meditation beach" ;;
-      "Boats")                 PEXELS_QUERY="boat sailing Mexico Pacific catamaran" ;;
-      "Land Adventures")       PEXELS_QUERY="ATV adventure Mexico jungle coastal" ;;
-      "Weddings")              PEXELS_QUERY="beach wedding ceremony Mexico tropical" ;;
-      "Chef")                  PEXELS_QUERY="private chef cooking Mexican cuisine beachfront" ;;
-      # Moroccan Palace categories (El Sargento, Baja California Sur, Mexico)
-      "The Villa")             PEXELS_QUERY="luxury villa pool rooftop terrace Baja Mexico Sea of Cortez" ;;
-      "Kite & Adventure")      PEXELS_QUERY="kite surfing Mexico Pacific Baja wind beach adventure" ;;
-      "Glamping")              PEXELS_QUERY="luxury glamping tent desert stars night sky outdoor" ;;
-      "Baja & Destination")    PEXELS_QUERY="Baja California Mexico Sea of Cortez beach mountains sunset" ;;
-      "Wellness")              PEXELS_QUERY="wellness massage yoga meditation spa terrace ocean Mexico" ;;
-      "Events & Celebrations") PEXELS_QUERY="luxury outdoor celebration wedding terrace rooftop Mexico" ;;
-      # LUX Property Management categories
-      "Portfolio")             PEXELS_QUERY="luxury villa portfolio property management ocean" ;;
-      "Brand")                 PEXELS_QUERY="luxury property management lifestyle concierge" ;;
-      *)                       PEXELS_QUERY="$PHOTO_FOLDER luxury travel lifestyle" ;;
+      "Surf")                  SEARCH_QUERY="surfing Mexico Pacific waves beach" ;;
+      "Yoga")                  SEARCH_QUERY="yoga beach sunrise Mexico tropical" ;;
+      "Restaurants")           SEARCH_QUERY="Mexican food tacos street food" ;;
+      "Marieta Islands")       SEARCH_QUERY="Marieta Islands hidden beach Mexico" ;;
+      "Monkey Mountain")       SEARCH_QUERY="jungle hiking Mexico wildlife monkeys" ;;
+      "Golf")                  SEARCH_QUERY="golf course tropical Mexico ocean" ;;
+      "Fishing Charter")       SEARCH_QUERY="deep sea fishing Mexico Pacific" ;;
+      "Whale Tours")           SEARCH_QUERY="humpback whale ocean Mexico Pacific" ;;
+      "SUP")                   SEARCH_QUERY="stand up paddleboard ocean tropical" ;;
+      "Ally Cat")              SEARCH_QUERY="sailing catamaran Mexico Pacific sunset" ;;
+      "CachaSol")              SEARCH_QUERY="Mexico agave tequila distillery farm" ;;
+      "Local Cultural")        SEARCH_QUERY="Mexico culture festival artisan market" ;;
+      "Wellness")              SEARCH_QUERY="wellness yoga sound healing meditation beach" ;;
+      "Boats")                 SEARCH_QUERY="boat sailing Mexico Pacific catamaran" ;;
+      "Land Adventures")       SEARCH_QUERY="ATV adventure Mexico jungle coastal" ;;
+      "Weddings")              SEARCH_QUERY="beach wedding ceremony Mexico tropical" ;;
+      "Chef")                  SEARCH_QUERY="private chef cooking Mexican cuisine beachfront" ;;
+      # Moroccan Palace / La Ventana / Baja California Sur — location-specific
+      "Kite Surfing"|"Kite & Adventure") SEARCH_QUERY="kite surfing La Ventana Baja California Sea of Cortez Mexico" ;;
+      "Diving")                SEARCH_QUERY="scuba diving Sea of Cortez Baja California whale sharks manta rays" ;;
+      "Snorkeling")            SEARCH_QUERY="snorkeling Sea of Cortez Baja California sea lions clear water" ;;
+      "Whale Sharks")          SEARCH_QUERY="whale shark Sea of Cortez Espiritu Santo Baja California Mexico" ;;
+      "Sea Lions")             SEARCH_QUERY="sea lions Los Islotes La Paz Baja California Sea of Cortez" ;;
+      "Beaches")               SEARCH_QUERY="La Ventana El Sargento beach Baja California Sur Mexico" ;;
+      "The Villa")             SEARCH_QUERY="luxury villa rooftop pool Sea of Cortez Baja California Mexico" ;;
+      "Glamping")              SEARCH_QUERY="glamping tent Baja California desert Mexico stars outdoor" ;;
+      "Baja & Destination")    SEARCH_QUERY="El Sargento La Ventana Baja California Sur Sea of Cortez landscape" ;;
+      "Events & Celebrations") SEARCH_QUERY="outdoor event celebration Sea of Cortez Baja Mexico rooftop" ;;
+      # LUX Property Management
+      "Portfolio")             SEARCH_QUERY="luxury villa portfolio property management ocean" ;;
+      "Brand")                 SEARCH_QUERY="luxury property management lifestyle concierge" ;;
+      *)                       SEARCH_QUERY="$PHOTO_FOLDER luxury travel lifestyle Mexico" ;;
     esac
   fi
 
-  echo ""
-  echo "--- Pexels fallback: \"$PEXELS_QUERY\" ---"
-  ENCODED_QUERY=$(printf '%s' "$PEXELS_QUERY" | jq -Rr @uri)
-  PEXELS_RESP=$(curl -s --max-time 15 \
-    -H "Authorization: $PEXELS_API_KEY" \
-    "https://api.pexels.com/v1/search?query=$ENCODED_QUERY&per_page=20&orientation=landscape")
+  INTERNET_URLS=()
 
-  PEXELS_ITEMS=$(echo "$PEXELS_RESP" | \
-    jq -r '.photos[] | (.id | tostring) + "|||" + (.src.large2x // .src.large)' \
-    2>/dev/null || true)
+  # ── Try Google Custom Search first ──────────────────────────────
+  GOOGLE_API_KEY=$(jq -r '.google.searchApiKey // empty' "$CREDS_FILE")
+  GOOGLE_CX="f4e3049e2b5a54b20"
+  if [ -n "$GOOGLE_API_KEY" ]; then
+    echo ""
+    echo "--- Google Image Search: \"$SEARCH_QUERY\" ---"
+    ENCODED_QUERY=$(printf '%s' "$SEARCH_QUERY" | jq -Rr @uri)
+    GOOGLE_RESP=$(curl -s --max-time 15 \
+      "https://www.googleapis.com/customsearch/v1?q=${ENCODED_QUERY}&cx=${GOOGLE_CX}&searchType=image&num=10&key=${GOOGLE_API_KEY}")
 
-  PEXELS_COUNT=$(printf '%s\n' "$PEXELS_ITEMS" | grep -c '|||' || true)
-  PEXELS_COUNT=${PEXELS_COUNT:-0}
-  echo "  Found $PEXELS_COUNT Pexels photos"
+    mapfile -t GOOGLE_URLS < <(echo "$GOOGLE_RESP" | jq -r '.items[]? | .link' 2>/dev/null | grep '^http')
+    GOOGLE_COUNT=${#GOOGLE_URLS[@]}
+    echo "  Found $GOOGLE_COUNT Google images"
 
-  if [ "$PEXELS_COUNT" -eq 0 ]; then
-    echo "ERROR: No Pexels results for: $PEXELS_QUERY"
-    echo "Set pexels_query in pending-post JSON to override."
-    exit 1
+    if [ "$GOOGLE_COUNT" -gt 0 ]; then
+      INTERNET_URLS=("${GOOGLE_URLS[@]}")
+      SOURCE_LABEL="Google"
+    fi
   fi
 
-  ACTUAL_COUNT=$(( NUM_PHOTOS < PEXELS_COUNT ? NUM_PHOTOS : PEXELS_COUNT ))
-  SELECTED_PEXELS=$(printf '%s\n' "$PEXELS_ITEMS" | grep '|||' | shuf -n "$ACTUAL_COUNT")
+  # ── Pexels fallback if Google unavailable or returned nothing ───
+  if [ "${#INTERNET_URLS[@]}" -eq 0 ]; then
+    if [ -z "$PEXELS_API_KEY" ]; then
+      echo "ERROR: Bunny empty, Google unavailable, and PEXELS_API_KEY not set."
+      exit 1
+    fi
+    echo ""
+    echo "--- Pexels fallback: \"$SEARCH_QUERY\" ---"
+    ENCODED_QUERY=$(printf '%s' "$SEARCH_QUERY" | jq -Rr @uri)
+    PEXELS_RESP=$(curl -s --max-time 15 \
+      -H "Authorization: $PEXELS_API_KEY" \
+      "https://api.pexels.com/v1/search?query=$ENCODED_QUERY&per_page=20&orientation=landscape")
+
+    mapfile -t PEXELS_URLS < <(echo "$PEXELS_RESP" | \
+      jq -r '.photos[] | (.id | tostring) + "|||" + (.src.large2x // .src.large)' \
+      2>/dev/null | grep '|||')
+    PEXELS_COUNT=${#PEXELS_URLS[@]}
+    echo "  Found $PEXELS_COUNT Pexels photos"
+
+    if [ "$PEXELS_COUNT" -eq 0 ]; then
+      echo "ERROR: No results from Pexels for: $SEARCH_QUERY"
+      exit 1
+    fi
+    INTERNET_URLS=("${PEXELS_URLS[@]}")
+    SOURCE_LABEL="Pexels"
+  fi
+
+  # ── Download and save to Bunny CDN ──────────────────────────────
+  ACTUAL_COUNT=$(( NUM_PHOTOS < ${#INTERNET_URLS[@]} ? NUM_PHOTOS : ${#INTERNET_URLS[@]} ))
+  mapfile -t SELECTED < <(printf '%s\n' "${INTERNET_URLS[@]}" | shuf -n "$ACTUAL_COUNT")
 
   echo ""
-  echo "--- Downloading from Pexels → saving to Bunny CDN ---"
+  echo "--- Downloading from $SOURCE_LABEL → saving to Bunny CDN ---"
   echo "  Zone: $BUNNY_ZONE/$BUNNY_SUBFOLDER"
   echo ""
 
   SAVED_FILENAMES=()
-  while IFS= read -r item; do
+  IDX=0
+  for item in "${SELECTED[@]}"; do
     [ -z "$item" ] && continue
-    PEXELS_ID="${item%%|||*}"
-    PEXELS_URL="${item##*|||}"
-    FILENAME="pexels-${PEXELS_ID}.jpg"
+    IDX=$(( IDX + 1 ))
 
-    echo "  Downloading pexels-$PEXELS_ID ..."
-    HTTP_STATUS=$(curl -sL --max-time 30 "$PEXELS_URL" | \
+    if [[ "$item" == *"|||"* ]]; then
+      # Pexels format: id|||url
+      PEXELS_ID="${item%%|||*}"
+      IMG_URL="${item##*|||}"
+      FILENAME="pexels-${PEXELS_ID}.jpg"
+    else
+      # Google or other direct URL
+      IMG_URL="$item"
+      RAW_EXT="${IMG_URL##*.}"
+      EXT="${RAW_EXT%%\?*}"
+      [[ "$EXT" =~ ^(jpg|jpeg|png|webp)$ ]] || EXT="jpg"
+      FILENAME="google-$(date +%s)-${IDX}.${EXT}"
+    fi
+
+    echo "  Downloading $(basename "$IMG_URL" | cut -c1-50) ..."
+    HTTP_STATUS=$(curl -sL --max-time 30 "$IMG_URL" | \
       curl -s -X PUT \
         -H "AccessKey: $BUNNY_KEY" \
         -H "Content-Type: image/jpeg" \
@@ -355,12 +397,12 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
       echo "  ✓ Saved to Bunny: $BUNNY_SUBFOLDER$FILENAME (HTTP $HTTP_STATUS)"
       SAVED_FILENAMES+=("$FILENAME")
     else
-      echo "  ✗ Bunny upload failed (HTTP $HTTP_STATUS) — using Pexels URL directly"
-      SAVED_FILENAMES+=("__pexels_direct__$PEXELS_URL")
+      echo "  ✗ Bunny upload failed (HTTP $HTTP_STATUS) — using direct URL"
+      SAVED_FILENAMES+=("__direct__$IMG_URL")
     fi
-  done <<< "$SELECTED_PEXELS"
+  done
 
-  PEXELS_USED=true
+  INTERNET_USED=true
   IMAGE_FILES=$(printf '%s\n' "${SAVED_FILENAMES[@]}")
   ACTUAL_COUNT=${#SAVED_FILENAMES[@]}
 
@@ -369,14 +411,14 @@ else
 fi
 
 # ── Step 3: Select from Bunny pool (if not already selected) ──
-if [ "$PEXELS_USED" = "false" ]; then
+if [ "$INTERNET_USED" = "false" ]; then
   echo ""
   echo "--- Selecting $ACTUAL_COUNT photos from Bunny ---"
   IMAGE_FILES=$(printf '%s\n' "$IMAGE_FILES" | grep '[^[:space:]]' | shuf -n "$ACTUAL_COUNT")
 fi
 
-[ "$PEXELS_USED" = "true" ] && echo ""
-[ "$PEXELS_USED" = "true" ] && echo "⚠️  Pexels used — photos now saved in Bunny for future reuse."
+[ "$INTERNET_USED" = "true" ] && echo ""
+[ "$INTERNET_USED" = "true" ] && echo "⚠️  $SOURCE_LABEL used — photos now saved in Bunny for future reuse."
 
 # ── Step 4: Upload each photo to Facebook (unpublished) ───────
 echo ""
@@ -386,8 +428,8 @@ PHOTO_IDS=()
 while IFS= read -r item; do
   [ -z "$item" ] && continue
 
-  if [[ "$item" == __pexels_direct__* ]]; then
-    CDN_URL="${item#__pexels_direct__}"
+  if [[ "$item" == __direct__* ]]; then
+    CDN_URL="${item#__direct__}"
   else
     ENCODED_ITEM="${item// /%20}"
     CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER_ENC}${ENCODED_ITEM}"
