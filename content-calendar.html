@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fullyo — Content Calendar</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky:      #0ea5e9;
+      --sky-bg:   #e0f2fe;
+      --sky-text: #0369a1;
+      --vsa:      #f97316;
+      --vsa-bg:   #ffedd5;
+      --vsa-text: #c2410c;
+      --mp:       #991b1b;
+      --mp-bg:    #fee2e2;
+      --mp-text:  #991b1b;
+      --lux:      #0f172a;
+      --lux-bg:   #fef9e7;
+      --lux-text: #78590a;
+      --lux-gold: #b8962e;
+      --border:   #e2e8f0;
+      --bg:       #f1f5f9;
+      --card:     #ffffff;
+      --text:     #1e293b;
+      --muted:    #64748b;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 48px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--lux);
+      color: #fff;
+      padding: 20px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .header-title { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+    .header-sub   { font-size: 0.7rem; color: var(--lux-gold); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+    .header-date  { font-size: 0.8rem; color: #94a3b8; text-align: right; }
+
+    /* ── Container ── */
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      padding: 18px 0 4px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.82rem; font-weight: 500;
+    }
+    .legend-dot {
+      width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.09em; color: var(--muted);
+      margin: 26px 0 10px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Week header ── */
+    .week-header {
+      font-size: 0.7rem; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin: 14px 0 7px; padding-left: 2px;
+    }
+    .week-header + .week-header { margin-top: 18px; }
+
+    /* ── Calendar grid ── */
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 7px;
+      margin-bottom: 0;
+    }
+
+    .cal-day {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px 8px 10px;
+      min-height: 110px;
+    }
+    .cal-day.today {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+    .cal-day.weekend { background: #fafbfc; }
+    .cal-day-dow {
+      font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted);
+    }
+    .cal-day-num {
+      font-size: 1.2rem; font-weight: 700; line-height: 1.2;
+      margin: 1px 0 6px;
+    }
+    .cal-day.today .cal-day-num { color: #b45309; }
+    .today-badge {
+      display: inline-block;
+      background: #f59e0b; color: #fff;
+      font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+      padding: 1px 4px; border-radius: 3px; letter-spacing: 0.05em;
+      vertical-align: middle; margin-left: 4px;
+    }
+
+    .cal-posts { display: flex; flex-direction: column; gap: 4px; }
+    .cal-post {
+      border-radius: 5px; padding: 4px 6px;
+      font-size: 0.65rem; font-weight: 600; line-height: 1.3;
+    }
+    .post-sky { background: var(--sky-bg); color: var(--sky-text); }
+    .post-vsa { background: var(--vsa-bg); color: var(--vsa-text); }
+    .post-mp  { background: var(--mp-bg);  color: var(--mp-text);  }
+    .post-lux { background: var(--lux-bg); color: var(--lux-text); border: 1px solid #e8d98a; }
+
+    .cal-post-time { font-weight: 400; opacity: 0.7; }
+    .cal-post-theme {
+      display: block; font-size: 0.59rem; font-weight: 400;
+      margin-top: 1px; line-height: 1.25; opacity: 0.85;
+    }
+    .cal-no-posts { font-size: 0.6rem; color: #b0bec5; margin-top: 4px; }
+
+    /* ── Pattern table ── */
+    .pattern-table {
+      width: 100%; border-collapse: collapse;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; font-size: 0.83rem;
+    }
+    .pattern-table th {
+      background: #f8fafc; padding: 9px 16px; text-align: left;
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .pattern-table td { padding: 9px 16px; border-bottom: 1px solid var(--border); }
+    .pattern-table tr:last-child td { border-bottom: none; }
+    .pattern-day { font-weight: 600; width: 110px; }
+    .pattern-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pattern-pill {
+      display: inline-flex; align-items: center;
+      padding: 2px 9px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 500;
+    }
+    .no-posts-text { color: var(--muted); font-style: italic; font-size: 0.77rem; }
+
+    /* ── Post counts ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 9px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .stat-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+    .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .stat-sub   { font-size: 0.7rem; color: var(--muted); }
+    .stat-bar   { height: 3px; border-radius: 2px; margin-top: 6px; }
+
+    /* ── LUX rotation ── */
+    .lux-rotation-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .lux-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 9px; overflow: hidden;
+    }
+    .lux-card-head {
+      background: var(--lux); color: var(--lux-gold);
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; padding: 8px 12px;
+    }
+    .lux-row {
+      display: flex; gap: 8px; padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+    .lux-row:last-child { border-bottom: none; }
+    .lux-week-label {
+      font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--muted); width: 65px; flex-shrink: 0; padding-top: 1px;
+    }
+    .lux-theme { font-weight: 500; }
+
+    /* ── Manual trigger guide ── */
+    .manual-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 9px; overflow: hidden;
+    }
+    .manual-row {
+      display: flex; align-items: center; gap: 20px;
+      padding: 9px 16px; border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+    .manual-row:last-child { border-bottom: none; }
+    .manual-prop { width: 200px; flex-shrink: 0; font-weight: 600; }
+    .manual-file {
+      font-family: 'Courier New', monospace;
+      background: #f1f5f9; padding: 2px 7px; border-radius: 4px;
+      font-size: 0.75rem;
+    }
+    .manual-note { color: var(--muted); font-size: 0.75rem; margin-left: auto; white-space: nowrap; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .cal-grid { grid-template-columns: repeat(7, minmax(90px,1fr)); overflow-x: auto; }
+      .lux-rotation-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Fullyo — Content Calendar</div>
+    <div class="header-sub">4 Properties · Facebook Automation · Riviera Nayarit &amp; BCS</div>
+  </div>
+  <div class="header-date" id="hdr-date"></div>
+</div>
+
+<div class="container">
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--sky)"></div>SkyHouse Sayulita</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--vsa)"></div>Villas Sempre Avanti</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--mp)"></div>The Moroccan Palace</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--lux)"></div>LUX Property Management</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="section-label">Monthly Snapshot</div>
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- 14-day calendar -->
+  <div class="section-label">Next 14 Days</div>
+  <div id="cal-container"></div>
+
+  <!-- Weekly pattern -->
+  <div class="section-label">Recurring Weekly Pattern</div>
+  <table class="pattern-table">
+    <thead>
+      <tr>
+        <th>Day</th>
+        <th>Scheduled Posts (Mexico time · UTC−7)</th>
+      </tr>
+    </thead>
+    <tbody id="pattern-body"></tbody>
+  </table>
+
+  <!-- LUX rotation -->
+  <div class="section-label">LUX — Content Rotation by Week Parity</div>
+  <div class="lux-rotation-grid" id="lux-rotation"></div>
+
+  <!-- Manual trigger -->
+  <div class="section-label">Manual Post Trigger — Edit &amp; Push</div>
+  <div class="manual-card" id="manual-card"></div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════
+const PROPS = {
+  sky: {
+    name: 'SkyHouse Sayulita',
+    short: 'SkyHouse',
+    cls: 'post-sky',
+    dot: 'var(--sky)',
+    dotHex: '#0ea5e9',
+    statColor: '#0ea5e9',
+    days: [1,3,5],       // Mon Wed Fri
+    utcHour: 18,
+    localTime: '11:00 AM',
+    pendingFile: 'pending-post.json',
+    source: 'Bunny CDN + Claude AI',
+  },
+  vsa: {
+    name: 'Villas Sempre Avanti',
+    short: 'VSA',
+    cls: 'post-vsa',
+    dot: 'var(--vsa)',
+    dotHex: '#f97316',
+    statColor: '#f97316',
+    days: [2,4,6],       // Tue Thu Sat
+    utcHour: 16,
+    localTime: '9:00 AM',
+    pendingFile: 'pending-post-casasempreavanti.json',
+    source: 'Bunny CDN + Claude AI',
+  },
+  mp: {
+    name: 'The Moroccan Palace',
+    short: 'Moroccan Palace',
+    cls: 'post-mp',
+    dot: 'var(--mp)',
+    dotHex: '#991b1b',
+    statColor: '#991b1b',
+    days: [1,3,5],       // Mon Wed Fri
+    utcHour: 14,
+    localTime: '7:00 AM',
+    pendingFile: 'pending-post-moroccanpalace.json',
+    source: 'Bunny CDN + Claude AI',
+  },
+  lux: {
+    name: 'LUX Property Management',
+    short: 'LUX PM',
+    cls: 'post-lux',
+    dot: 'var(--lux)',
+    dotHex: '#0f172a',
+    statColor: '#b8962e',
+    days: [1,3,5],       // Mon Wed Fri
+    utcHour: 17,
+    localTime: '10:00 AM',
+    pendingFile: 'pending-post-lux.json',
+    source: 'Bunny CDN (real villas) + Claude AI',
+    themes: {
+      1: { odd: 'Why Professional Management', even: 'Revenue Optimization' },
+      3: { odd: 'Full-Service Staffing',        even: 'Direct Booking Advantage' },
+      5: { odd: 'Riviera Nayarit Luxury Market', even: 'Owner Transparency' },
+    },
+  },
+};
+
+const DAYS_SHORT  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS_LONG   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS      = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+function isoWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const y1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - y1) / 86400000) + 1) / 7);
+}
+
+function luxTheme(date, dow) {
+  const parity = isoWeek(date) % 2 === 1 ? 'odd' : 'even';
+  return PROPS.lux.themes[dow]?.[parity] ?? null;
+}
+
+function postsForDay(date) {
+  const dow = date.getDay();
+  const out = [];
+  for (const [id, p] of Object.entries(PROPS)) {
+    if (p.days.includes(dow)) {
+      out.push({
+        id, p,
+        theme: id === 'lux' ? luxTheme(date, dow) : null,
+      });
+    }
+  }
+  return out.sort((a, b) => a.p.utcHour - b.p.utcHour);
+}
+
+function today0() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function fmtShort(date) {
+  return `${MONTHS[date.getMonth()]} ${date.getDate()}`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  HEADER DATE
+// ═══════════════════════════════════════════════════════
+(function() {
+  const now = new Date();
+  const el = document.getElementById('hdr-date');
+  el.innerHTML = `${DAYS_LONG[now.getDay()]}, ${MONTHS_LONG[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+})();
+
+// ═══════════════════════════════════════════════════════
+//  MONTHLY STATS
+// ═══════════════════════════════════════════════════════
+(function() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const counts = { sky: 0, vsa: 0, mp: 0, lux: 0 };
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dow = date.getDay();
+    for (const [id, p] of Object.entries(PROPS)) {
+      if (p.days.includes(dow)) counts[id]++;
+    }
+  }
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  const container = document.getElementById('stats-row');
+  const entries = [
+    ['sky', 'SkyHouse Sayulita',         counts.sky,  'posts this month'],
+    ['vsa', 'Villas Sempre Avanti',       counts.vsa,  'posts this month'],
+    ['mp',  'The Moroccan Palace',        counts.mp,   'posts this month'],
+    ['lux', 'LUX Property Mgmt',         counts.lux,  'posts this month'],
+  ];
+
+  let html = '';
+  for (const [id, name, count, sub] of entries) {
+    const p = PROPS[id];
+    html += `
+      <div class="stat-card">
+        <div class="stat-label" style="color:${p.statColor}">${name}</div>
+        <div class="stat-value">${count}</div>
+        <div class="stat-sub">${sub} · ${MONTHS_LONG[month]}</div>
+        <div class="stat-bar" style="background:${p.statColor};opacity:0.25;width:${Math.round(count/total*100)}%"></div>
+      </div>`;
+  }
+  container.innerHTML = html;
+})();
+
+// ═══════════════════════════════════════════════════════
+//  14-DAY CALENDAR
+// ═══════════════════════════════════════════════════════
+(function() {
+  const today = today0();
+  const container = document.getElementById('cal-container');
+  let html = '';
+
+  for (let week = 0; week < 2; week++) {
+    const start = addDays(today, week * 7);
+    const end   = addDays(today, week * 7 + 6);
+    html += `<div class="week-header">${fmtShort(start)} – ${fmtShort(end)}</div>`;
+    html += `<div class="cal-grid">`;
+
+    for (let i = 0; i < 7; i++) {
+      const day  = addDays(today, week * 7 + i);
+      const dow  = day.getDay();
+      const isToday = day.getTime() === today.getTime();
+      const isWknd  = dow === 0 || dow === 6;
+      const posts   = postsForDay(day);
+
+      let cls = 'cal-day';
+      if (isToday) cls += ' today';
+      else if (isWknd) cls += ' weekend';
+
+      html += `<div class="${cls}">`;
+      html += `<div class="cal-day-dow">${DAYS_SHORT[dow]}</div>`;
+      html += `<div class="cal-day-num">${day.getDate()}${isToday ? '<span class="today-badge">Today</span>' : ''}</div>`;
+      html += `<div class="cal-posts">`;
+
+      if (posts.length === 0) {
+        html += `<div class="cal-no-posts">No posts</div>`;
+      } else {
+        for (const { id, p, theme } of posts) {
+          html += `<div class="cal-post ${p.cls}">`;
+          html += `${p.short} <span class="cal-post-time">${p.localTime}</span>`;
+          if (theme) html += `<span class="cal-post-theme">${theme}</span>`;
+          html += `</div>`;
+        }
+      }
+
+      html += `</div></div>`; // .cal-posts .cal-day
+    }
+    html += `</div>`; // .cal-grid
+  }
+
+  container.innerHTML = html;
+})();
+
+// ═══════════════════════════════════════════════════════
+//  WEEKLY PATTERN TABLE
+// ═══════════════════════════════════════════════════════
+(function() {
+  const tbody = document.getElementById('pattern-body');
+  let html = '';
+
+  for (let dow = 0; dow < 7; dow++) {
+    const posts = [];
+    for (const [id, p] of Object.entries(PROPS)) {
+      if (p.days.includes(dow)) posts.push({ id, p });
+    }
+    posts.sort((a, b) => a.p.utcHour - b.p.utcHour);
+
+    html += `<tr><td class="pattern-day">${DAYS_LONG[dow]}</td><td>`;
+    if (posts.length === 0) {
+      html += `<span class="no-posts-text">No scheduled posts</span>`;
+    } else {
+      html += `<div class="pattern-pills">`;
+      for (const { id, p } of posts) {
+        html += `<span class="pattern-pill ${p.cls}">${p.short} · ${p.localTime}</span>`;
+      }
+      html += `</div>`;
+    }
+    html += `</td></tr>`;
+  }
+
+  tbody.innerHTML = html;
+})();
+
+// ═══════════════════════════════════════════════════════
+//  LUX CONTENT ROTATION
+// ═══════════════════════════════════════════════════════
+(function() {
+  const { themes } = PROPS.lux;
+  const dayNames = { 1: 'Monday', 3: 'Wednesday', 5: 'Friday' };
+  const container = document.getElementById('lux-rotation');
+  let html = '';
+
+  for (const [dow, theme] of Object.entries(themes)) {
+    html += `
+      <div class="lux-card">
+        <div class="lux-card-head">${dayNames[dow]}</div>
+        <div class="lux-row">
+          <div class="lux-week-label">Odd weeks</div>
+          <div class="lux-theme">${theme.odd}</div>
+        </div>
+        <div class="lux-row">
+          <div class="lux-week-label">Even weeks</div>
+          <div class="lux-theme">${theme.even}</div>
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+})();
+
+// ═══════════════════════════════════════════════════════
+//  MANUAL TRIGGER GUIDE
+// ═══════════════════════════════════════════════════════
+(function() {
+  const container = document.getElementById('manual-card');
+  const entries = [
+    ['sky', 'SkyHouse Sayulita',         'Mon / Wed / Fri'],
+    ['vsa', 'Villas Sempre Avanti',       'Tue / Thu / Sat'],
+    ['mp',  'The Moroccan Palace',        'Mon / Wed / Fri'],
+    ['lux', 'LUX Property Management',   'Mon / Wed / Fri'],
+  ];
+
+  let html = '';
+  for (const [id, name, sched] of entries) {
+    const p = PROPS[id];
+    html += `
+      <div class="manual-row">
+        <div class="manual-prop">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.dotHex};margin-right:6px;vertical-align:middle"></span>
+          ${name}
+        </div>
+        <code class="manual-file">${p.pendingFile}</code>
+        <div class="manual-note">${sched} · ${p.localTime} local</div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+})();
+</script>
+
+</body>
+</html>
