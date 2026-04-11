@@ -309,7 +309,7 @@ if [ "$BUNNY_COUNT" -eq 0 ]; then
 
   # ── Try Google Custom Search first ──────────────────────────────
   GOOGLE_API_KEY=$(jq -r '.google.searchApiKey // empty' "$CREDS_FILE")
-  GOOGLE_CX="f4e3049e2b5a54b20"
+  GOOGLE_CX="56a321af92e894e8c"
   if [ -n "$GOOGLE_API_KEY" ]; then
     echo ""
     echo "--- Google Image Search: \"$SEARCH_QUERY\" ---"
