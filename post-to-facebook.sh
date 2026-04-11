@@ -467,5 +467,5 @@ fi
 
 echo ""
 echo "✓ Published! Post ID: $POST_ID"
-[ "$PEXELS_USED" = "true" ] && echo "  📦 $ACTUAL_COUNT photos saved to $BUNNY_ZONE/$BUNNY_SUBFOLDER for reuse"
+[ "${INTERNET_USED:-false}" = "true" ] && echo "  📦 $ACTUAL_COUNT photos saved to $BUNNY_ZONE/$BUNNY_SUBFOLDER for reuse"
 echo "=== DONE ==="
