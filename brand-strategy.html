@@ -13,8 +13,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f1f5f9;color:#1e
 .topbar a:hover{text-decoration:underline}
 .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
 h2{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#64748b;margin:28px 0 12px;padding-left:2px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
 @media(max-width:900px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
 @media(max-width:500px){.grid4{grid-template-columns:1fr}}
 .brand-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
@@ -46,8 +46,7 @@ h2{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.09e
 .angle:last-child{border-bottom:none}
 .angle::before{content:"→";color:#94a3b8;flex-shrink:0;font-size:.65rem;margin-top:2px}
 
-.rules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-@media(max-width:900px){.rules-grid{grid-template-columns:repeat(2,1fr)}}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .rule-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px}
 .rule-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:10px}
 .rule-item{font-size:.78rem;padding:3px 0;border-bottom:1px solid #f8fafc;display:flex;gap:6px;align-items:flex-start}
@@ -55,8 +54,7 @@ h2{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.09e
 .rule-item::before{content:"✕";color:#dc2626;font-size:.6rem;flex-shrink:0;margin-top:2px}
 
 .goals-section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px 20px}
-.goals-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-@media(max-width:900px){.goals-row{grid-template-columns:repeat(2,1fr)}}
+.goals-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
 .goal-col-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
 
 .eighty{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
