@@ -1,0 +1,81 @@
+name: Auto Reel — SkyHouse Sayulita
+
+on:
+  workflow_dispatch:
+    inputs:
+      num_photos:
+        description: 'Number of photos in reel'
+        required: false
+        default: '6'
+      caption:
+        description: 'Custom caption (leave blank to auto-generate)'
+        required: false
+        default: ''
+      photo_folder:
+        description: 'Bunny subfolder override (leave blank for root)'
+        required: false
+        default: ''
+  schedule:
+    # Every Wednesday at 19:30 UTC (12:30pm Mexico) — between the MP and SkyHouse photo posts
+    - cron: '30 19 * * 3'
+
+jobs:
+  generate-reel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build credentials file
+        env:
+          FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+          BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          jq -n \
+            --arg fb "$FB_TOKEN_SKYHOUSE" \
+            --arg bsky "$BUNNY_SKYHOUSE_KEY" \
+            --arg ant "$ANTHROPIC_API_KEY" \
+            --arg pex "$PEXELS_API_KEY" \
+            --arg tg "$TELEGRAM_BOT_TOKEN" \
+            '{
+              facebook: {
+                pages: {
+                  skyhouse_sayulita: { pageId: "1004908006045909", accessToken: $fb }
+                }
+              },
+              bunny: {
+                storageRegionHostname: "la.storage.bunnycdn.com",
+                skyhouse: {
+                  storageZoneName: "skyhousesayulita",
+                  storageApiKey: $bsky,
+                  cdnHostname: "SkyhouseSayulita.b-cdn.net"
+                }
+              },
+              anthropic: { apiKey: $ant },
+              pexels: { apiKey: $pex },
+              telegram: { botToken: $tg, ownerChatId: "8609472348" }
+            }' > credentials.local.json
+
+      - name: Generate and post Reel
+        env:
+          PROPERTY: skyhouse
+          NUM_PHOTOS: ${{ github.event.inputs.num_photos || '6' }}
+          CAPTION: ${{ github.event.inputs.caption || '' }}
+          PHOTO_FOLDER: ${{ github.event.inputs.photo_folder || '' }}
+        run: |
+          bash generate-reel.sh 2>&1 | tee _reel-debug-skyhouse.log
+          EXIT=${PIPESTATUS[0]}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _reel-debug-skyhouse.log || true
+          git commit -m "reel-log: skyhouse $(date +%Y-%m-%d)" || true
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG || true
+          exit $EXIT
