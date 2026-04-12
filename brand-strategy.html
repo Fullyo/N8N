@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fullyo — Brand Strategy</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f1f5f9;color:#1e293b;padding-bottom:60px}
+.topbar{background:#0f172a;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.topbar h1{font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
+.topbar a{color:#b8962e;font-size:.8rem;text-decoration:none;font-weight:600}
+.topbar a:hover{text-decoration:underline}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+h2{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#64748b;margin:28px 0 12px;padding-left:2px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:900px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:500px){.grid4{grid-template-columns:1fr}}
+.brand-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+.brand-card-head{padding:12px 16px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.brand-card-body{padding:14px 16px}
+.brand-row{font-size:.8rem;padding:5px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px}
+.brand-row:last-child{border-bottom:none}
+.brand-label{font-weight:700;min-width:110px;flex-shrink:0;color:#64748b;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding-top:1px}
+.brand-val{color:#1e293b;line-height:1.45}
+.tag{display:inline-block;background:#f1f5f9;border-radius:4px;padding:1px 7px;font-size:.7rem;margin:2px 2px 0 0;font-weight:500}
+.goal-num{display:inline-block;width:18px;height:18px;border-radius:50%;background:#0f172a;color:#fff;font-size:.6rem;font-weight:700;text-align:center;line-height:18px;margin-right:5px;flex-shrink:0}
+.goal-item{display:flex;align-items:flex-start;font-size:.78rem;padding:3px 0}
+.no-tag{background:#fee2e2;color:#991b1b}
+
+.prop-section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:12px}
+.prop-section-head{padding:12px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.prop-section-head:hover{background:#f8fafc}
+.prop-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.prop-title{font-size:.9rem;font-weight:700}
+.prop-sub{font-size:.75rem;color:#64748b;margin-left:auto}
+.chevron{font-size:.7rem;color:#94a3b8;margin-left:8px;transition:transform .2s}
+.chevron.open{transform:rotate(90deg)}
+.pillars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid #e2e8f0}
+@media(max-width:700px){.pillars-grid{grid-template-columns:1fr}}
+.pillar-col{border-right:1px solid #e2e8f0;padding:14px 16px}
+.pillar-col:last-child{border-right:none}
+.pillar-name{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:8px}
+.angle{font-size:.78rem;padding:4px 0;border-bottom:1px solid #f8fafc;color:#334155;display:flex;align-items:flex-start;gap:6px}
+.angle:last-child{border-bottom:none}
+.angle::before{content:"→";color:#94a3b8;flex-shrink:0;font-size:.65rem;margin-top:2px}
+
+.rules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.rules-grid{grid-template-columns:repeat(2,1fr)}}
+.rule-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px}
+.rule-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:10px}
+.rule-item{font-size:.78rem;padding:3px 0;border-bottom:1px solid #f8fafc;display:flex;gap:6px;align-items:flex-start}
+.rule-item:last-child{border-bottom:none}
+.rule-item::before{content:"✕";color:#dc2626;font-size:.6rem;flex-shrink:0;margin-top:2px}
+
+.goals-section{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px 20px}
+.goals-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+@media(max-width:900px){.goals-row{grid-template-columns:repeat(2,1fr)}}
+.goal-col-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+
+.eighty{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:600px){.eighty{grid-template-columns:1fr}}
+.eighty-block{font-size:.82rem}
+.eighty-block h4{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.eighty-item{padding:4px 0;border-bottom:1px solid #f1f5f9;color:#334155}
+.eighty-item:last-child{border-bottom:none}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Fullyo — Brand Strategy &amp; Content Guide</h1>
+  <a href="content-calendar.html">← Content Calendar</a>
+</div>
+
+<div class="wrap">
+
+<!-- ── BRAND GUIDES ─────────────────────────────────────────── -->
+<h2>Brand Guide — 4 Properties</h2>
+<div class="grid4" id="brand-grid"></div>
+
+<!-- ── GOALS ──────────────────────────────────────────────────── -->
+<h2>Business Goals by Property</h2>
+<div class="goals-section">
+  <div class="goals-row" id="goals-row"></div>
+</div>
+
+<!-- ── 80/20 RULE ──────────────────────────────────────────────── -->
+<h2>The 80/20 Content Rule</h2>
+<div class="eighty">
+  <div class="eighty-block">
+    <h4>80% — Value &amp; Inspiration (no direct ask)</h4>
+    <div class="eighty-item">Property showcase — beautiful spaces &amp; details</div>
+    <div class="eighty-item">Destination content — Sayulita, Baja, Riviera Nayarit</div>
+    <div class="eighty-item">Lifestyle &amp; aspiration — what a stay feels like</div>
+    <div class="eighty-item">Behind the scenes — hosts, staff, local culture</div>
+    <div class="eighty-item">Educational — why the region, why this property type</div>
+  </div>
+  <div class="eighty-block">
+    <h4>20% — Direct Ask (CTA)</h4>
+    <div class="eighty-item">Check availability — DM us or link in bio</div>
+    <div class="eighty-item">Limited dates — create urgency around high season</div>
+    <div class="eighty-item">Book direct — save vs. Airbnb/VRBO</div>
+    <div class="eighty-item">Owner inquiries (LUX only) — DM for a free assessment</div>
+  </div>
+</div>
+
+<!-- ── CONTENT PILLARS ────────────────────────────────────────── -->
+<h2>Content Pillars &amp; Post Angles</h2>
+<div id="pillars-container"></div>
+
+<!-- ── GUARDRAILS ─────────────────────────────────────────────── -->
+<h2>What NOT to Post — Guardrails per Property</h2>
+<div class="rules-grid" id="rules-grid"></div>
+
+</div><!-- /wrap -->
+
+<script>
+const PROPS = [
+  {
+    id:'sky', name:'SkyHouse Sayulita', color:'#0ea5e9', textColor:'#fff',
+    location:'Sayulita, Nayarit, Mexico',
+    audience:'Affluent travelers, surfers, yogis, couples, small groups. Age 28–55. Value authenticity over resort experience.',
+    voice:'Relaxed & aspirational. Surf culture meets luxury. Warm, never corporate.',
+    tone:['Conversational','Evocative','Unpretentious','Inviting'],
+    goals:['Direct bookings via DM / WhatsApp','Follower growth — reach new travelers','Brand authority as Sayulita\'s premium villa','Reduce Airbnb dependency'],
+    guardrails:['No generic "paradise" or "dream vacation" clichés','Never use stock photos of people — only property & destination','No pricing in posts','Never compare to competitors'],
+    pillars:[
+      {name:'The Villa',angles:['The pool at golden hour','Indoor-outdoor living spaces','Bedroom with jungle or ocean views','Shaded outdoor dining terrace','Private entrance and garden details']},
+      {name:'Sayulita Life',angles:['Morning surf at Sayulita beach','Thursday artisan market colours','Street art and colonial murals','Local seafood and ceviche spots','Sunset at the beach bar']},
+      {name:'Guest Experience',angles:['Wake up to the sounds of Sayulita','What a perfect day looks like here','Morning coffee with jungle view','Why guests come back year after year','Groups who arrived as strangers, left as family']},
+      {name:'Wellness & Slow Living',angles:['Yoga on the terrace at sunrise','A slow morning with no alarm','Farm-fresh breakfast, local ingredients','Hammock time as a daily practice','The healing power of warm Pacific water']},
+      {name:'Adventure & Exploration',angles:['Learn to surf — best beginner waves in Mexico','Day trip to Punta de Mita','Whale watching season (Dec–Mar)','Jungle hiking trails near the villa','Sayulita to San Pancho coastal road trip']}
+    ]
+  },
+  {
+    id:'vsa', name:'Villas Sempre Avanti', color:'#f97316', textColor:'#fff',
+    location:'Sayulita, Nayarit, Mexico',
+    audience:'Families, multi-generational groups, friend groups of 6–14 people. Age 30–65. Value space, character, and authenticity.',
+    voice:'Warm Italian-Mexican character. Built for togetherness. Inviting and personal.',
+    tone:['Warm','Characterful','Group-focused','Genuine'],
+    goals:['Group booking inquiries via DM','Follower growth among family & group travelers','Build identity as Sayulita\'s best group villa option','Direct bookings to avoid platform fees'],
+    guardrails:['Never show empty villas as the hero — show the life inside them','No solo traveler content — always group or family angle','Never promise specific amenities not confirmed available','No generic beach content without tying it back to the villas'],
+    pillars:[
+      {name:'Villa Luisa',angles:['Old-world Italian architecture details','The courtyard and garden at midday','Al fresco dining for 10+ people','The pool and shaded lounge areas','Why Luisa is perfect for multi-generational families']},
+      {name:'Villa Pietro',angles:['How Pietro differs from Luisa — its character','The terrace views and outdoor flow','Perfect for couples or smaller groups','Design details worth a second look','Pietro + Luisa together — the full compound experience']},
+      {name:'Group & Family Travel',angles:['Three generations under one roof in Sayulita','Friend groups who rent both villas together','The shared cooking and dining ritual','Kids in Sayulita — what families love','Why a private villa beats a resort for groups']},
+      {name:'Sayulita Destination',angles:['Best surf school for first-timers','Sunday market finds and local artisans','Best restaurants by vibe (casual, romantic, family)','Hidden beaches within 20 minutes','San Pancho day trip — quieter, just as beautiful']},
+      {name:'Booking & Value',angles:['Book direct and save the platform fee','What\'s included that Airbnb listings don\'t mention','Flexible check-in for large groups','Villa concierge — what we can arrange for you','Why Sayulita in shoulder season is underrated']}
+    ]
+  },
+  {
+    id:'mp', name:'The Moroccan Palace', color:'#991b1b', textColor:'#fff',
+    location:'El Sargento, Baja California Sur, Mexico',
+    audience:'Experience seekers, kite surfers, divers, wellness travelers, adventurous couples. Age 28–55. Hate cookie-cutter tourism.',
+    voice:'Exotic, adventurous, deeply personal. Scott & Jewels\' story is the brand. Unique and unforgettable.',
+    tone:['Adventurous','Intimate','Exotic','Authentic'],
+    goals:['Booking inquiries — unique-stay seekers & kite surfers','Follower growth among adventure & wellness travel niches','Establish as the go-to base for La Ventana adventures','Build the Scott & Jewels host brand'],
+    guardrails:['Never market as "Moroccan" without context — always clarify it\'s Moroccan-inspired architecture in Baja','No generic Baja or desert stock content','Don\'t oversell the location without mentioning La Ventana activities','Never post without tying content to the host experience or unique property'],
+    pillars:[
+      {name:'The Property',angles:['The 22-foot pool — Baja\'s finest infinity moment','Moroccan-inspired architecture in the desert landscape','The rooftop sky bed under Sea of Cortez stars','Riad courtyard and interior tile work details','Glamping tents — luxury meets open sky']},
+      {name:'La Ventana Adventures',angles:['Why La Ventana is a world-class kite surfing destination','Whale shark encounters — swimming with giants','Sea lion colonies of the Sea of Cortez','Scuba diving the Eastern Cape reefs','Kayaking at sunrise on flat water']},
+      {name:'Scott & Jewels',angles:['Meet your hosts — who they are and why they built this','Jewels\' 25+ years in massage and acupuncture','In-house healing sessions available for guests','What makes Moroccan Palace hospitality different','A guest story told from their eyes']},
+      {name:'Baja Life',angles:['El Sargento and La Ventana — two sibling towns','The Sea of Cortez: why Cousteau called it the world\'s aquarium','Baja road trip from Cabo or La Paz to El Sargento','Local fish tacos and open-air cantinas','Why the East Cape is Baja\'s best-kept secret']},
+      {name:'Wellness & Healing',angles:['Massage under the Baja sky','Acupuncture sessions with Jewels','Desert-meets-sea as a healing combination','Yoga facing the Sea of Cortez at sunrise','What unplugging in Baja actually feels like']}
+    ]
+  },
+  {
+    id:'lux', name:'LUX Property Management', color:'#0f172a', textColor:'#b8962e',
+    location:'Riviera Nayarit — Punta de Mita, Sayulita, San Pancho',
+    audience:'Luxury villa owners in Riviera Nayarit. Distance owners frustrated with DIY management. Sophisticated, results-focused.',
+    voice:'Professional, authoritative, transparent. Owner-first. Results over promises.',
+    tone:['Authoritative','Results-focused','Transparent','Direct'],
+    goals:['Property management contract inquiries via DM','Build authority as Riviera Nayarit\'s premier luxury PM firm','Educate owners on revenue optimization','Establish trust through radical transparency'],
+    guardrails:['Never consumer-facing content — always owner/investor audience','No specific revenue figures or guarantees','Never mention competing PM companies by name','No lifestyle content unrelated to property ownership'],
+    pillars:[
+      {name:'Why Professional PM',angles:['What happens when you self-manage from a distance','The real cost of one bad housekeeper','One negative review on Airbnb — the revenue math','What local expertise means in Riviera Nayarit','The owner who tried DIY for one year — what changed']},
+      {name:'Revenue Optimization',angles:['Direct booking vs Airbnb: the 20% difference','Dynamic pricing in Punta de Mita — how it works','How to achieve 60%+ annual occupancy','What top-performing villas do differently in high season','The revenue your villa should be generating (and why it isn\'t)']},
+      {name:'Full-Service Staffing',angles:['What a private chef does to your guest reviews','Why housekeeper continuity matters more than anything','Concierge services that justify premium nightly rates','How we vet every staff member before placement','An operations manual for every villa we manage']},
+      {name:'Direct Booking Advantage',angles:['How we build a direct booking channel for your villa','Getting off Airbnb dependency — a 6-month roadmap','What a direct booking website for your villa includes','Email marketing to past guests: cheapest revenue source','Professional photography as a conversion investment']},
+      {name:'Riviera Nayarit Market',angles:['Why Punta de Mita keeps appreciating','Sayulita: from surf town to luxury destination','San Pancho and the boutique travel revolution','What international buyers are looking for in 2026','The 10-year case for owning a villa in this region']},
+      {name:'Owner Transparency',angles:['What you see on your dashboard in real time','Monthly reporting: what we track and why it matters','How we handle maintenance — no surprises policy','Revenue vs expense breakdown made simple','How often and how we communicate with owners']}
+    ]
+  }
+];
+
+// ── Brand Cards ──────────────────────────────────────────────────────
+const brandGrid = document.getElementById('brand-grid');
+PROPS.forEach(p => {
+  brandGrid.innerHTML += `
+    <div class="brand-card">
+      <div class="brand-card-head" style="background:${p.color};color:${p.textColor}">${p.name}</div>
+      <div class="brand-card-body">
+        <div class="brand-row"><span class="brand-label">Location</span><span class="brand-val">${p.location}</span></div>
+        <div class="brand-row"><span class="brand-label">Audience</span><span class="brand-val">${p.audience}</span></div>
+        <div class="brand-row"><span class="brand-label">Voice</span><span class="brand-val">${p.voice}</span></div>
+        <div class="brand-row"><span class="brand-label">Tone</span><span class="brand-val">${p.tone.map(t=>`<span class="tag">${t}</span>`).join('')}</span></div>
+      </div>
+    </div>`;
+});
+
+// ── Goals ────────────────────────────────────────────────────────────
+const goalsRow = document.getElementById('goals-row');
+PROPS.forEach(p => {
+  goalsRow.innerHTML += `
+    <div>
+      <div class="goal-col-title" style="color:${p.color === '#0f172a' ? '#b8962e' : p.color}">${p.name}</div>
+      ${p.goals.map((g,i)=>`<div class="goal-item"><span class="goal-num">${i+1}</span>${g}</div>`).join('')}
+    </div>`;
+});
+
+// ── Content Pillars ──────────────────────────────────────────────────
+const pillarsContainer = document.getElementById('pillars-container');
+PROPS.forEach(p => {
+  const id = 'p_'+p.id;
+  const pillarsHtml = p.pillars.map(pl => `
+    <div class="pillar-col">
+      <div class="pillar-name">${pl.name}</div>
+      ${pl.angles.map(a=>`<div class="angle">${a}</div>`).join('')}
+    </div>`).join('');
+
+  pillarsContainer.innerHTML += `
+    <div class="prop-section">
+      <div class="prop-section-head" onclick="toggle('${id}')">
+        <div class="prop-dot" style="background:${p.color}"></div>
+        <div class="prop-title">${p.name}</div>
+        <div class="prop-sub">${p.pillars.length} pillars · ${p.pillars.reduce((a,pl)=>a+pl.angles.length,0)} post angles</div>
+        <span class="chevron" id="ch_${id}">▶</span>
+      </div>
+      <div id="${id}" class="hidden">
+        <div class="pillars-grid">${pillarsHtml}</div>
+      </div>
+    </div>`;
+});
+
+// ── Guardrails ───────────────────────────────────────────────────────
+const rulesGrid = document.getElementById('rules-grid');
+PROPS.forEach(p => {
+  rulesGrid.innerHTML += `
+    <div class="rule-card">
+      <div class="rule-title" style="color:${p.color === '#0f172a' ? '#b8962e' : p.color}">${p.name}</div>
+      ${p.guardrails.map(r=>`<div class="rule-item">${r}</div>`).join('')}
+    </div>`;
+});
+
+// ── Toggle ───────────────────────────────────────────────────────────
+function toggle(id) {
+  const el = document.getElementById(id);
+  const ch = document.getElementById('ch_'+id);
+  const open = !el.classList.contains('hidden');
+  el.classList.toggle('hidden', open);
+  ch.classList.toggle('open', !open);
+}
+</script>
+</body>
+</html>
