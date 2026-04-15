@@ -1,0 +1,40 @@
+=== Reel Generator ===
+  Property: skyhouse
+  Photos:   6 × 5s = 30s raw
+
+--- Getting page token ---
+  ⚠ Could not get page token — using stored token
+
+--- Scanning Bunny CDN (skyhousesayulita/) ---
+  Found 32 photos — selecting 6
+
+--- Downloading photos ---
+  ✓ DSC05949.JPG (941KB)
+  ✓ DSC05964.JPG (1327KB)
+  ✓ DSC05988.JPG (1723KB)
+  ✓ DSC05976.JPG (1546KB)
+  ✓ DSC05916.JPG (1969KB)
+  ✓ DSC05937.JPG (1378KB)
+  → 6 photos ready
+
+--- Getting background music ---
+  Downloading ambient track from Pixabay (CC0)...
+  ✓ Track downloaded
+  ✓ Cached to Bunny CDN for next run
+
+--- Generating Ken Burns video segments ---
+generate-reel.sh: line 234: ffmpeg: command not found
+  ✓ Segment 1/6
+generate-reel.sh: line 234: ffmpeg: command not found
+  ✓ Segment 2/6
+generate-reel.sh: line 234: ffmpeg: command not found
+  ✓ Segment 3/6
+generate-reel.sh: line 234: ffmpeg: command not found
+  ✓ Segment 4/6
+generate-reel.sh: line 234: ffmpeg: command not found
+  ✓ Segment 5/6
+generate-reel.sh: line 234: ffmpeg: command not found
+  ✓ Segment 6/6
+
+--- Concatenating 6 segments with 0.5s crossfades ---
+generate-reel.sh: line 276: ffmpeg: command not found
