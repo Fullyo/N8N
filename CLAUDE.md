@@ -115,7 +115,7 @@ and never repeats the same diagnostic mistakes across sessions.
   - Reads FB token from `fb-tokens.json`
 - **Facebook token storage:** `fb-tokens.json` in repo (same reason as MP)
 
-### Villas Sempre Avanti (Casa Sempre Avanti)
+### Villas Samme Avanti (Casa Sempre Avanti)
 - **Facebook Page ID:** `350547805544245`
 - **Pending post file:** `pending-post-casasempreavanti.json`
 - **GitHub Action:** `.github/workflows/auto-post-casasempreavanti.yml`
@@ -123,6 +123,15 @@ and never repeats the same diagnostic mistakes across sessions.
   - Sets `PENDING_FILE` env var so `post-to-facebook.sh` routes correctly
 - **n8n workflow:** `villas-sempre-avanti-social-poster.json`
   - Schedule: Tue / Thu / Sat at 16:00 UTC (9am Mexico time)
+- **Guesty booking portal:** https://villassempreavanti.guestybookings.com
+  - Villa Luisa: https://villassempreavanti.guestybookings.com/en/properties/697bcfcf3f5e990014fbc4dd?minOccupancy=1
+  - Villa Pietro: https://villassempreavanti.guestybookings.com/en/properties/697bcfb8c91d8d0015ca285a?minOccupancy=1
+  - Third villa: https://villassempreavanti.guestybookings.com/en/properties/697bcfe3a874360012e8aa31?minOccupancy=1
+  - Note: Guesty blocks automated fetches — must be opened in browser
+- **Villa specs (add when confirmed by owner):**
+  - Villa Luisa: 3 bedrooms · [bathrooms TBC] · [max guests TBC] · private pool · al fresco dining
+  - Villa Pietro: [specs TBC]
+  - Third villa: [name and specs TBC]
 - **Bunny zones:**
   - Property photos: `villassempreavanti`
     - `Villa Luisa/` — 87 objects confirmed uploaded
