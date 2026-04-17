@@ -1,6 +1,8 @@
 {
-  "caption": "",
-  "photo_folder": "",
+  "caption": "Rare opening — Villa Luisa, April 22 to May 3.\n\nOne of the last available windows before the summer season locks in. Villa Luisa is a 3-bedroom beachfront sanctuary on Patzcuaro Beach: a private infinity pool, a dedicated chef, outdoor kitchen and fire pit, and direct access to the Pacific from your terrace.\n\nFrom here, the region opens up — surf breaks at Sayulita and Punta de Mita, whale watching from La Cruz marina, snorkeling at Islas Marietas, deep-sea fishing, yoga in the village, rooftop dining ten minutes away.\n\nThis stretch doesn't stay empty for long.\n\nDM us to check availability or follow the link in bio.\n\n#VillaLuisa #VillasSempreAvanti #PatzcuaroBeach #Sayulita #PuntaDeMita #RivieraNayarit #LuxuryVilla #PrivateChef #BeachfrontVilla #MexicoTravel",
+  "photo_folder": "Villa Luisa",
   "num_photos": 3,
-  "property": "casasempreavanti"
+  "activity_folders": ["Surf", "Whale Tours"],
+  "property": "casasempreavanti",
+  "_trigger": "villa-luisa-rare-opening-apr22-may3-v2"
 }
