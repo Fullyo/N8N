@@ -32,6 +32,8 @@ PHOTO_FOLDER=$(jq -r '.photo_folder' "$PENDING_FILE")
 NUM_PHOTOS=$(jq -r '.num_photos // 3' "$PENDING_FILE")
 PEXELS_QUERY_OVERRIDE=$(jq -r '.pexels_query // empty' "$PENDING_FILE")
 PROPERTY=$(jq -r '.property // "skyhouse"' "$PENDING_FILE")
+ACTIVITY_FOLDERS=$(jq -r '.activity_folders // [] | .[]' "$PENDING_FILE" 2>/dev/null || true)
+PHOTO_NAMES=$(jq -r '.photo_names // [] | .[]' "$PENDING_FILE" 2>/dev/null || true)
 
 if [ -z "$CAPTION" ] || [ "$CAPTION" = "null" ] || \
    [ -z "$PHOTO_FOLDER" ] || [ "$PHOTO_FOLDER" = "null" ]; then
@@ -230,7 +232,7 @@ scan_bunny_dir() {
 
   echo "$resp" | \
     jq -r --arg p "$base_prefix" \
-      '.[] | select(.IsDirectory == false) | select(.Length <= 10485760) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp|heic|tiff|bmp)$"; "i")) | $p + .ObjectName' \
+      '.[] | select(.IsDirectory == false) | select(.Length <= 10485760) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp|heic|tiff|bmp)$"; "i")) | select(.ObjectName | test("bath|toilet|shower|closet|sink|mirror|vanity|wc\\b|laundry|restroom|powder"; "i") | not) | $p + .ObjectName' \
     2>/dev/null || true
 
   local subdirs
@@ -422,12 +424,70 @@ fi
 # ── Step 3: Select from Bunny pool (if not already selected) ──
 if [ "$INTERNET_USED" = "false" ]; then
   echo ""
-  echo "--- Selecting $ACTUAL_COUNT photos from Bunny ---"
-  IMAGE_FILES=$(printf '%s\n' "$IMAGE_FILES" | grep '[^[:space:]]' | shuf -n "$ACTUAL_COUNT")
+
+  # If photo_names specified, use those exact files (bypasses random selection)
+  if [ -n "$PHOTO_NAMES" ]; then
+    echo "--- Using curated photo_names list ---"
+    IMAGE_FILES=$(printf '%s\n' "$PHOTO_NAMES" | grep '[^[:space:]]')
+    ACTUAL_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
+  else
+    echo "--- Selecting $ACTUAL_COUNT photos (priority: pool/ocean/exterior first) ---"
+    ALL_FILES=$(printf '%s\n' "$IMAGE_FILES" | grep '[^[:space:]]')
+    # Priority tier 1: pool, ocean, sea, view, exterior, terrace, beach, palm, sunset, garden, dining
+    TIER1=$(printf '%s\n' "$ALL_FILES" | grep -iE "pool|ocean|sea[_ -]|view|exterior|terrace|beach|palm|sunset|garden|dining|lounge|infinity" | shuf)
+    # Tier 2: everything else (already filtered — no bathrooms)
+    TIER2=$(printf '%s\n' "$ALL_FILES" | grep -ivE "pool|ocean|sea[_ -]|view|exterior|terrace|beach|palm|sunset|garden|dining|lounge|infinity" | shuf)
+    IMAGE_FILES=$(printf '%s\n%s' "$TIER1" "$TIER2" | grep '[^[:space:]]' | head -n "$ACTUAL_COUNT")
+  fi
 fi
 
 [ "$INTERNET_USED" = "true" ] && echo ""
 [ "$INTERNET_USED" = "true" ] && echo "⚠️  $SOURCE_LABEL used — photos now saved in Bunny for future reuse."
+
+# ── Step 3b: Mix in activity photos (activity_folders field) ──
+if [ -n "$ACTIVITY_FOLDERS" ]; then
+  ACT_KEY=""
+  ACT_CDN_HOST=""
+  ACT_ZONE=""
+  case "$PROPERTY" in
+    "casasempreavanti"|"villas_sempre_avanti"|"skyhouse")
+      ACT_KEY=$(jq -r '.bunny.sayulita_shared.storageApiKey' "$CREDS_FILE")
+      ACT_CDN_HOST="sayulitaandbeyond.b-cdn.net"
+      ACT_ZONE="sayulitaandbeyond"
+      ;;
+    "moroccan_palace"|"the_moroccan_palace")
+      ACT_KEY=$(jq -r '.bunny.themoroccanpalace.storageApiKey // empty' "$CREDS_FILE")
+      ACT_CDN_HOST="themoroccanpalace.b-cdn.net"
+      ACT_ZONE="themoroccanpalace"
+      ;;
+  esac
+  if [ -n "$ACT_KEY" ]; then
+    echo ""
+    echo "--- Adding activity photos ---"
+    EXTRA_LINES=""
+    while IFS= read -r folder; do
+      [ -z "$folder" ] && continue
+      ENC_FOLDER="${folder// /%20}"
+      ACT_RESP=$(curl -s --max-time 10 \
+        -H "AccessKey: $ACT_KEY" \
+        "https://la.storage.bunnycdn.com/$ACT_ZONE/$ENC_FOLDER/")
+      PICK=$(echo "$ACT_RESP" | jq -r \
+        '.[] | select(.IsDirectory == false) | select(.Length <= 10485760) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp)$"; "i")) | .ObjectName' \
+        2>/dev/null | shuf -n 1)
+      if [ -n "$PICK" ]; then
+        ENC_PICK="${PICK// /%20}"
+        EXTRA_URL="https://$ACT_CDN_HOST/$ENC_FOLDER/$ENC_PICK"
+        echo "  + [$folder] $PICK"
+        EXTRA_LINES="${EXTRA_LINES}__direct__${EXTRA_URL}"$'\n'
+      else
+        echo "  ⚠ No photos in activity folder: $folder (will try Pexels fallback)"
+      fi
+    done <<< "$ACTIVITY_FOLDERS"
+    if [ -n "$EXTRA_LINES" ]; then
+      IMAGE_FILES=$(printf '%s\n%s' "$IMAGE_FILES" "$EXTRA_LINES" | grep '[^[:space:]]')
+    fi
+  fi
+fi
 
 # ── Step 4: Upload each photo to Facebook (unpublished) ───────
 echo ""

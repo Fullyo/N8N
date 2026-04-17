@@ -1,0 +1,75 @@
+name: List Bunny Photos
+
+on:
+  workflow_dispatch:
+    inputs:
+      zone:
+        description: 'Bunny zone name (e.g. villassempreavanti)'
+        required: true
+        default: 'villassempreavanti'
+      folder:
+        description: 'Subfolder (e.g. Villa Luisa)'
+        required: false
+        default: 'Villa Luisa'
+      secret_key:
+        description: 'Which secret to use: BUNNY_SEMPREAVANTI_KEY or BUNNY_SKYHOUSE_KEY or BUNNY_SAYULITA_KEY'
+        required: true
+        default: 'BUNNY_SEMPREAVANTI_KEY'
+
+jobs:
+  list-photos:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List photos
+        env:
+          BUNNY_KEY_VSA: ${{ secrets.BUNNY_SEMPREAVANTI_KEY }}
+          BUNNY_KEY_SKY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
+          BUNNY_KEY_SAY: ${{ secrets.BUNNY_SAYULITA_KEY }}
+          ZONE: ${{ github.event.inputs.zone }}
+          FOLDER: ${{ github.event.inputs.folder }}
+          SECRET_KEY: ${{ github.event.inputs.secret_key }}
+        run: |
+          case "$SECRET_KEY" in
+            BUNNY_SEMPREAVANTI_KEY) BUNNY_KEY="$BUNNY_KEY_VSA" ;;
+            BUNNY_SKYHOUSE_KEY)     BUNNY_KEY="$BUNNY_KEY_SKY" ;;
+            BUNNY_SAYULITA_KEY)     BUNNY_KEY="$BUNNY_KEY_SAY" ;;
+            *) echo "Unknown key: $SECRET_KEY"; exit 1 ;;
+          esac
+
+          ENC_FOLDER="${FOLDER// /%20}"
+          echo "Listing: $ZONE/$FOLDER/"
+          echo ""
+
+          RESP=$(curl -s -H "AccessKey: $BUNNY_KEY" \
+            "https://la.storage.bunnycdn.com/$ZONE/$ENC_FOLDER/")
+
+          echo "$RESP" | jq -r '
+            ["SIZE_BYTES","FILENAME"],
+            (.[] | select(.IsDirectory == false) | [(.Length|tostring), .ObjectName])
+            | @tsv' | column -t
+
+          echo ""
+          echo "--- JSON saved to _bunny-photo-list.json ---"
+          echo "$RESP" | jq '[.[] | select(.IsDirectory == false) | {
+            name: .ObjectName,
+            size_mb: ((.Length / 1048576 * 10 | round) / 10),
+            over_10mb: (.Length > 10485760)
+          }] | sort_by(.name)' > _bunny-photo-list.json
+
+          cat _bunny-photo-list.json
+
+      - name: Commit photo list
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _bunny-photo-list.json
+          git commit -m "data: list Bunny photos for ${{ github.event.inputs.zone }}/${{ github.event.inputs.folder }}" || echo "No changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
