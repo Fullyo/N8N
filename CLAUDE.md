@@ -128,10 +128,10 @@ and never repeats the same diagnostic mistakes across sessions.
   - Villa Pietro: https://villassempreavanti.guestybookings.com/en/properties/697bcfb8c91d8d0015ca285a?minOccupancy=1
   - Third villa: https://villassempreavanti.guestybookings.com/en/properties/697bcfe3a874360012e8aa31?minOccupancy=1
   - Note: Guesty blocks automated fetches — must be opened in browser
-- **Villa specs (add when confirmed by owner):**
-  - Villa Luisa: 3 bedrooms · [bathrooms TBC] · [max guests TBC] · private pool · al fresco dining
-  - Villa Pietro: [specs TBC]
-  - Third villa: [name and specs TBC]
+- **Villa specs (from Guesty API — fetched 2026-04-17):**
+  - **Villa Luisa** (Guesty ID: 697bcfe3a874360012e8aa31): 3BR · 3.5 bath · sleeps 8 · beachfront Patzcuaro Beach · private infinity pool · private chef included · outdoor kitchen · BBQ · fire pit · AC · $949/night base
+  - **Villa Pietro** (Guesty ID: 697bcfb8c91d8d0015ca285a): 2BR · 2.5 bath · sleeps 6 · beachfront Patzcuaro Beach · private infinity pool · private chef included · outdoor kitchen · $849/night base
+  - **Full Estate / Villas Sempre Avanti** (Guesty ID: 697bcfcf3f5e990014fbc4dd): 5BR · 5.5 bath · sleeps 14 · two infinity pools · private chef · concierge · suitable for events · $1,749/night base
 - **Bunny zones:**
   - Property photos: `villassempreavanti`
     - `Villa Luisa/` — 87 objects confirmed uploaded
