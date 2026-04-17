@@ -1,28 +1,19 @@
 === Facebook Post Creator ===
   Property:  casasempreavanti
-  Category:  Surf
+  Category:  Villa Luisa
   Photos:    5
-  Caption:   La Lancha fires best at dawn, when the offshore wind is still light and the line...
+  Caption:   🗓 RARE OPENING — April 22 to May 3
+
+Villa Luisa just opened up for one of the la...
 
   ✓ Exchanged user token for page token
---- Scanning Bunny CDN (sayulitaandbeyond/Surf/) ---
-  Found 11 images in Bunny CDN
+--- Scanning Bunny CDN (villassempreavanti/Villa Luisa/) ---
+  Found 33 images in Bunny CDN
 
 --- Selecting 5 photos from Bunny ---
 
 --- Uploading to Facebook (page: 350547805544245) ---
-  → Sayulita-Surf.jpg
-  ✓ ID: 1494580802369900
-  → Sayulita.png
-  ✓ ID: 1494580839036563
-  → vary3.jpeg
-  ✓ ID: 1494580875703226
-  → sayulita-surf-day-camps.jpg
-  ✓ ID: 1494580919036555
-  → burros.jpg
-  ✓ ID: 1494580949036552
-
---- Publishing post ---
-
-✓ Published! Post ID: 350547805544245_1494580989036548
-=== DONE ===
+  → Camilla-Luisa-3.jpg
+  ✓ ID: 1500691275092186
+  → DJI_0912.jpg
+  ERROR: {"error":{"message":"Invalid parameter","type":"OAuthException","code":100,"error_subcode":1366046,"is_transient":false,"error_user_title":"Can't Read Files","error_user_msg":"Your photos couldn't be uploaded. Photos should be less than 10 MB and saved as JPG, PNG, GIF, TIFF, HEIF or WebP files.","fbtrace_id":"Aa0zs53FFT7bOx8AaPLAR-1"}}
