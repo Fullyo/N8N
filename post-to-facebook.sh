@@ -230,7 +230,7 @@ scan_bunny_dir() {
 
   echo "$resp" | \
     jq -r --arg p "$base_prefix" \
-      '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp|heic|tiff|bmp)$"; "i")) | $p + .ObjectName' \
+      '.[] | select(.IsDirectory == false) | select(.Length <= 10485760) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp|heic|tiff|bmp)$"; "i")) | $p + .ObjectName' \
     2>/dev/null || true
 
   local subdirs
@@ -444,15 +444,7 @@ while IFS= read -r item; do
     CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER_ENC}${ENCODED_ITEM}"
   fi
 
-  FNAME="$(basename "$CDN_URL" | cut -c1-60)"
-  echo "  → $FNAME"
-
-  # Skip files over 10MB (Facebook limit)
-  FILE_SIZE=$(curl -sI "$CDN_URL" | grep -i content-length | awk '{print $2}' | tr -d '[:space:]')
-  if [ -n "$FILE_SIZE" ] && [ "$FILE_SIZE" -gt 10485760 ] 2>/dev/null; then
-    echo "  ⚠ Skipped ($(( FILE_SIZE / 1048576 ))MB > 10MB limit)"
-    continue
-  fi
+  echo "  → $(basename "$CDN_URL" | cut -c1-60)"
 
   UPLOAD_RESP=$(curl -s -X POST \
     "$FB_API/$FB_PAGE_ID/photos" \
