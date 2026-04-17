@@ -1,0 +1,108 @@
+name: Fetch VSA Villa Specs from Guesty
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch-guesty:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch villa specs from Guesty API
+        env:
+          GUESTY_CLIENT_ID: ${{ secrets.GUESTY_CLIENT_ID }}
+          GUESTY_CLIENT_SECRET: ${{ secrets.GUESTY_CLIENT_SECRET }}
+        run: |
+          # Listing IDs from booking URLs
+          LUISA="697bcfcf3f5e990014fbc4dd"
+          PIETRO="697bcfb8c91d8d0015ca285a"
+          THIRD="697bcfe3a874360012e8aa31"
+
+          echo "--- Getting Guesty access token ---"
+          TOKEN_RESP=$(curl -s -X POST "https://open-api.guesty.com/oauth2/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=${GUESTY_CLIENT_ID}&client_secret=${GUESTY_CLIENT_SECRET}&scope=open-api")
+
+          echo "Token response: $TOKEN_RESP"
+          ACCESS_TOKEN=$(echo "$TOKEN_RESP" | jq -r '.access_token // empty')
+
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "ERROR: Could not get access token"
+            echo "$TOKEN_RESP"
+            exit 1
+          fi
+          echo "✓ Access token obtained"
+
+          fetch_listing() {
+            local id="$1"
+            curl -s "https://open-api.guesty.com/v1/listings/${id}" \
+              -H "Authorization: Bearer $ACCESS_TOKEN" \
+              -H "Accept: application/json"
+          }
+
+          echo "--- Fetching Villa Luisa ---"
+          LUISA_DATA=$(fetch_listing "$LUISA")
+          echo "--- Fetching Villa Pietro ---"
+          PIETRO_DATA=$(fetch_listing "$PIETRO")
+          echo "--- Fetching Third Villa ---"
+          THIRD_DATA=$(fetch_listing "$THIRD")
+
+          echo "--- Saving villa-specs.json ---"
+          jq -n \
+            --argjson luisa "$LUISA_DATA" \
+            --argjson pietro "$PIETRO_DATA" \
+            --argjson third "$THIRD_DATA" \
+            '{
+              fetched_at: (now | todate),
+              villa_luisa: {
+                id: $luisa._id,
+                title: $luisa.title,
+                bedrooms: $luisa.bedrooms,
+                bathrooms: $luisa.bathrooms,
+                accommodates: $luisa.accommodates,
+                amenities: $luisa.amenities,
+                description: $luisa.publicDescription.summary,
+                address: $luisa.address,
+                pricing: $luisa.prices
+              },
+              villa_pietro: {
+                id: $pietro._id,
+                title: $pietro.title,
+                bedrooms: $pietro.bedrooms,
+                bathrooms: $pietro.bathrooms,
+                accommodates: $pietro.accommodates,
+                amenities: $pietro.amenities,
+                description: $pietro.publicDescription.summary,
+                address: $pietro.address,
+                pricing: $pietro.prices
+              },
+              villa_three: {
+                id: $third._id,
+                title: $third.title,
+                bedrooms: $third.bedrooms,
+                bathrooms: $third.bathrooms,
+                accommodates: $third.accommodates,
+                amenities: $third.amenities,
+                description: $third.publicDescription.summary,
+                address: $third.address,
+                pricing: $third.prices
+              }
+            }' > villa-specs.json
+
+          echo "✓ villa-specs.json written"
+          cat villa-specs.json
+
+      - name: Commit villa specs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add villa-specs.json
+          git commit -m "data: fetch VSA villa specs from Guesty API" || echo "No changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
