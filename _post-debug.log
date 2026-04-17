@@ -8,12 +8,23 @@ Villa Luisa just opened up for one of the la...
 
   ✓ Exchanged user token for page token
 --- Scanning Bunny CDN (villassempreavanti/Villa Luisa/) ---
-  Found 33 images in Bunny CDN
+  Found 22 images in Bunny CDN
 
 --- Selecting 5 photos from Bunny ---
 
 --- Uploading to Facebook (page: 350547805544245) ---
-  → Casa%20Sempre%20Avanti%20Old%20House-2%20(1).jpg
-  ✓ ID: 1500719725089341
-  → Casa%20Sempre%20Avanti%20Old%20House-3.jpg
-  ERROR: {"error":{"message":"Invalid parameter","type":"OAuthException","code":100,"error_subcode":1366046,"is_transient":false,"error_user_title":"Can't Read Files","error_user_msg":"Your photos couldn't be uploaded. Photos should be less than 10 MB and saved as JPG, PNG, GIF, TIFF, HEIF or WebP files.","fbtrace_id":"AczYHtB07Bsx7WASlBh9jyB"}}
+  → Casa%20Sempre%20Avanti%20Old%20House-7.jpg
+  ✓ ID: 1500724345088879
+  → Casa%20Sempre%20Avanti%20Old%20House-12.jpg
+  ✓ ID: 1500724415088872
+  → VillaLuisa-3.jpg
+  ✓ ID: 1500724468422200
+  → Camilla-Luisa-2.jpg
+  ✓ ID: 1500724515088862
+  → villa%20Luisa-4.jpg
+  ✓ ID: 1500724561755524
+
+--- Publishing post ---
+
+✓ Published! Post ID: 350547805544245_1500724615088852
+=== DONE ===
