@@ -1,0 +1,48 @@
+name: Diagnose n8n
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Query n8n workflows and recent executions
+        env:
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+        run: |
+          BASE="https://fullyo.app.n8n.cloud/api/v1"
+          H="-H X-N8N-API-KEY:$N8N_API_KEY"
+
+          echo "=== WORKFLOWS ==="
+          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
+            | jq '.data[] | {id, name, active, updatedAt}'
+
+          echo ""
+          echo "=== RECENT EXECUTIONS (last 30) ==="
+          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/executions?limit=30" \
+            | jq '.data[] | {id, workflowId, finished, mode, status, startedAt, stoppedAt}'
+
+          echo ""
+          echo "=== FAILED EXECUTIONS (last 15) ==="
+          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/executions?status=error&limit=15" \
+            | jq '.data[] | {id, workflowId, finished, mode, status, startedAt}'
+
+          echo ""
+          echo "=== WORKFLOW DETAILS (active ones) ==="
+          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
+            | jq -r '.data[] | select(.active == true) | .id' \
+            | while read -r id; do
+                echo "--- Workflow $id ---"
+                curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows/$id" \
+                  | jq '{id, name, active, nodes: [.nodes[] | {name, type, disabled}]}'
+              done
+
+          echo ""
+          echo "=== DONE ==="
