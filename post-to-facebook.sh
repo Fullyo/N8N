@@ -264,10 +264,28 @@ elif [ "$PHOTO_SOURCE" = "guesty" ] && [ -f "$VILLA_SPECS_FILE" ]; then
     "Villas Sempre Avanti")  GUESTY_KEY="villa_luisa" ;;
     *)                       GUESTY_KEY="villa_three" ;;  # Villa Luisa 3BR default
   esac
-  echo "--- Using Guesty photos ($GUESTY_KEY) ---"
-  TOTAL_GUESTY=$(jq ".$GUESTY_KEY.photos | length" "$VILLA_SPECS_FILE")
-  echo "  Found $TOTAL_GUESTY Guesty photos"
-  IMAGE_FILES=$(jq -r ".$GUESTY_KEY.photos[]" "$VILLA_SPECS_FILE" | shuf -n "$NUM_PHOTOS" | while IFS= read -r url; do
+  POST_TYPE=$(jq -r '.post_type // empty' "$PENDING_FILE")
+  HERO_COUNT=$(jq "(.$GUESTY_KEY.hero_photos // []) | length" "$VILLA_SPECS_FILE")
+
+  # Availability / featured posts MUST use only curated hero photos — hard fail if missing
+  if [ "$POST_TYPE" = "availability" ] || [ "$POST_TYPE" = "featured" ]; then
+    if [ "$HERO_COUNT" -eq 0 ]; then
+      echo "ERROR: post_type=$POST_TYPE requires curated hero_photos for $GUESTY_KEY — none defined in villa-specs.json"
+      exit 1
+    fi
+    SOURCE_ARRAY="hero_photos"
+    echo "--- Using Guesty HERO photos ($GUESTY_KEY, post_type=$POST_TYPE, $HERO_COUNT curated) ---"
+  elif [ "$HERO_COUNT" -gt 0 ]; then
+    SOURCE_ARRAY="hero_photos"
+    echo "--- Using Guesty HERO photos ($GUESTY_KEY, $HERO_COUNT curated) ---"
+  else
+    SOURCE_ARRAY="photos"
+    echo "--- Using Guesty full photo set ($GUESTY_KEY — no hero_photos defined) ---"
+  fi
+
+  TOTAL_GUESTY=$(jq ".$GUESTY_KEY.$SOURCE_ARRAY | length" "$VILLA_SPECS_FILE")
+  echo "  Drawing $NUM_PHOTOS from $TOTAL_GUESTY photos"
+  IMAGE_FILES=$(jq -r ".$GUESTY_KEY.$SOURCE_ARRAY[]" "$VILLA_SPECS_FILE" | shuf -n "$NUM_PHOTOS" | while IFS= read -r url; do
     echo "__direct__$url"
   done)
   ACTUAL_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)

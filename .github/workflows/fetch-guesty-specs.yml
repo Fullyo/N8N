@@ -55,10 +55,24 @@ jobs:
           THIRD_DATA=$(fetch_listing "$THIRD")
 
           echo "--- Saving villa-specs.json ---"
+          # Preserve existing hero_photos curation (if villa-specs.json already exists)
+          OLD_LUISA_HEROES='[]'
+          OLD_PIETRO_HEROES='[]'
+          OLD_THREE_HEROES='[]'
+          if [ -f villa-specs.json ]; then
+            OLD_LUISA_HEROES=$(jq -c '.villa_luisa.hero_photos // []' villa-specs.json)
+            OLD_PIETRO_HEROES=$(jq -c '.villa_pietro.hero_photos // []' villa-specs.json)
+            OLD_THREE_HEROES=$(jq -c '.villa_three.hero_photos // []' villa-specs.json)
+            echo "Preserving hero_photos: luisa=$(echo "$OLD_LUISA_HEROES" | jq length), pietro=$(echo "$OLD_PIETRO_HEROES" | jq length), three=$(echo "$OLD_THREE_HEROES" | jq length)"
+          fi
+
           jq -n \
             --argjson luisa "$LUISA_DATA" \
             --argjson pietro "$PIETRO_DATA" \
             --argjson third "$THIRD_DATA" \
+            --argjson luisa_heroes "$OLD_LUISA_HEROES" \
+            --argjson pietro_heroes "$OLD_PIETRO_HEROES" \
+            --argjson three_heroes "$OLD_THREE_HEROES" \
             '{
               fetched_at: (now | todate),
               villa_luisa: {
@@ -71,7 +85,8 @@ jobs:
                 description: $luisa.publicDescription.summary,
                 address: $luisa.address,
                 pricing: $luisa.prices,
-                photos: [($luisa.pictures // [])[] | .original]
+                photos: [($luisa.pictures // [])[] | .original],
+                hero_photos: $luisa_heroes
               },
               villa_pietro: {
                 id: $pietro._id,
@@ -83,7 +98,8 @@ jobs:
                 description: $pietro.publicDescription.summary,
                 address: $pietro.address,
                 pricing: $pietro.prices,
-                photos: [($pietro.pictures // [])[] | .original]
+                photos: [($pietro.pictures // [])[] | .original],
+                hero_photos: $pietro_heroes
               },
               villa_three: {
                 id: $third._id,
@@ -95,7 +111,8 @@ jobs:
                 description: $third.publicDescription.summary,
                 address: $third.address,
                 pricing: $third.prices,
-                photos: [($third.pictures // [])[] | .original]
+                photos: [($third.pictures // [])[] | .original],
+                hero_photos: $three_heroes
               }
             }' > villa-specs.json
 

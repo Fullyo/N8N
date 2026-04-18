@@ -44,6 +44,16 @@ and never repeats the same diagnostic mistakes across sessions.
 7. **Do not ask the user to do something you can do yourself.** Exhaust all available tools
    before involving the user. If you must ask, be 150% sure there is no other way.
 
+8. **Availability posts use ONLY curated hero photos.** Any post promoting real dates,
+   rare openings, or specific villa availability MUST draw exclusively from the
+   `hero_photos` array in `villa-specs.json` for that exact property. No Bunny CDN random
+   selection, no activity folder mixing, no Pexels fallback. This is enforced in
+   `post-to-facebook.sh` via `post_type: "availability"` (hard-fails if no hero_photos exist).
+   - `villa_luisa.hero_photos` → Full Estate / Villas Sempre Avanti (5BR)
+   - `villa_pietro.hero_photos` → Villa Pietro (2BR)
+   - `villa_three.hero_photos` → Villa Luisa (3BR)
+   - Re-curate via pickers at `https://stellular-gaufre-2b4f51.netlify.app/select-hero-{estate,luisa,pietro}.html`
+
 ---
 
 ## Repository
@@ -170,6 +180,19 @@ curl -s -H "AccessKey: $BUNNY_KEY" "https://la.storage.bunnycdn.com/villassempre
 3. Script auto-exchanges user token → page token → uploads photos → publishes post
 4. On success: pending post file is cleared automatically
 5. Debug log written to `_post-debug.log` on every run — pull and read it to diagnose
+
+### Pending-post JSON fields
+| Field | Purpose |
+|---|---|
+| `caption` | Post body text |
+| `photo_folder` | Category key — maps to Bunny subfolder or Guesty villa |
+| `num_photos` | How many photos to attach (default 3) |
+| `property` | `skyhouse` / `casasempreavanti` / `moroccan_palace` / `lux` |
+| `photo_source` | `bunny` (default), `guesty` (VSA villa photos from Guesty API) |
+| `post_type` | `availability` or `featured` → forces curated `hero_photos` only (hard-fail if none) |
+| `photo_names` | Array of exact filenames/URLs — bypasses scan & tier selection |
+| `activity_folders` | Array of extra activity folders to mix in (ignored for availability posts) |
+| `pexels_query` | Override Pexels fallback search term |
 
 ### n8n (scheduled posts)
 1. Schedule trigger fires
