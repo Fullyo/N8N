@@ -1,0 +1,50 @@
+=== WORKFLOWS ===
+{
+  "id": "3mW5h8P4qWdwvNmf",
+  "name": "Villas Sempre Avanti — Daily Social Post",
+  "active": false,
+  "updatedAt": "2026-04-18T19:38:09.890Z"
+}
+{
+  "id": "8GapeyJSUjSx2gNY",
+  "name": "SkyHouse Sayulita — Daily Social Post",
+  "active": false,
+  "updatedAt": "2026-04-18T19:38:08.674Z"
+}
+{
+  "id": "8qEtxp9DvhBuniMg",
+  "name": "The Moroccan Palace — Daily Social Post",
+  "active": false,
+  "updatedAt": "2026-04-18T19:38:10.760Z"
+}
+{
+  "id": "tWX1PmRCMVnXvZFx",
+  "name": "Sky House Sayulita — Daily Facebook Post",
+  "active": false,
+  "updatedAt": "2026-03-28T17:14:35.065Z"
+}
+{
+  "id": "uEexHK92V8UiMuEY",
+  "name": "LUX Property Management — Daily Social Post",
+  "active": false,
+  "updatedAt": "2026-04-18T19:38:12.403Z"
+}
+{
+  "id": "ycEOQ5T0T47GrevA",
+  "name": "Fullyo — Telegram AI Assistant",
+  "active": true,
+  "updatedAt": "2026-04-04T20:17:50.989Z"
+}
+
+=== RECENT EXECUTIONS (last 30) ===
+{
+  "id": "43",
+  "workflowId": "ycEOQ5T0T47GrevA",
+  "finished": true,
+  "mode": "trigger",
+  "status": "success",
+  "startedAt": "2026-04-13T21:00:00.187Z",
+  "stoppedAt": "2026-04-13T21:00:00.691Z"
+}
+
+=== FAILED EXECUTIONS (last 15) ===
