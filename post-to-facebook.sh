@@ -34,6 +34,7 @@ PEXELS_QUERY_OVERRIDE=$(jq -r '.pexels_query // empty' "$PENDING_FILE")
 PROPERTY=$(jq -r '.property // "skyhouse"' "$PENDING_FILE")
 ACTIVITY_FOLDERS=$(jq -r '.activity_folders // [] | .[]' "$PENDING_FILE" 2>/dev/null || true)
 PHOTO_NAMES=$(jq -r '.photo_names // [] | .[]' "$PENDING_FILE" 2>/dev/null || true)
+PHOTO_SOURCE=$(jq -r '.photo_source // "bunny"' "$PENDING_FILE")
 
 if [ -z "$CAPTION" ] || [ "$CAPTION" = "null" ] || \
    [ -z "$PHOTO_FOLDER" ] || [ "$PHOTO_FOLDER" = "null" ]; then
@@ -243,19 +244,36 @@ scan_bunny_dir() {
   done <<< "$subdirs"
 }
 
-# ── Step 0: Use photo_names directly if specified ─────────────
+# ── Step 0: Guesty or photo_names override (bypasses Bunny scan) ──
+VILLA_SPECS_FILE="$SCRIPT_DIR/villa-specs.json"
+
 if [ -n "$PHOTO_NAMES" ]; then
   echo "--- Using curated photo_names list ---"
   IMAGE_FILES=$(printf '%s\n' "$PHOTO_NAMES" | grep '[^[:space:]]' | while IFS= read -r f; do
-    # If it's a full URL, pass as __direct__; otherwise treat as filename in current zone
-    if [[ "$f" == http* ]]; then echo "__direct__$f"
-    else echo "$f"
-    fi
+    if [[ "$f" == http* ]]; then echo "__direct__$f"; else echo "$f"; fi
   done)
   BUNNY_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
   ACTUAL_COUNT=$(( NUM_PHOTOS < BUNNY_COUNT ? NUM_PHOTOS : BUNNY_COUNT ))
   INTERNET_USED=false
   SOURCE_LABEL=""
+
+elif [ "$PHOTO_SOURCE" = "guesty" ] && [ -f "$VILLA_SPECS_FILE" ]; then
+  # Map photo_folder → villa-specs.json key
+  case "$PHOTO_FOLDER" in
+    "Villa Pietro")          GUESTY_KEY="villa_pietro" ;;
+    "Villas Sempre Avanti")  GUESTY_KEY="villa_luisa" ;;
+    *)                       GUESTY_KEY="villa_three" ;;  # Villa Luisa 3BR default
+  esac
+  echo "--- Using Guesty photos ($GUESTY_KEY) ---"
+  TOTAL_GUESTY=$(jq ".$GUESTY_KEY.photos | length" "$VILLA_SPECS_FILE")
+  echo "  Found $TOTAL_GUESTY Guesty photos"
+  IMAGE_FILES=$(jq -r ".$GUESTY_KEY.photos[]" "$VILLA_SPECS_FILE" | shuf -n "$NUM_PHOTOS" | while IFS= read -r url; do
+    echo "__direct__$url"
+  done)
+  ACTUAL_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
+  INTERNET_USED=false
+  SOURCE_LABEL=""
+
 else
 
 # ── Step 1: Scan Bunny CDN ────────────────────────────────────
