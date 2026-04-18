@@ -1,6 +1,8 @@
 {
-  "caption": "",
-  "photo_folder": "",
-  "num_photos": 3,
-  "property": "moroccan_palace"
+  "caption": "The Moroccan Palace — where the Sea of Cortez meets Moroccan-inspired architecture in El Sargento, Baja California Sur.\n\nA 22-foot pool. A rooftop sky bed under open stars. Three glamping tents tucked into the desert. Scott and Jewels host — Jewels brings 25+ years of massage and acupuncture on-site when you want it.\n\nMinutes from La Ventana: kite surfing, diving with sea lions, whale shark encounters. Mornings with coffee on the rooftop watching the Sea of Cortez wake up. Evenings by the pool as the desert cools.\n\nOpen dates in May. DM to book or visit themoroccanpalace.com.\n\n#TheMoroccanPalace #ElSargento #BajaCaliforniaSur #SeaOfCortez #LaVentana #KiteSurfing #MexicoVacation #DesertRetreat #LuxuryRental",
+  "photo_folder": "Pool",
+  "num_photos": 4,
+  "property": "moroccan_palace",
+  "activity_folders": ["Rooftop", "Interiors"],
+  "_trigger": "mp-sea-of-cortez-2026-04-18"
 }
