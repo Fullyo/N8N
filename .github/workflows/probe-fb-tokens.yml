@@ -1,0 +1,70 @@
+name: Probe Facebook Tokens
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - '_probe-fb-trigger.txt'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Probe all FB tokens
+        env:
+          FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+          FB_TOKEN_CASASEMPREAVANTI: ${{ secrets.FB_TOKEN_CASASEMPREAVANTI }}
+        run: |
+          API="https://graph.facebook.com/v19.0"
+          FB_MP=$(jq -r '.facebook.moroccan_palace.accessToken' fb-tokens.json)
+          FB_LUX=$(jq -r '.facebook.lux_property_management.accessToken' fb-tokens.json)
+
+          probe() {
+            local label="$1"
+            local token="$2"
+            local page_id="$3"
+            echo "========================================"
+            echo "  $label (page: $page_id)"
+            echo "========================================"
+            echo "--- /debug_token ---"
+            APP_TOKEN_RESP=$(curl -s "$API/debug_token?input_token=$token&access_token=$token")
+            echo "$APP_TOKEN_RESP" | jq '.'
+
+            echo ""
+            echo "--- /me?fields=id,name ---"
+            curl -s "$API/me?fields=id,name&access_token=$token" | jq '.'
+
+            echo ""
+            echo "--- /me/accounts (list of pages this user manages) ---"
+            curl -s "$API/me/accounts?access_token=$token" | jq '{data: [.data[]? | {id, name, category}], error}'
+
+            echo ""
+            echo "--- /$page_id?fields=id,name (can this token see the target page) ---"
+            curl -s "$API/$page_id?fields=id,name&access_token=$token" | jq '.'
+            echo ""
+          }
+
+          {
+            probe "SkyHouse Sayulita" "$FB_TOKEN_SKYHOUSE" "1004908006045909"
+            probe "VSA Casa Sempre Avanti" "$FB_TOKEN_CASASEMPREAVANTI" "350547805544245"
+            probe "Moroccan Palace" "$FB_MP" "954938847703306"
+            probe "LUX Property Management" "$FB_LUX" "999599493240965"
+          } > _fb-token-probe.txt 2>&1
+
+          cat _fb-token-probe.txt
+
+      - name: Commit probe output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _fb-token-probe.txt
+          git commit -m "diag: FB token probe output" || echo "no changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
