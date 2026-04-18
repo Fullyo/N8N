@@ -162,13 +162,14 @@ deploy_workflow() {
       exit 1
     fi
     echo "  ✓ Updated in place: $wid"
-    api PATCH "/workflows/$wid" '{"active":true}' > /dev/null
+    # n8n Cloud Public API requires POST /workflows/:id/activate — PATCH active is ignored
+    api POST "/workflows/$wid/activate" '{}' > /dev/null
     echo "  ✓ Activated"
 
     # Delete any duplicate workflows with same name (keep the one we just updated)
     while IFS= read -r dup_id; do
       [ -z "$dup_id" ] || [ "$dup_id" = "$wid" ] && continue
-      api PATCH "/workflows/$dup_id" '{"active":false}' > /dev/null
+      api POST "/workflows/$dup_id/deactivate" '{}' > /dev/null
       api DELETE "/workflows/$dup_id" > /dev/null
       echo "  → Removed duplicate: $dup_id" >&2
     done < <(echo "$all_wf" | jq -r --arg name "$label" '.data[] | select(.name == $name) | .id' 2>/dev/null || true)
@@ -182,7 +183,7 @@ deploy_workflow() {
     fi
     echo "  ✓ Created: $wid"
     echo "  ⚠ ACTION NEEDED: Open n8n and click Publish on this workflow once."
-    api PATCH "/workflows/$wid" '{"active":true}' > /dev/null
+    api POST "/workflows/$wid/activate" '{}' > /dev/null
   fi
 
   echo "  URL: $N8N_BASE_URL/workflow/$wid"

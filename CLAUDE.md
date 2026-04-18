@@ -44,7 +44,14 @@ and never repeats the same diagnostic mistakes across sessions.
 7. **Do not ask the user to do something you can do yourself.** Exhaust all available tools
    before involving the user. If you must ask, be 150% sure there is no other way.
 
-8. **Availability posts use ONLY curated hero photos.** Any post promoting real dates,
+8. **n8n Cloud Public API requires dedicated activate/deactivate endpoints.**
+   `PATCH /workflows/:id` with `{"active": true}` is silently ignored — the workflow
+   stays inactive and no scheduled posts fire. Always use `POST /workflows/:id/activate`
+   and `POST /workflows/:id/deactivate`. `deploy-to-n8n.sh` has been fixed — if scheduled
+   posts stop going out, first verify workflows are `active: true` via
+   `.github/workflows/diagnose-n8n.yml` before chasing credentials or schedules.
+
+9. **Availability posts use ONLY curated hero photos.** Any post promoting real dates,
    rare openings, or specific villa availability MUST draw exclusively from the
    `hero_photos` array in `villa-specs.json` for that exact property. No Bunny CDN random
    selection, no activity folder mixing, no Pexels fallback. This is enforced in

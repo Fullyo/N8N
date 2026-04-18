@@ -30,14 +30,20 @@ jobs:
               | jq '.data[] | {id, name, active}'
 
             echo ""
-            echo "=== ACTIVATING ==="
+            echo "=== DEACTIVATING OLD DUPLICATES ==="
+            # The old "Sky House Sayulita — Daily Facebook Post" (with space) is obsolete
+            OLD_SKY="tWX1PmRCMVnXvZFx"
+            resp=$(curl -s -X POST -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows/$OLD_SKY/deactivate")
+            echo "  Deactivated $OLD_SKY: $(echo "$resp" | jq -r '{id, name, active}')"
+
+            echo ""
+            echo "=== ACTIVATING CURRENT WORKFLOWS ==="
             curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
-              | jq -r '.data[] | select(.name | test("Daily (Social|Facebook) Post")) | .id + "|" + .name' \
+              | jq -r '.data[] | select(.name | test(" — Daily Social Post$")) | .id + "|" + .name' \
               | while IFS='|' read -r id name; do
                   echo "Activating $name ($id)..."
-                  # Try dedicated activate endpoint
                   resp=$(curl -s -X POST -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows/$id/activate")
-                  echo "  POST /activate response: $resp"
+                  echo "  active: $(echo "$resp" | jq -r '.active')"
                 done
 
             echo ""
