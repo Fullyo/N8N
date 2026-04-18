@@ -483,12 +483,12 @@ if [ "$INTERNET_USED" = "false" ]; then
     ACTUAL_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
   else
     echo "--- Selecting $ACTUAL_COUNT photos (priority: pool/ocean/exterior first) ---"
-    ALL_FILES=$(printf '%s\n' "$IMAGE_FILES" | grep '[^[:space:]]')
+    ALL_FILES=$(printf '%s\n' "$IMAGE_FILES" | grep '[^[:space:]]' || true)
     # Priority tier 1: pool, ocean, sea, view, exterior, terrace, beach, palm, sunset, garden, dining
-    TIER1=$(printf '%s\n' "$ALL_FILES" | grep -iE "pool|ocean|sea[_ -]|view|exterior|terrace|beach|palm|sunset|garden|dining|lounge|infinity" | shuf)
+    TIER1=$(printf '%s\n' "$ALL_FILES" | { grep -iE "pool|ocean|sea[_ -]|view|exterior|terrace|beach|palm|sunset|garden|dining|lounge|infinity" || true; } | shuf || true)
     # Tier 2: everything else (already filtered — no bathrooms)
-    TIER2=$(printf '%s\n' "$ALL_FILES" | grep -ivE "pool|ocean|sea[_ -]|view|exterior|terrace|beach|palm|sunset|garden|dining|lounge|infinity" | shuf)
-    IMAGE_FILES=$(printf '%s\n%s' "$TIER1" "$TIER2" | grep '[^[:space:]]' | head -n "$ACTUAL_COUNT")
+    TIER2=$(printf '%s\n' "$ALL_FILES" | { grep -ivE "pool|ocean|sea[_ -]|view|exterior|terrace|beach|palm|sunset|garden|dining|lounge|infinity" || true; } | shuf || true)
+    IMAGE_FILES=$(printf '%s\n%s' "$TIER1" "$TIER2" | grep '[^[:space:]]' | head -n "$ACTUAL_COUNT" || true)
   fi
 fi
 
