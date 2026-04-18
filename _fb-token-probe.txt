@@ -1,0 +1,257 @@
+========================================
+  SkyHouse Sayulita (page: 1004908006045909)
+========================================
+--- /debug_token ---
+{
+  "data": {
+    "app_id": "812551218572821",
+    "type": "PAGE",
+    "application": "LUX",
+    "data_access_expires_at": 1783556022,
+    "expires_at": 0,
+    "is_valid": true,
+    "issued_at": 1775237152,
+    "profile_id": "1004908006045909",
+    "scopes": [
+      "pages_show_list",
+      "pages_read_engagement",
+      "pages_manage_posts",
+      "public_profile"
+    ],
+    "granular_scopes": [
+      {
+        "scope": "pages_show_list"
+      },
+      {
+        "scope": "pages_read_engagement"
+      },
+      {
+        "scope": "pages_manage_posts"
+      }
+    ],
+    "user_id": "10174004780050177"
+  }
+}
+
+--- /me?fields=id,name ---
+{
+  "id": "1004908006045909",
+  "name": "SkyHouse Sayulita"
+}
+
+--- /me/accounts (list of pages this user manages) ---
+{
+  "data": [],
+  "error": {
+    "message": "(#100) Tried accessing nonexisting field (accounts)",
+    "type": "OAuthException",
+    "code": 100,
+    "fbtrace_id": "Arubn_P1M5iqvZcFNV3CH0K"
+  }
+}
+
+--- /1004908006045909?fields=id,name (can this token see the target page) ---
+{
+  "id": "1004908006045909",
+  "name": "SkyHouse Sayulita"
+}
+
+========================================
+  VSA Casa Sempre Avanti (page: 350547805544245)
+========================================
+--- /debug_token ---
+{
+  "data": {
+    "app_id": "812551218572821",
+    "type": "USER",
+    "application": "LUX",
+    "data_access_expires_at": 1783556022,
+    "expires_at": 0,
+    "is_valid": true,
+    "issued_at": 1775780153,
+    "scopes": [
+      "pages_show_list",
+      "pages_read_engagement",
+      "pages_manage_posts",
+      "public_profile"
+    ],
+    "granular_scopes": [
+      {
+        "scope": "pages_show_list"
+      },
+      {
+        "scope": "pages_read_engagement"
+      },
+      {
+        "scope": "pages_manage_posts"
+      }
+    ],
+    "user_id": "10174004780050177"
+  }
+}
+
+--- /me?fields=id,name ---
+{
+  "id": "10174004780050177",
+  "name": "Seb L'Heureux"
+}
+
+--- /me/accounts (list of pages this user manages) ---
+{
+  "data": [
+    {
+      "id": "999599493240965",
+      "name": "LUX Property Management",
+      "category": "Property Management Company"
+    },
+    {
+      "id": "954938847703306",
+      "name": "The Moroccan Palace",
+      "category": "Vacation Home Rental"
+    },
+    {
+      "id": "662435283611212",
+      "name": "Steller Landscaping Victoria BC",
+      "category": "Landscape Company"
+    },
+    {
+      "id": "350547805544245",
+      "name": "Villas Sempre Avanti",
+      "category": "Vacation Home Rental"
+    },
+    {
+      "id": "709433222764704",
+      "name": "Adventure.media",
+      "category": "Consulting agency"
+    },
+    {
+      "id": "437001370010602",
+      "name": "Fully Booked",
+      "category": "Web Designer"
+    }
+  ],
+  "error": null
+}
+
+--- /350547805544245?fields=id,name (can this token see the target page) ---
+{
+  "id": "350547805544245",
+  "name": "Villas Sempre Avanti"
+}
+
+========================================
+  Moroccan Palace (page: 954938847703306)
+========================================
+--- /debug_token ---
+{
+  "data": {
+    "app_id": "812551218572821",
+    "type": "PAGE",
+    "application": "LUX",
+    "data_access_expires_at": 1783556022,
+    "expires_at": 0,
+    "is_valid": true,
+    "issued_at": 1775236773,
+    "profile_id": "954938847703306",
+    "scopes": [
+      "pages_show_list",
+      "pages_read_engagement",
+      "pages_manage_posts",
+      "public_profile"
+    ],
+    "granular_scopes": [
+      {
+        "scope": "pages_show_list"
+      },
+      {
+        "scope": "pages_read_engagement"
+      },
+      {
+        "scope": "pages_manage_posts"
+      }
+    ],
+    "user_id": "10174004780050177"
+  }
+}
+
+--- /me?fields=id,name ---
+{
+  "id": "954938847703306",
+  "name": "The Moroccan Palace"
+}
+
+--- /me/accounts (list of pages this user manages) ---
+{
+  "data": [],
+  "error": {
+    "message": "(#100) Tried accessing nonexisting field (accounts)",
+    "type": "OAuthException",
+    "code": 100,
+    "fbtrace_id": "AyG0YbzQTuvv0a6INvggHG9"
+  }
+}
+
+--- /954938847703306?fields=id,name (can this token see the target page) ---
+{
+  "id": "954938847703306",
+  "name": "The Moroccan Palace"
+}
+
+========================================
+  LUX Property Management (page: 999599493240965)
+========================================
+--- /debug_token ---
+{
+  "data": {
+    "app_id": "812551218572821",
+    "type": "PAGE",
+    "application": "LUX",
+    "data_access_expires_at": 1783556022,
+    "expires_at": 0,
+    "is_valid": true,
+    "issued_at": 1775236773,
+    "profile_id": "999599493240965",
+    "scopes": [
+      "pages_show_list",
+      "pages_read_engagement",
+      "pages_manage_posts",
+      "public_profile"
+    ],
+    "granular_scopes": [
+      {
+        "scope": "pages_show_list"
+      },
+      {
+        "scope": "pages_read_engagement"
+      },
+      {
+        "scope": "pages_manage_posts"
+      }
+    ],
+    "user_id": "10174004780050177"
+  }
+}
+
+--- /me?fields=id,name ---
+{
+  "id": "999599493240965",
+  "name": "LUX Property Management"
+}
+
+--- /me/accounts (list of pages this user manages) ---
+{
+  "data": [],
+  "error": {
+    "message": "(#100) Tried accessing nonexisting field (accounts)",
+    "type": "OAuthException",
+    "code": 100,
+    "fbtrace_id": "ApBVBc77Wq38ijgROYtr68L"
+  }
+}
+
+--- /999599493240965?fields=id,name (can this token see the target page) ---
+{
+  "id": "999599493240965",
+  "name": "LUX Property Management"
+}
+
