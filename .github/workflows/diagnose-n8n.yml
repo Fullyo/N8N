@@ -2,6 +2,11 @@ name: Diagnose n8n
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - '_diag-n8n-trigger.txt'
 
 jobs:
   diagnose:
