@@ -1,26 +1,10 @@
 === Facebook Post Creator ===
   Property:  casasempreavanti
   Category:  Villa Luisa
-  Photos:    3
+  Photos:    5
   Caption:   Rare opening — Villa Luisa, April 22 to May 3.
 
 One of the last available window...
 
   ✓ Exchanged user token for page token
---- Scanning Bunny CDN (villassempreavanti/Villa Luisa/) ---
-  Found 22 images in Bunny CDN
-
---- Selecting 3 photos from Bunny ---
-
---- Uploading to Facebook (page: 350547805544245) ---
-  → Casa%20Sempre%20Avanti%20Old%20House-8.jpg
-  ✓ ID: 1500749458419701
-  → Camilla-Luisa-2.jpg
-  ✓ ID: 1500749515086362
-  → Camilla-Luisa-4.jpg
-  ✓ ID: 1500749565086357
-
---- Publishing post ---
-
-✓ Published! Post ID: 350547805544245_1500749615086352
-=== DONE ===
+post-to-facebook.sh: line 607: syntax error: unexpected end of file
