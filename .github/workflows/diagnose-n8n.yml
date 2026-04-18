@@ -23,31 +23,29 @@ jobs:
           N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
         run: |
           BASE="https://fullyo.app.n8n.cloud/api/v1"
-          H="-H X-N8N-API-KEY:$N8N_API_KEY"
 
-          echo "=== WORKFLOWS ==="
-          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
-            | jq '.data[] | {id, name, active, updatedAt}'
+          {
+            echo "=== WORKFLOWS ==="
+            curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
+              | jq '.data[] | {id, name, active, updatedAt}'
 
-          echo ""
-          echo "=== RECENT EXECUTIONS (last 30) ==="
-          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/executions?limit=30" \
-            | jq '.data[] | {id, workflowId, finished, mode, status, startedAt, stoppedAt}'
+            echo ""
+            echo "=== RECENT EXECUTIONS (last 30) ==="
+            curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/executions?limit=30&includeData=false" \
+              | jq '.data[] | {id, workflowId, finished, mode, status, startedAt, stoppedAt}'
 
-          echo ""
-          echo "=== FAILED EXECUTIONS (last 15) ==="
-          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/executions?status=error&limit=15" \
-            | jq '.data[] | {id, workflowId, finished, mode, status, startedAt}'
+            echo ""
+            echo "=== FAILED EXECUTIONS (last 15) ==="
+            curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/executions?status=error&limit=15&includeData=true" \
+              | jq '.data[] | {id, workflowId, finished, mode, status, startedAt, errorMessage: (.data.resultData.error.message // ""), errorNode: (.data.resultData.error.node.name // "")}'
+          } > _n8n-diagnostic.txt 2>&1
 
-          echo ""
-          echo "=== WORKFLOW DETAILS (active ones) ==="
-          curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
-            | jq -r '.data[] | select(.active == true) | .id' \
-            | while read -r id; do
-                echo "--- Workflow $id ---"
-                curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows/$id" \
-                  | jq '{id, name, active, nodes: [.nodes[] | {name, type, disabled}]}'
-              done
+          cat _n8n-diagnostic.txt
 
-          echo ""
-          echo "=== DONE ==="
+      - name: Commit diagnostic output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _n8n-diagnostic.txt
+          git commit -m "diag: n8n status snapshot" || echo "no changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
