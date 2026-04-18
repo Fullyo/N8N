@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Select Hero Photos — Villas Sempre Avanti (Full Estate)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0f172a;color:#f1f5f9;padding:0 0 80px}
+.header{background:#1e293b;padding:20px 24px;position:sticky;top:0;z-index:100;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.header h1{font-size:18px;font-weight:700;color:#f97316}
+.header p{font-size:13px;color:#94a3b8;margin-top:2px}
+.counter{background:#f97316;color:#fff;font-weight:700;font-size:14px;padding:6px 16px;border-radius:20px;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:20px 16px}
+.card{position:relative;border-radius:10px;overflow:hidden;cursor:pointer;border:3px solid transparent;transition:border-color .15s,transform .1s;aspect-ratio:4/3;background:#1e293b}
+.card img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .2s}
+.card.selected{border-color:#f97316}
+.card.selected::after{content:'✓';position:absolute;top:8px;right:8px;background:#f97316;color:#fff;font-weight:900;font-size:16px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:28px;text-align:center}
+.card .num{position:absolute;bottom:6px;left:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px}
+.card:hover{transform:scale(1.02)}
+.card.loading img{opacity:0}
+.footer{position:fixed;bottom:0;left:0;right:0;background:#1e293b;border-top:1px solid #334155;padding:14px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn{padding:10px 22px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-primary{background:#f97316;color:#fff}
+.btn-primary:hover{background:#ea6c09}
+.btn-secondary{background:#334155;color:#f1f5f9}
+.btn-secondary:hover{background:#475569}
+.status{font-size:13px;color:#94a3b8;flex:1}
+#output{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:20px}
+#output.show{display:flex}
+.output-box{background:#1e293b;border-radius:12px;padding:24px;max-width:640px;width:100%;border:1px solid #334155}
+.output-box h2{color:#f97316;margin-bottom:12px;font-size:16px}
+.output-box p{color:#94a3b8;font-size:13px;margin-bottom:12px}
+textarea{width:100%;height:180px;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:8px;padding:12px;font-size:12px;font-family:monospace;resize:vertical}
+.output-actions{display:flex;gap:10px;margin-top:12px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Villas Sempre Avanti — Select Hero Photos</h1>
+    <p>Full 5BR estate · 92 photos. Click the best shots for availability & featured posts.</p>
+  </div>
+  <div class="counter"><span id="count">0</span> selected</div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">
+  <span class="status" id="status">Click photos to select your hero shots</span>
+  <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+  <button class="btn btn-primary" onclick="showOutput()">Done — Copy Selection</button>
+</div>
+
+<div id="output">
+  <div class="output-box">
+    <h2>Your Hero Photo Selection</h2>
+    <p>Copy everything below and paste it back to Claude — it will save these as the permanent hero photos for the full estate.</p>
+    <textarea id="json-out" readonly></textarea>
+    <div class="output-actions">
+      <button class="btn btn-primary" onclick="copyJSON()">Copy to Clipboard</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('output').classList.remove('show')">Back</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = 'https://assets.guesty.com/image/upload/';
+const THUMB = 'w_500,h_375,c_fill,q_75/';
+
+const PHOTOS = [
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/be73dfeb-ad88-44-9prTG',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/0f826f14-7442-4e-reCXH',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/6997b7c3-35d2-4b-Zv-U2',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/476b38eb-0f51-41-TaI9L',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b783ab96-40e9-44-HLZwg',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/0a130acd-60d9-43-i-YFl',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b053ed34-08b8-46-n5m5Q',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/0fd6c382-9565-45-yqnl7',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/52d650f5-dd49-40-c5j1r',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/61f994c0-b727-41-6jq6e',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/254d82aa-8aee-43-ja7x3',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/002862b0-3415-47-u4R5l',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/c770c3ee-0e8b-46-ZytH1',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/812a2c52-7369-44-0_hcr',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/2833d32f-6cd7-42-HKYrT',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/8f05bad6-4623-40-QDcB8',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/ef258ca0-cdcf-49-RypDK',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/9032e215-abe3-43-N3XBc',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/f0f8f300-bc86-4e-OGvek',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/9d716885-b5c0-43-LAobN',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/1819af81-a431-4e-s4t7-',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/58e2286d-350c-42-OldPj',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/dfe63ae6-40a0-4a-Om0Hr',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/4babf9ac-9531-42-FRT6t',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b9837d5b-5c0a-40-3h4nm',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/c6954e38-bf32-4e-cbqAW',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/7b4891be-454d-48-Uxc3-',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/c9064754-07c0-45-J1r5N',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/25e9097e-dd45-49-NMLFH',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/a3bc0ae1-be03-42-KJrog',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/7d559fc4-b50e-49-mpYUn',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/35aa69ad-e342-4b-d4SYB',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/da14e6a1-0ace-42-lWrMu',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/6a575c4d-7fc6-44-tge9R',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/ce674691-5148-4b-fvxTZ',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/47738f5d-e0b3-4e-IpR2c',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/bc65cfac-6951-43-lqhAq',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/04c4f26a-0b24-4b-DF2oc',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/f359ba2f-f7d3-48-QC7V3',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/c81d8e32-38c9-4f-_Pzqs',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/a9b90e63-712a-44-kYRaW',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/d3874777-ef46-4f-LBw0-',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/52f67534-b935-4a-4f05o',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b6909156-711b-42-2kj6U',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b001f548-9846-47-xErfg',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/596585d2-f97c-47-USVLc',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/fc67aa35-7fb2-4c-Vkhsx',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/94821f2e-7f31-49-rni_t',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/9aa07b9f-8f09-46-Lf_7M',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/218e11ff-fd3a-44-5Fohh',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/f60781d6-b357-4b-WCWvE',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/0d71f419-780a-41-IRuVd',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/831154c4-46c7-4c-S_2Nw',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/ceb51fa2-f853-4b-FoMA2',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/66e540ad-5fed-40-QOPBf',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/61649523-85bf-41-bTqSM',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/159ed016-f899-43-jP_i9',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/dca42dae-aad0-43-Y4gpi',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/7b91eae8-9c55-42-vDC5U',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/003f396a-b434-4f-SM4es',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/8679bebb-c0fd-43-hhn0I',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/5597b9d8-0a4e-47-AhBwG',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/e895848e-f61a-49-1rWw9',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/0edb0d30-9913-4b-KxrGw',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/8fdfb237-73b7-42-zu-fw',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/34927ceb-b245-4b-6jQIq',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/491e89f0-fba7-42-hO-tJ',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/044f9dc3-b352-40-dizht',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/d2c99f46-e431-48-0RQfG',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b0aa6faa-ad0d-48-Lj495',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/2478be94-3fde-4d-ocjD1',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/4be68a17-f151-47-PF5c0',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/aabe83af-fc80-42-FfLzb',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/c256930e-5a6c-44-MvDxO',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/97af93fb-9fb7-47-Vltez',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/c759b244-a332-45-bjukg',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/e0650634-2789-49-8H_xl',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b15f3ded-b28b-41-eKVnI',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/664598ed-8e39-45-o8C97',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/ec04b7b8-ac64-44-j2sP8',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/cb10c526-8cba-49-K91Dc',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/4631d332-f9ac-46-HhvoT',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/68235ece-1f2f-43-VTmqt',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b7c93ec6-6430-45-J-Cv3',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/b255b102-da1a-4f-cp5jz',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/3867954a-ef09-4d-kzOx3',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/3df2a528-f783-47-CirGI',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/ea48c317-cc92-4a-f4FAC',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/aaa0a0d7-fa59-42-jYV91',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/d1967785-e268-4d-L32Xp',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/a3174b32-9000-41-cYJ4q',
+  'listing_images_s3/production/property-photos/37fa8cd20239d298c04724dd0fb2668337d0c3d70092d090/697bcfcf3f5e990014fbc4dd/25481c22-0973-48-MJAaA'
+];
+
+const selected = new Set();
+
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  PHOTOS.forEach((path, i) => {
+    const card = document.createElement('div');
+    card.className = 'card loading';
+    card.dataset.idx = i;
+
+    const img = document.createElement('img');
+    img.src = BASE + THUMB + path;
+    img.alt = 'Photo ' + (i+1);
+    img.loading = 'lazy';
+    img.onload = () => card.classList.remove('loading');
+    img.onerror = () => { card.classList.remove('loading'); img.style.background='#334155'; };
+
+    const num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = '#' + (i+1);
+
+    card.appendChild(img);
+    card.appendChild(num);
+    card.addEventListener('click', () => toggle(i, card));
+    grid.appendChild(card);
+  });
+}
+
+function toggle(idx, card) {
+  if (selected.has(idx)) {
+    selected.delete(idx);
+    card.classList.remove('selected');
+  } else {
+    selected.add(idx);
+    card.classList.add('selected');
+  }
+  const n = selected.size;
+  document.getElementById('count').textContent = n;
+  document.getElementById('status').textContent =
+    n === 0 ? 'Click photos to select your hero shots' :
+    n + ' photo' + (n===1?'':'s') + ' selected';
+}
+
+function clearAll() {
+  selected.clear();
+  document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+  document.getElementById('count').textContent = '0';
+  document.getElementById('status').textContent = 'Click photos to select your hero shots';
+}
+
+function showOutput() {
+  if (selected.size === 0) { alert('Select at least one photo first.'); return; }
+  const urls = [...selected].sort((a,b)=>a-b).map(i => BASE + PHOTOS[i]);
+  const out = JSON.stringify({ villa: 'estate', hero_photos: urls }, null, 2);
+  document.getElementById('json-out').value = out;
+  document.getElementById('output').classList.add('show');
+}
+
+function copyJSON() {
+  const ta = document.getElementById('json-out');
+  ta.select();
+  document.execCommand('copy');
+  const btn = event.target;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy to Clipboard', 2000);
+}
+
+buildGrid();
+</script>
+</body>
+</html>
