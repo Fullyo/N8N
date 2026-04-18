@@ -70,7 +70,8 @@ jobs:
                 amenities: $luisa.amenities,
                 description: $luisa.publicDescription.summary,
                 address: $luisa.address,
-                pricing: $luisa.prices
+                pricing: $luisa.prices,
+                photos: [($luisa.pictures // [])[] | .original]
               },
               villa_pietro: {
                 id: $pietro._id,
@@ -81,7 +82,8 @@ jobs:
                 amenities: $pietro.amenities,
                 description: $pietro.publicDescription.summary,
                 address: $pietro.address,
-                pricing: $pietro.prices
+                pricing: $pietro.prices,
+                photos: [($pietro.pictures // [])[] | .original]
               },
               villa_three: {
                 id: $third._id,
@@ -92,7 +94,8 @@ jobs:
                 amenities: $third.amenities,
                 description: $third.publicDescription.summary,
                 address: $third.address,
-                pricing: $third.prices
+                pricing: $third.prices,
+                photos: [($third.pictures // [])[] | .original]
               }
             }' > villa-specs.json
 

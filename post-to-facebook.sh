@@ -232,7 +232,7 @@ scan_bunny_dir() {
 
   echo "$resp" | \
     jq -r --arg p "$base_prefix" \
-      '.[] | select(.IsDirectory == false) | select(.Length <= 10485760) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp|heic|tiff|bmp)$"; "i")) | select(.ObjectName | test("bath|toilet|shower|closet|sink|mirror|vanity|wc\\b|laundry|restroom|powder"; "i") | not) | $p + .ObjectName' \
+      '.[] | select(.IsDirectory == false) | select(.ObjectName | test("\\.(jpg|jpeg|png|webp|heic|tiff|bmp)$"; "i")) | select(.ObjectName | test("bath|toilet|shower|closet|sink|mirror|vanity|wc\\b|laundry|restroom|powder"; "i") | not) | $p + .ObjectName' \
     2>/dev/null || true
 
   local subdirs
@@ -242,6 +242,21 @@ scan_bunny_dir() {
     scan_bunny_dir "$base_prefix$sd/" "${sd// /%20}/" $(( depth + 1 ))
   done <<< "$subdirs"
 }
+
+# ── Step 0: Use photo_names directly if specified ─────────────
+if [ -n "$PHOTO_NAMES" ]; then
+  echo "--- Using curated photo_names list ---"
+  IMAGE_FILES=$(printf '%s\n' "$PHOTO_NAMES" | grep '[^[:space:]]' | while IFS= read -r f; do
+    # If it's a full URL, pass as __direct__; otherwise treat as filename in current zone
+    if [[ "$f" == http* ]]; then echo "__direct__$f"
+    else echo "$f"
+    fi
+  done)
+  BUNNY_COUNT=$(printf '%s\n' "$IMAGE_FILES" | grep -c '[^[:space:]]' || true)
+  ACTUAL_COUNT=$(( NUM_PHOTOS < BUNNY_COUNT ? NUM_PHOTOS : BUNNY_COUNT ))
+  INTERNET_USED=false
+  SOURCE_LABEL=""
+else
 
 # ── Step 1: Scan Bunny CDN ────────────────────────────────────
 echo "--- Scanning Bunny CDN ($BUNNY_ZONE/$BUNNY_SUBFOLDER) ---"
@@ -487,7 +502,7 @@ if [ -n "$ACTIVITY_FOLDERS" ]; then
       IMAGE_FILES=$(printf '%s\n%s' "$IMAGE_FILES" "$EXTRA_LINES" | grep '[^[:space:]]')
     fi
   fi
-fi
+fi # end photo_names else block
 
 # ── Step 4: Upload each photo to Facebook (unpublished) ───────
 echo ""
@@ -504,13 +519,36 @@ while IFS= read -r item; do
     CDN_URL="https://$BUNNY_CDN_HOST/${BUNNY_SUBFOLDER_ENC}${ENCODED_ITEM}"
   fi
 
-  echo "  → $(basename "$CDN_URL" | cut -c1-60)"
+  FNAME="$(basename "$CDN_URL" | sed 's/%20/ /g' | cut -c1-60)"
+  echo "  → $FNAME"
 
-  UPLOAD_RESP=$(curl -s -X POST \
-    "$FB_API/$FB_PAGE_ID/photos" \
-    -F "url=$CDN_URL" \
-    -F "published=false" \
-    -F "access_token=$FB_ACCESS_TOKEN")
+  # Check file size — if over 10MB, download and compress before uploading
+  FILE_SIZE_BYTES=$(curl -sI "$CDN_URL" | grep -i "^content-length:" | awk '{print $2}' | tr -d '[:space:]\r')
+  UPLOAD_AS_FILE=false
+  TEMP_FILE=""
+  if [ -n "$FILE_SIZE_BYTES" ] && [ "$FILE_SIZE_BYTES" -gt 10485760 ] 2>/dev/null; then
+    echo "    ⚙ File is $(( FILE_SIZE_BYTES / 1048576 ))MB — compressing..."
+    TEMP_FILE="/tmp/fb_upload_$$.jpg"
+    curl -sL "$CDN_URL" -o "$TEMP_FILE"
+    convert "$TEMP_FILE" -resize 3840x3840\> -quality 82 "$TEMP_FILE.out.jpg" && mv "$TEMP_FILE.out.jpg" "$TEMP_FILE"
+    echo "    ✓ Compressed to $(( $(stat -c%s "$TEMP_FILE") / 1048576 ))MB"
+    UPLOAD_AS_FILE=true
+  fi
+
+  if [ "$UPLOAD_AS_FILE" = "true" ] && [ -n "$TEMP_FILE" ]; then
+    UPLOAD_RESP=$(curl -s -X POST \
+      "$FB_API/$FB_PAGE_ID/photos" \
+      -F "source=@$TEMP_FILE;type=image/jpeg" \
+      -F "published=false" \
+      -F "access_token=$FB_ACCESS_TOKEN")
+    rm -f "$TEMP_FILE"
+  else
+    UPLOAD_RESP=$(curl -s -X POST \
+      "$FB_API/$FB_PAGE_ID/photos" \
+      -F "url=$CDN_URL" \
+      -F "published=false" \
+      -F "access_token=$FB_ACCESS_TOKEN")
+  fi
 
   PHOTO_ID=$(echo "$UPLOAD_RESP" | jq -r '.id // empty')
   if [ -z "$PHOTO_ID" ]; then
