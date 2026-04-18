@@ -19,22 +19,29 @@ jobs:
         env:
           BUNNY_MOROCCANPALACE_KEY: ${{ secrets.BUNNY_MOROCCANPALACE_KEY }}
         run: |
+          set +e
           FROM_FILE=$(jq -r '.bunny.themoroccanpalace.storageApiKey // empty' fb-tokens.json)
           KEY="${BUNNY_MOROCCANPALACE_KEY:-$FROM_FILE}"
-          if [ -z "$KEY" ]; then echo "NO KEY available"; exit 1; fi
-          API="https://la.storage.bunnycdn.com/themoroccanpalace"
           {
-            echo "=== KEY_SOURCE ==="
-            if [ -n "$BUNNY_MOROCCANPALACE_KEY" ]; then echo "github-secret"; else echo "fb-tokens.json"; fi
-            echo "=== ROOT ==="
-            curl -s -H "AccessKey: $KEY" "$API/" | jq '[.[]? | {ObjectName, IsDirectory, Length}]'
-            for folder in Pool Rooftop Riad Interiors Glamping Villa "La Ventana"; do
-              ENC="${folder// /%20}"
-              echo "=== /$folder/ ==="
-              curl -s -H "AccessKey: $KEY" "$API/$ENC/" | jq '[.[]? | {ObjectName, IsDirectory, Length}] | .[0:20]'
+            echo "=== KEY_LEN ==="
+            echo "secret_len=${#BUNNY_MOROCCANPALACE_KEY}"
+            echo "from_file_len=${#FROM_FILE}"
+            echo "effective_len=${#KEY}"
+            for BASE in "https://la.storage.bunnycdn.com/themoroccanpalace" "https://storage.bunnycdn.com/themoroccanpalace"; do
+              echo ""
+              echo "#### BASE=$BASE"
+              echo "=== ROOT ==="
+              RESP=$(curl -s -H "AccessKey: $KEY" "$BASE/")
+              echo "$RESP" | head -c 400; echo
+              for folder in Pool Rooftop Riad Interiors Glamping Villa "La Ventana"; do
+                ENC="${folder// /%20}"
+                echo "=== /$folder/ ==="
+                curl -s -H "AccessKey: $KEY" "$BASE/$ENC/" | head -c 400; echo
+              done
             done
           } > _mp-bunny-listing.txt 2>&1
           cat _mp-bunny-listing.txt
+          exit 0
       - name: Commit listing
         run: |
           git config user.name "github-actions[bot]"
