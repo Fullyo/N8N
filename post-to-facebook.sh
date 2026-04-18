@@ -520,7 +520,8 @@ if [ -n "$ACTIVITY_FOLDERS" ]; then
       IMAGE_FILES=$(printf '%s\n%s' "$IMAGE_FILES" "$EXTRA_LINES" | grep '[^[:space:]]')
     fi
   fi
-fi # end photo_names else block
+fi # end activity_folders block
+fi # end photo_names/guesty/bunny block
 
 # ── Step 4: Upload each photo to Facebook (unpublished) ───────
 echo ""
