@@ -7,22 +7,22 @@
 One of the last available window...
 
   ✓ Exchanged user token for page token
---- Using Guesty photos (villa_three) ---
-  Found 51 Guesty photos
+--- Using Guesty HERO photos (villa_three, post_type=availability, 18 curated) ---
+  Drawing 5 from 18 photos
 
 --- Uploading to Facebook (page: 350547805544245) ---
-  → 6dfd3da3-6d62-49-A6Dql
-  ✓ ID: 1501111708383476
-  → 3f04da12-971d-49-C272A
-  ✓ ID: 1501111758383471
-  → f41be137-fa7f-4c-61IPd
-  ✓ ID: 1501111825050131
-  → eccd2e2b-f9f7-4b-PiOC8
-  ✓ ID: 1501111871716793
-  → d8bfefe9-f1a1-46-yyXCm
-  ✓ ID: 1501111931716787
+  → f030df84-adca-47-RRuak
+  ✓ ID: 1501418285019485
+  → bf27357a-fec0-44-P952B
+  ✓ ID: 1501418341686146
+  → a8a6d821-6d9b-40-93n-3
+  ✓ ID: 1501418378352809
+  → c4df4f05-b58e-48-7uAbD
+  ✓ ID: 1501418425019471
+  → 39ebd4f2-34d5-44-ZU6BM
+  ✓ ID: 1501418485019465
 
 --- Publishing post ---
 
-✓ Published! Post ID: 350547805544245_1501111975050116
+✓ Published! Post ID: 350547805544245_1501418558352791
 === DONE ===
