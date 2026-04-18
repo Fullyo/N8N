@@ -1,0 +1,41 @@
+=== KEY_LEN ===
+secret_len=41
+from_file_len=0
+effective_len=41
+
+#### BASE=https://la.storage.bunnycdn.com/themoroccanpalace
+=== ROOT ===
+{"HttpCode":401,"Message":"Unauthorized"}
+
+=== /Pool/ ===
+{"HttpCode":401,"Message":"Unauthorized"}
+=== /Rooftop/ ===
+{"HttpCode":401,"Message":"Unauthorized"}
+=== /Riad/ ===
+{"HttpCode":401,"Message":"Unauthorized"}
+=== /Interiors/ ===
+{"HttpCode":401,"Message":"Unauthorized"}
+=== /Glamping/ ===
+{"HttpCode":401,"Message":"Unauthorized"}
+=== /Villa/ ===
+{"HttpCode":401,"Message":"Unauthorized"}
+=== /La Ventana/ ===
+{"HttpCode":401,"Message":"Unauthorized"}
+
+#### BASE=https://storage.bunnycdn.com/themoroccanpalace
+=== ROOT ===
+[{"Guid":"73412d20-36c7-4b7e-9191-d013d4fd149f","StorageZoneName":"themoroccanpalace","Path":"/themoroccanpalace/","ObjectName":"La Ventana","Length":0,"Checksum":null,"ReplicatedZones":null,"LastChanged":"2026-04-10T18:51:30.169","ServerId":0,"ArrayNumber":0,"IsDirectory":true,"UserId":"48613f02-658d-4693-bf88-f11d6e68f9a5","ContentType":"","DateCreated":"2026-04-10T18:51:30.169","StorageZoneId":
+=== /Pool/ ===
+[]
+=== /Rooftop/ ===
+[]
+=== /Riad/ ===
+[]
+=== /Interiors/ ===
+[]
+=== /Glamping/ ===
+[]
+=== /Villa/ ===
+[]
+=== /La Ventana/ ===
+[{"Guid":"05b36ffe-0f64-4b0b-a6e2-19997d42527e","StorageZoneName":"themoroccanpalace","Path":"/themoroccanpalace/La Ventana/","ObjectName":"Kite Surfing","Length":0,"Checksum":null,"ReplicatedZones":null,"LastChanged":"2026-04-10T18:51:30.188","ServerId":0,"ArrayNumber":0,"IsDirectory":true,"UserId":"48613f02-658d-4693-bf88-f11d6e68f9a5","ContentType":"","DateCreated":"2026-04-10T18:51:30.188","St
