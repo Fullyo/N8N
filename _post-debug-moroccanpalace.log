@@ -1,16 +1,44 @@
 === Facebook Post Creator ===
   Property:  moroccan_palace
-  Category:  Pool
+  Category:  Whale Sharks
   Photos:    4
-  Caption:   The Moroccan Palace — where the Sea of Cortez meets Moroccan-inspired architectu...
+  Caption:   Whale shark season is closing out on the Sea of Cortez.
+
+From The Moroccan Palac...
 
   ⚠ Could not get page token — using stored token as-is
---- Scanning Bunny CDN (themoroccanpalace/Pool/) ---
+--- Scanning Bunny CDN (themoroccanpalace/La Ventana/Whale Sharks/) ---
   Found 0 images in Bunny CDN
 
-╔══════════════════════════════════════════════════════╗
-║  STOP: Property folder is empty.                    ║
-║  Folder: themoroccanpalace/Pool/
-║  Stock photos cannot be used for property shots.    ║
-║  Upload real photos to Bunny CDN first.             ║
-╚══════════════════════════════════════════════════════╝
+--- Pexels fallback: "whale shark swimming ocean Baja Mexico sea Cortez" ---
+  Found 20 Pexels photos
+
+--- Downloading from Pexels → saving to Bunny CDN ---
+  Zone: themoroccanpalace/La Ventana/Whale Sharks/
+
+  Downloading pexels-photo-4552986.jpeg?auto=compress&cs=tinysrg ...
+  ✓ Saved to Bunny: La Ventana/Whale Sharks/pexels-4552986.jpg (HTTP 201)
+  Downloading pexels-photo-7905793.jpeg?auto=compress&cs=tinysrg ...
+  ✓ Saved to Bunny: La Ventana/Whale Sharks/pexels-7905793.jpg (HTTP 201)
+  Downloading pexels-photo-6530409.jpeg?auto=compress&cs=tinysrg ...
+  ✓ Saved to Bunny: La Ventana/Whale Sharks/pexels-6530409.jpg (HTTP 201)
+  Downloading pexels-photo-4781962.jpeg?auto=compress&cs=tinysrg ...
+  ✓ Saved to Bunny: La Ventana/Whale Sharks/pexels-4781962.jpg (HTTP 201)
+
+⚠️  Pexels used — photos now saved in Bunny for future reuse.
+
+--- Uploading to Facebook (page: 954938847703306) ---
+  → pexels-4552986.jpg
+  ✓ ID: 122122010505229271
+  → pexels-7905793.jpg
+  ✓ ID: 122122010541229271
+  → pexels-6530409.jpg
+  ✓ ID: 122122010595229271
+  → pexels-4781962.jpg
+  ✓ ID: 122122010655229271
+
+--- Publishing post ---
+
+✓ Published! Post ID: 954938847703306_122122010691229271
+  📦 4 photos saved to themoroccanpalace/La Ventana/Whale Sharks/ for reuse
+=== DONE ===
