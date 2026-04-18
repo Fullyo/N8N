@@ -1,44 +1,16 @@
 === Facebook Post Creator ===
   Property:  moroccan_palace
-  Category:  Kite Surfing
+  Category:  Pool
   Photos:    4
-  Caption:   La Ventana is one of the best kite surfing destinations in the world.
-
-From Nove...
+  Caption:   The Moroccan Palace — where the Sea of Cortez meets Moroccan-inspired architectu...
 
   ⚠ Could not get page token — using stored token as-is
---- Scanning Bunny CDN (themoroccanpalace/La Ventana/Kite Surfing/) ---
+--- Scanning Bunny CDN (themoroccanpalace/Pool/) ---
   Found 0 images in Bunny CDN
 
---- Pexels fallback: "kite surfing Baja California Mexico wind beach sea" ---
-  Found 20 Pexels photos
-
---- Downloading from Pexels → saving to Bunny CDN ---
-  Zone: themoroccanpalace/La Ventana/Kite Surfing/
-
-  Downloading pexels-13176903 ...
-  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-13176903.jpg (HTTP 201)
-  Downloading pexels-18553964 ...
-  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-18553964.jpg (HTTP 201)
-  Downloading pexels-19059873 ...
-  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-19059873.jpg (HTTP 201)
-  Downloading pexels-16684231 ...
-  ✓ Saved to Bunny: La Ventana/Kite Surfing/pexels-16684231.jpg (HTTP 201)
-
-⚠️  Pexels used — photos now saved in Bunny for future reuse.
-
---- Uploading to Facebook (page: 954938847703306) ---
-  → pexels-13176903.jpg
-  ✓ ID: 122119932363229271
-  → pexels-18553964.jpg
-  ✓ ID: 122119932417229271
-  → pexels-19059873.jpg
-  ✓ ID: 122119932471229271
-  → pexels-16684231.jpg
-  ✓ ID: 122119932519229271
-
---- Publishing post ---
-
-✓ Published! Post ID: 954938847703306_122119932555229271
-  📦 4 photos saved to themoroccanpalace/La Ventana/Kite Surfing/ for reuse
-=== DONE ===
+╔══════════════════════════════════════════════════════╗
+║  STOP: Property folder is empty.                    ║
+║  Folder: themoroccanpalace/Pool/
+║  Stock photos cannot be used for property shots.    ║
+║  Upload real photos to Bunny CDN first.             ║
+╚══════════════════════════════════════════════════════╝
