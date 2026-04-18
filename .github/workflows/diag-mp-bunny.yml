@@ -1,0 +1,44 @@
+name: Diag MP Bunny
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - '_diag-mp-bunny-trigger.txt'
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: List MP Bunny zone
+        env:
+          BUNNY_MOROCCANPALACE_KEY: ${{ secrets.BUNNY_MOROCCANPALACE_KEY }}
+        run: |
+          FROM_FILE=$(jq -r '.bunny.themoroccanpalace.storageApiKey // empty' fb-tokens.json)
+          KEY="${BUNNY_MOROCCANPALACE_KEY:-$FROM_FILE}"
+          if [ -z "$KEY" ]; then echo "NO KEY available"; exit 1; fi
+          API="https://la.storage.bunnycdn.com/themoroccanpalace"
+          {
+            echo "=== KEY_SOURCE ==="
+            if [ -n "$BUNNY_MOROCCANPALACE_KEY" ]; then echo "github-secret"; else echo "fb-tokens.json"; fi
+            echo "=== ROOT ==="
+            curl -s -H "AccessKey: $KEY" "$API/" | jq '[.[]? | {ObjectName, IsDirectory, Length}]'
+            for folder in Pool Rooftop Riad Interiors Glamping Villa "La Ventana"; do
+              ENC="${folder// /%20}"
+              echo "=== /$folder/ ==="
+              curl -s -H "AccessKey: $KEY" "$API/$ENC/" | jq '[.[]? | {ObjectName, IsDirectory, Length}] | .[0:20]'
+            done
+          } > _mp-bunny-listing.txt 2>&1
+          cat _mp-bunny-listing.txt
+      - name: Commit listing
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _mp-bunny-listing.txt
+          git commit -m "diag: MP Bunny zone listing" || echo "no changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
