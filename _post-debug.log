@@ -7,4 +7,22 @@
 One of the last available window...
 
   ✓ Exchanged user token for page token
-post-to-facebook.sh: line 607: syntax error: unexpected end of file
+--- Using Guesty photos (villa_three) ---
+  Found 51 Guesty photos
+
+--- Uploading to Facebook (page: 350547805544245) ---
+  → 6dfd3da3-6d62-49-A6Dql
+  ✓ ID: 1501111708383476
+  → 3f04da12-971d-49-C272A
+  ✓ ID: 1501111758383471
+  → f41be137-fa7f-4c-61IPd
+  ✓ ID: 1501111825050131
+  → eccd2e2b-f9f7-4b-PiOC8
+  ✓ ID: 1501111871716793
+  → d8bfefe9-f1a1-46-yyXCm
+  ✓ ID: 1501111931716787
+
+--- Publishing post ---
+
+✓ Published! Post ID: 350547805544245_1501111975050116
+=== DONE ===
