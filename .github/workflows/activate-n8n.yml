@@ -1,0 +1,57 @@
+name: Activate n8n Workflows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - '_activate-n8n-trigger.txt'
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Activate all social-post workflows
+        env:
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+        run: |
+          BASE="https://fullyo.app.n8n.cloud/api/v1"
+
+          {
+            echo "=== BEFORE ==="
+            curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
+              | jq '.data[] | {id, name, active}'
+
+            echo ""
+            echo "=== ACTIVATING ==="
+            curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
+              | jq -r '.data[] | select(.name | test("Daily (Social|Facebook) Post")) | .id + "|" + .name' \
+              | while IFS='|' read -r id name; do
+                  echo "Activating $name ($id)..."
+                  # Try dedicated activate endpoint
+                  resp=$(curl -s -X POST -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows/$id/activate")
+                  echo "  POST /activate response: $resp"
+                done
+
+            echo ""
+            echo "=== AFTER ==="
+            curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
+              | jq '.data[] | {id, name, active}'
+          } > _n8n-activation.txt 2>&1
+
+          cat _n8n-activation.txt
+
+      - name: Commit activation output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _n8n-activation.txt
+          git commit -m "diag: n8n activation attempt" || echo "no changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
