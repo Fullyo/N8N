@@ -1,0 +1,50 @@
+name: Diag Guesty Calendar Pietro
+
+on:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - '_diag-guesty-cal-trigger.txt'
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Pietro calendar April–May
+        env:
+          GUESTY_CLIENT_ID: ${{ secrets.GUESTY_CLIENT_ID }}
+          GUESTY_CLIENT_SECRET: ${{ secrets.GUESTY_CLIENT_SECRET }}
+        run: |
+          PIETRO="697bcfb8c91d8d0015ca285a"
+
+          TOKEN=$(curl -s -X POST "https://open-api.guesty.com/oauth2/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=${GUESTY_CLIENT_ID}&client_secret=${GUESTY_CLIENT_SECRET}&scope=open-api" \
+            | jq -r '.access_token')
+
+          {
+            echo "=== Reservations April 15 – May 31 ==="
+            curl -s "https://open-api.guesty.com/v1/reservations?listingId=${PIETRO}&checkIn=2026-04-15&checkOut=2026-05-31&limit=20" \
+              -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
+              | jq '[.results[]? | {status, checkIn, checkOut, nights, guestName: .guest.fullName}]'
+
+            echo ""
+            echo "=== Calendar April 20 – May 10 ==="
+            curl -s "https://open-api.guesty.com/v1/listings/${PIETRO}/calendar?from=2026-04-20&to=2026-05-10" \
+              -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
+              | jq '[.[]? | {date, status, price}]'
+
+          } > _guesty-cal-pietro.txt 2>&1
+          cat _guesty-cal-pietro.txt
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _guesty-cal-pietro.txt
+          git commit -m "diag: Guesty calendar Pietro" || echo "no changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
