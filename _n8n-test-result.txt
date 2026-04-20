@@ -1,0 +1,4 @@
+=== Test Execution Summary ===
+Workflow: SkyHouse Sayulita — Daily Social Post (8GapeyJSUjSx2gNY)
+Execution ID: 
+Trigger response: {"message":"POST method not allowed"}
