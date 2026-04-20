@@ -3,19 +3,19 @@
   "id": "3mW5h8P4qWdwvNmf",
   "name": "Villas Sempre Avanti — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-19T17:35:12.305Z"
+  "updatedAt": "2026-04-20T06:03:14.914Z"
 }
 {
   "id": "8GapeyJSUjSx2gNY",
   "name": "SkyHouse Sayulita — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-19T17:35:11.259Z"
+  "updatedAt": "2026-04-20T06:03:12.884Z"
 }
 {
   "id": "8qEtxp9DvhBuniMg",
   "name": "The Moroccan Palace — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-19T17:35:13.357Z"
+  "updatedAt": "2026-04-20T06:03:16.608Z"
 }
 {
   "id": "tWX1PmRCMVnXvZFx",
@@ -27,7 +27,7 @@
   "id": "uEexHK92V8UiMuEY",
   "name": "LUX Property Management — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-19T17:35:14.810Z"
+  "updatedAt": "2026-04-20T06:03:18.318Z"
 }
 {
   "id": "ycEOQ5T0T47GrevA",
@@ -37,6 +37,69 @@
 }
 
 === RECENT EXECUTIONS (last 30) ===
+{
+  "id": "54",
+  "workflowId": "ycEOQ5T0T47GrevA",
+  "finished": true,
+  "mode": "trigger",
+  "status": "success",
+  "startedAt": "2026-04-20T21:00:00.423Z",
+  "stoppedAt": "2026-04-20T21:00:00.881Z"
+}
+{
+  "id": "53",
+  "workflowId": "8GapeyJSUjSx2gNY",
+  "finished": true,
+  "mode": "error",
+  "status": "success",
+  "startedAt": "2026-04-20T18:00:02.972Z",
+  "stoppedAt": "2026-04-20T18:00:03.021Z"
+}
+{
+  "id": "52",
+  "workflowId": "8GapeyJSUjSx2gNY",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-20T18:00:00.419Z",
+  "stoppedAt": "2026-04-20T18:00:02.810Z"
+}
+{
+  "id": "51",
+  "workflowId": "uEexHK92V8UiMuEY",
+  "finished": true,
+  "mode": "error",
+  "status": "success",
+  "startedAt": "2026-04-20T17:00:02.118Z",
+  "stoppedAt": "2026-04-20T17:00:02.162Z"
+}
+{
+  "id": "50",
+  "workflowId": "uEexHK92V8UiMuEY",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-20T17:00:00.183Z",
+  "stoppedAt": "2026-04-20T17:00:01.953Z"
+}
+{
+  "id": "49",
+  "workflowId": "8qEtxp9DvhBuniMg",
+  "finished": true,
+  "mode": "error",
+  "status": "success",
+  "startedAt": "2026-04-20T14:00:03.441Z",
+  "stoppedAt": "2026-04-20T14:00:03.484Z"
+}
+{
+  "id": "48",
+  "workflowId": "8qEtxp9DvhBuniMg",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-20T14:00:00.450Z",
+  "stoppedAt": "2026-04-20T14:00:03.019Z"
+}
 {
   "id": "47",
   "workflowId": "8qEtxp9DvhBuniMg",
@@ -84,6 +147,36 @@
 }
 
 === FAILED EXECUTIONS (last 15) ===
+{
+  "id": "52",
+  "workflowId": "8GapeyJSUjSx2gNY",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-20T18:00:00.419Z",
+  "errorMessage": "Bad request - please check your parameters",
+  "errorNode": "Upload Photo to Facebook"
+}
+{
+  "id": "50",
+  "workflowId": "uEexHK92V8UiMuEY",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-20T17:00:00.183Z",
+  "errorMessage": "Authorization failed - please check your credentials",
+  "errorNode": "Fetch Pexels Photos"
+}
+{
+  "id": "48",
+  "workflowId": "8qEtxp9DvhBuniMg",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-20T14:00:00.450Z",
+  "errorMessage": "Bad request - please check your parameters",
+  "errorNode": "Upload Photo to Facebook"
+}
 {
   "id": "46",
   "workflowId": "8qEtxp9DvhBuniMg",
