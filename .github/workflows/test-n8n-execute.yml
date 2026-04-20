@@ -1,0 +1,72 @@
+name: Test n8n Workflow Execute
+
+on:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - '_test-n8n-trigger.txt'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Trigger SkyHouse workflow and wait for result
+        env:
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+        run: |
+          BASE="https://fullyo.app.n8n.cloud/api/v1"
+
+          # Get SkyHouse workflow ID
+          WF_ID=$(curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "$BASE/workflows?limit=30" \
+            | jq -r '.data[] | select(.name == "SkyHouse Sayulita — Daily Social Post") | .id')
+          echo "SkyHouse workflow ID: $WF_ID"
+
+          # Trigger a manual execution
+          EXEC=$(curl -s -X POST -H "X-N8N-API-KEY: $N8N_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "$BASE/workflows/$WF_ID/execute")
+          EXEC_ID=$(echo "$EXEC" | jq -r '.executionId // .data.id // empty')
+          echo "Execution started: $EXEC_ID"
+          echo "Raw trigger response: $EXEC"
+
+          # Poll for completion (up to 90s)
+          if [ -n "$EXEC_ID" ]; then
+            for i in $(seq 1 18); do
+              sleep 5
+              STATUS=$(curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" \
+                "$BASE/executions/$EXEC_ID?includeData=true")
+              FINISHED=$(echo "$STATUS" | jq -r '.finished // false')
+              RUN_STATUS=$(echo "$STATUS" | jq -r '.status // "unknown"')
+              echo "Poll $i: finished=$FINISHED status=$RUN_STATUS"
+              if [ "$FINISHED" = "true" ]; then
+                echo "=== FINAL RESULT ==="
+                echo "$STATUS" | jq '{status, finished, startedAt, stoppedAt, errorMessage: (.data.resultData.error.message // "none"), errorNode: (.data.resultData.error.node.name // "none")}'
+                break
+              fi
+            done
+          fi
+
+          {
+            echo "=== Test Execution Summary ==="
+            echo "Workflow: SkyHouse Sayulita — Daily Social Post ($WF_ID)"
+            echo "Execution ID: $EXEC_ID"
+            echo "Trigger response: $EXEC"
+          } > _n8n-test-result.txt
+
+          cat _n8n-test-result.txt
+
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _n8n-test-result.txt
+          git commit -m "test: n8n SkyHouse execute result" || echo "no changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
