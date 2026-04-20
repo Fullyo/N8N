@@ -28,6 +28,31 @@ BUNNY_CSA_KEY=$(jq -r '.bunny.casasempreavanti.storageApiKey' "$CREDS_FILE")
 PEXELS_API_KEY=$(jq -r '.pexels.apiKey // empty' "$CREDS_FILE")
 TELEGRAM_BOT_TOKEN=$(jq -r '.telegram.botToken' "$CREDS_FILE")
 
+# Exchange user tokens for page tokens.
+# Facebook requires page access tokens for /photos?published=false uploads.
+# Falls back to the original token if exchange fails (e.g. already a page token).
+get_page_token() {
+  local token="$1"
+  local page_id="$2"
+  local result page_token
+  result=$(curl -s "https://graph.facebook.com/v19.0/me/accounts?access_token=${token}&fields=id,access_token&limit=50" 2>/dev/null || echo '{}')
+  page_token=$(echo "$result" | jq -r --arg pid "$page_id" '.data[]? | select(.id == $pid) | .access_token // empty' 2>/dev/null | head -1)
+  if [ -n "$page_token" ]; then
+    echo "  ✓ Exchanged page token for page $page_id" >&2
+    echo "$page_token"
+  else
+    echo "  ⚠ Page token exchange failed for $page_id — using stored token as-is" >&2
+    echo "$token"
+  fi
+}
+
+echo "--- Exchanging user tokens for Facebook page tokens ---"
+FB_ACCESS_TOKEN=$(get_page_token "$FB_ACCESS_TOKEN" "1004908006045909")
+FB_VSA_TOKEN=$(get_page_token "$FB_VSA_TOKEN" "350547805544245")
+FB_MP_TOKEN=$(get_page_token "$FB_MP_TOKEN" "954938847703306")
+FB_LUX_TOKEN=$(get_page_token "$FB_LUX_TOKEN" "999599493240965")
+echo ""
+
 echo "=== Fullyo — n8n Cloud Deployment ==="
 echo "Instance: $N8N_BASE_URL"
 echo ""
@@ -168,7 +193,9 @@ deploy_workflow() {
     -e "s/CRED_ID_TELEGRAM/$CRED_ID_TELEGRAM/g" \
     -e "s/CRED_ID_FB_CASASEMPREAVANTI/$CRED_ID_FB_CASASEMPREAVANTI/g" \
     -e "s/CRED_ID_BUNNY_CASASEMPREAVANTI/$CRED_ID_BUNNY_CASASEMPREAVANTI/g" \
-    -e "s/CRED_ID_FB_LUX/$CRED_ID_FB_LUX/g")
+    -e "s/CRED_ID_FB_LUX/$CRED_ID_FB_LUX/g" \
+    -e "s/CRED_ID_FB_MOROCCANPALACE/$CRED_ID_FB_MOROCCANPALACE/g" \
+    -e "s/CRED_ID_PEXELS/$CRED_ID_PEXELS/g")
 
   # Remove 'active' field — managed separately
   json=$(echo "$json" | jq 'del(.active)')
