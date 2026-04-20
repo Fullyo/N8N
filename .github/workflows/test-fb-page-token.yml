@@ -1,0 +1,71 @@
+name: Test FB Page Token Exchange + Upload
+
+on:
+  push:
+    branches:
+      - claude/n8n-social-media-automation-XpSkG
+    paths:
+      - '_test-fb-trigger.txt'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Test page token exchange and photo upload
+        env:
+          FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+        run: |
+          PAGE_ID="1004908006045909"
+          TEST_PHOTO_URL="https://SkyhouseSayulita.b-cdn.net/$(
+            curl -s -H "AccessKey: ${{ secrets.BUNNY_SKYHOUSE_KEY }}" \
+              "https://la.storage.bunnycdn.com/skyhousesayulita/" \
+            | jq -r '[.[] | select(.IsDirectory == false)] | first | .ObjectName // empty'
+          )"
+
+          echo "Test photo URL: $TEST_PHOTO_URL"
+
+          # Exchange user token → page token
+          ACCOUNTS=$(curl -s "https://graph.facebook.com/v19.0/me/accounts?access_token=${FB_TOKEN_SKYHOUSE}&fields=id,name,access_token&limit=50")
+          echo "Accounts response keys: $(echo "$ACCOUNTS" | jq 'keys')"
+          PAGE_TOKEN=$(echo "$ACCOUNTS" | jq -r --arg pid "$PAGE_ID" '.data[]? | select(.id == $pid) | .access_token // empty')
+
+          if [ -z "$PAGE_TOKEN" ]; then
+            echo "ERROR: Could not exchange user token for page token"
+            echo "Accounts data: $(echo "$ACCOUNTS" | jq '.data[]? | {id, name}')"
+            RESULT="FAILED: page token exchange"
+          else
+            echo "Page token exchange: SUCCESS (token length: ${#PAGE_TOKEN})"
+
+            # Test upload with published=false
+            UPLOAD=$(curl -s -X POST \
+              "https://graph.facebook.com/v19.0/${PAGE_ID}/photos?access_token=${PAGE_TOKEN}" \
+              -F "url=${TEST_PHOTO_URL}" \
+              -F "published=false")
+
+            echo "Upload response: $UPLOAD"
+            PHOTO_ID=$(echo "$UPLOAD" | jq -r '.id // empty')
+
+            if [ -n "$PHOTO_ID" ]; then
+              RESULT="SUCCESS: staged photo ID $PHOTO_ID"
+              echo "Photo staged successfully. Deleting test photo..."
+              curl -s -X DELETE "https://graph.facebook.com/v19.0/${PHOTO_ID}?access_token=${PAGE_TOKEN}" | jq .
+            else
+              RESULT="FAILED: upload error — $(echo "$UPLOAD" | jq -r '.error.message // "unknown"')"
+            fi
+          fi
+
+          echo "=== RESULT: $RESULT ===" | tee _fb-test-result.txt
+
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _fb-test-result.txt
+          git commit -m "test: FB page token + upload result" || echo "no changes"
+          git push origin HEAD:claude/n8n-social-media-automation-XpSkG
