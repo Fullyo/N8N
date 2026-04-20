@@ -79,9 +79,38 @@ get_or_create_cred() {
   echo "$new_id"
 }
 
-CRED_ID_FACEBOOK=$(get_or_create_cred \
-  "SkyHouse Facebook Token" "httpHeaderAuth" \
-  "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_ACCESS_TOKEN\"}")
+# Always updates credential data (handles type changes); creates if missing
+upsert_cred() {
+  local name="$1"
+  local type="$2"
+  local data="$3"
+
+  local existing_id
+  existing_id=$(echo "$EXISTING_CREDS" | jq -r --arg n "$name" '.data[] | select(.name == $n) | .id // empty' 2>/dev/null | head -1)
+
+  if [ -n "$existing_id" ]; then
+    api PATCH "/credentials/$existing_id" "{\"name\":\"$name\",\"type\":\"$type\",\"data\":$data}" > /dev/null
+    echo "  ↺ $name updated: $existing_id" >&2
+    echo "$existing_id"
+    return
+  fi
+
+  local response
+  response=$(api POST /credentials "{\"name\":\"$name\",\"type\":\"$type\",\"data\":$data}")
+  local new_id
+  new_id=$(echo "$response" | jq -r '.id // empty')
+
+  if [ -z "$new_id" ]; then
+    echo "ERROR creating credential '$name': $response" >&2
+    exit 1
+  fi
+  echo "  ✓ $name: $new_id" >&2
+  echo "$new_id"
+}
+
+CRED_ID_FACEBOOK=$(upsert_cred \
+  "SkyHouse Facebook Token" "httpQueryAuth" \
+  "{\"name\":\"access_token\",\"value\":\"$FB_ACCESS_TOKEN\"}")
 
 CRED_ID_ANTHROPIC=$(get_or_create_cred \
   "Anthropic API" "httpHeaderAuth" \
@@ -99,21 +128,21 @@ CRED_ID_TELEGRAM=$(get_or_create_cred \
   "Fullyo Telegram Bot" "telegramApi" \
   "{\"accessToken\":\"$TELEGRAM_BOT_TOKEN\"}")
 
-CRED_ID_FB_CASASEMPREAVANTI=$(get_or_create_cred \
-  "Facebook VSA Page Token" "httpHeaderAuth" \
-  "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_VSA_TOKEN\"}")
+CRED_ID_FB_CASASEMPREAVANTI=$(upsert_cred \
+  "Facebook VSA Page Token" "httpQueryAuth" \
+  "{\"name\":\"access_token\",\"value\":\"$FB_VSA_TOKEN\"}")
 
 CRED_ID_BUNNY_CASASEMPREAVANTI=$(get_or_create_cred \
   "Bunny VSA Storage" "httpHeaderAuth" \
   "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_CSA_KEY\"}")
 
-CRED_ID_FB_MOROCCANPALACE=$(get_or_create_cred \
-  "Facebook Moroccan Palace Token" "httpHeaderAuth" \
-  "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_MP_TOKEN\"}")
+CRED_ID_FB_MOROCCANPALACE=$(upsert_cred \
+  "Facebook Moroccan Palace Token" "httpQueryAuth" \
+  "{\"name\":\"access_token\",\"value\":\"$FB_MP_TOKEN\"}")
 
-CRED_ID_FB_LUX=$(get_or_create_cred \
-  "Facebook LUX Token" "httpHeaderAuth" \
-  "{\"name\":\"Authorization\",\"value\":\"Bearer $FB_LUX_TOKEN\"}")
+CRED_ID_FB_LUX=$(upsert_cred \
+  "Facebook LUX Token" "httpQueryAuth" \
+  "{\"name\":\"access_token\",\"value\":\"$FB_LUX_TOKEN\"}")
 
 CRED_ID_PEXELS=$(get_or_create_cred \
   "Pexels API" "httpHeaderAuth" \

@@ -52,7 +52,7 @@
       },
       "parameters": {
         "method": "GET",
-        "url": "={{ 'https://la.storage.bunnycdn.com/villassempreavanti/' + .first().json.photoFolder.replace(/ /g, '%20') + '/' }}",
+        "url": "={{ 'https://la.storage.bunnycdn.com/villassempreavanti/' + $input.first().json.photoFolder.replace(/ /g, '%20') + '/' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -83,7 +83,7 @@
       },
       "parameters": {
         "method": "GET",
-        "url": "={{ 'https://la.storage.bunnycdn.com/sayulitaandbeyond/' + .first().json.photoFolder.replace(/ /g, '%20') + '/' }}",
+        "url": "={{ 'https://la.storage.bunnycdn.com/sayulitaandbeyond/' + $input.first().json.photoFolder.replace(/ /g, '%20') + '/' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -121,16 +121,18 @@
         460
       ],
       "credentials": {
-        "httpHeaderAuth": {
+        "httpQueryAuth": {
           "id": "CRED_ID_FB_CASASEMPREAVANTI",
           "name": "Facebook VSA Page Token"
         }
       },
       "parameters": {
         "method": "POST",
-        "url": "https://graph.facebook.com/v19.0/1004908006045909/photos",
+        "url": "https://graph.facebook.com/v19.0/350547805544245/photos",
         "sendBody": true,
         "contentType": "multipart-form-data",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpQueryAuth",
         "bodyParameters": {
           "parameters": [
             {
@@ -142,9 +144,7 @@
               "value": "false"
             }
           ]
-        },
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth"
+        }
       }
     },
     {
@@ -249,7 +249,7 @@
         460
       ],
       "credentials": {
-        "httpHeaderAuth": {
+        "httpQueryAuth": {
           "id": "CRED_ID_FB_CASASEMPREAVANTI",
           "name": "Facebook VSA Page Token"
         }
@@ -262,7 +262,7 @@
         "rawContentType": "application/json",
         "body": "={{ $json.fbPostBodyJson }}",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpHeaderAuth"
+        "nodeCredentialType": "httpQueryAuth"
       }
     },
     {

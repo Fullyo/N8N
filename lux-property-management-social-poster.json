@@ -65,7 +65,7 @@
       "typeVersion": 4.2,
       "position": [1120, 460],
       "credentials": {
-        "httpHeaderAuth": {
+        "httpQueryAuth": {
           "id": "CRED_ID_FB_LUX",
           "name": "Facebook LUX Token"
         }
@@ -75,6 +75,8 @@
         "url": "https://graph.facebook.com/v19.0/999599493240965/photos",
         "sendBody": true,
         "contentType": "multipart-form-data",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpQueryAuth",
         "bodyParameters": {
           "parameters": [
             { "name": "url", "value": "={{ $json.photoUrl }}" },
@@ -164,7 +166,7 @@
       "typeVersion": 4.2,
       "position": [2440, 460],
       "credentials": {
-        "httpHeaderAuth": {
+        "httpQueryAuth": {
           "id": "CRED_ID_FB_LUX",
           "name": "Facebook LUX Token"
         }
@@ -176,6 +178,8 @@
         "contentType": "raw",
         "rawContentType": "application/json",
         "body": "={{ $json.postBody }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpQueryAuth",
         "options": {}
       }
     },
