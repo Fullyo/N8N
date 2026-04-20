@@ -20,47 +20,76 @@ jobs:
       - name: Test page token exchange and photo upload
         env:
           FB_TOKEN_SKYHOUSE: ${{ secrets.FB_TOKEN_SKYHOUSE }}
+          BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
         run: |
+          set -x
           PAGE_ID="1004908006045909"
-          TEST_PHOTO_URL="https://SkyhouseSayulita.b-cdn.net/$(
-            curl -s -H "AccessKey: ${{ secrets.BUNNY_SKYHOUSE_KEY }}" \
-              "https://la.storage.bunnycdn.com/skyhousesayulita/" \
-            | jq -r '[.[] | select(.IsDirectory == false)] | first | .ObjectName // empty'
-          )"
 
+          # Get a real photo URL from Bunny
+          BUNNY_LIST=$(curl -s -H "AccessKey: ${BUNNY_SKYHOUSE_KEY}" \
+            "https://la.storage.bunnycdn.com/skyhousesayulita/")
+          FIRST_FILE=$(echo "$BUNNY_LIST" | jq -r '[.[] | select(.IsDirectory == false)] | first | .ObjectName // empty')
+          echo "First file from Bunny: $FIRST_FILE"
+          TEST_PHOTO_URL="https://SkyhouseSayulita.b-cdn.net/${FIRST_FILE}"
           echo "Test photo URL: $TEST_PHOTO_URL"
 
+          # Test CDN URL accessibility
+          CDN_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$TEST_PHOTO_URL")
+          echo "CDN URL HTTP status: $CDN_STATUS"
+
           # Exchange user token → page token
-          ACCOUNTS=$(curl -s "https://graph.facebook.com/v19.0/me/accounts?access_token=${FB_TOKEN_SKYHOUSE}&fields=id,name,access_token&limit=50")
-          echo "Accounts response keys: $(echo "$ACCOUNTS" | jq 'keys')"
-          PAGE_TOKEN=$(echo "$ACCOUNTS" | jq -r --arg pid "$PAGE_ID" '.data[]? | select(.id == $pid) | .access_token // empty')
+          ACCOUNTS=$(curl -s "https://graph.facebook.com/v19.0/me/accounts?access_token=${FB_TOKEN_SKYHOUSE}&fields=id,name&limit=50")
+          ACCOUNTS_SAFE=$(echo "$ACCOUNTS" | jq '{data: [.data[]? | {id, name}], error: .error}')
+          echo "Accounts response (no tokens): $ACCOUNTS_SAFE"
+
+          # Try exchange with access_token field
+          ACCOUNTS_WITH_TOKEN=$(curl -s "https://graph.facebook.com/v19.0/me/accounts?access_token=${FB_TOKEN_SKYHOUSE}&fields=id,name,access_token&limit=50")
+          PAGE_TOKEN=$(echo "$ACCOUNTS_WITH_TOKEN" | jq -r --arg pid "$PAGE_ID" '.data[]? | select(.id == $pid) | .access_token // empty')
+
+          {
+            echo "=== FB Page Token Test ==="
+            echo "CDN URL: $TEST_PHOTO_URL"
+            echo "CDN HTTP status: $CDN_STATUS"
+            echo "Accounts (no tokens): $ACCOUNTS_SAFE"
+            echo "Page token found: $([ -n "$PAGE_TOKEN" ] && echo YES || echo NO)"
+          } > _fb-test-result.txt
 
           if [ -z "$PAGE_TOKEN" ]; then
-            echo "ERROR: Could not exchange user token for page token"
-            echo "Accounts data: $(echo "$ACCOUNTS" | jq '.data[]? | {id, name}')"
-            RESULT="FAILED: page token exchange"
+            echo "Exchange FAILED — trying direct upload with stored token (may already be page token)"
+            # Try upload with the stored token directly (fallback)
+            UPLOAD=$(curl -s -X POST \
+              "https://graph.facebook.com/v19.0/${PAGE_ID}/photos?access_token=${FB_TOKEN_SKYHOUSE}" \
+              -F "url=${TEST_PHOTO_URL}" \
+              -F "published=false")
+            UPLOAD_SAFE=$(echo "$UPLOAD" | jq '{id, error}')
+            echo "Direct token upload: $UPLOAD_SAFE"
+            echo "Direct upload result: $UPLOAD_SAFE" >> _fb-test-result.txt
+            PHOTO_ID=$(echo "$UPLOAD" | jq -r '.id // empty')
+            if [ -n "$PHOTO_ID" ]; then
+              echo "=== RESULT: SUCCESS with stored token (already page token) ===" >> _fb-test-result.txt
+              curl -s -X DELETE "https://graph.facebook.com/v19.0/${PHOTO_ID}?access_token=${FB_TOKEN_SKYHOUSE}" | jq .
+            else
+              echo "=== RESULT: FAILED — $(echo "$UPLOAD" | jq -r '.error.message // "unknown"') ===" >> _fb-test-result.txt
+            fi
           else
-            echo "Page token exchange: SUCCESS (token length: ${#PAGE_TOKEN})"
-
-            # Test upload with published=false
+            echo "Exchange SUCCESS — testing upload with page token"
             UPLOAD=$(curl -s -X POST \
               "https://graph.facebook.com/v19.0/${PAGE_ID}/photos?access_token=${PAGE_TOKEN}" \
               -F "url=${TEST_PHOTO_URL}" \
               -F "published=false")
-
-            echo "Upload response: $UPLOAD"
+            UPLOAD_SAFE=$(echo "$UPLOAD" | jq '{id, error}')
+            echo "Upload response: $UPLOAD_SAFE"
+            echo "Upload result: $UPLOAD_SAFE" >> _fb-test-result.txt
             PHOTO_ID=$(echo "$UPLOAD" | jq -r '.id // empty')
-
             if [ -n "$PHOTO_ID" ]; then
-              RESULT="SUCCESS: staged photo ID $PHOTO_ID"
-              echo "Photo staged successfully. Deleting test photo..."
+              echo "=== RESULT: SUCCESS ===" >> _fb-test-result.txt
               curl -s -X DELETE "https://graph.facebook.com/v19.0/${PHOTO_ID}?access_token=${PAGE_TOKEN}" | jq .
             else
-              RESULT="FAILED: upload error — $(echo "$UPLOAD" | jq -r '.error.message // "unknown"')"
+              echo "=== RESULT: FAILED — $(echo "$UPLOAD" | jq -r '.error.message // "unknown"') ===" >> _fb-test-result.txt
             fi
           fi
 
-          echo "=== RESULT: $RESULT ===" | tee _fb-test-result.txt
+          cat _fb-test-result.txt
 
       - name: Commit result
         run: |
