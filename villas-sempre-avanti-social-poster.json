@@ -130,7 +130,7 @@
         "method": "POST",
         "url": "https://graph.facebook.com/v19.0/350547805544245/photos",
         "sendBody": true,
-        "contentType": "multipart-form-data",
+        "contentType": "form-urlencoded",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpQueryAuth",
         "bodyParameters": {
