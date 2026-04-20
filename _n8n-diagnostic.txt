@@ -2,20 +2,20 @@
 {
   "id": "3mW5h8P4qWdwvNmf",
   "name": "Villas Sempre Avanti — Daily Social Post",
-  "active": false,
-  "updatedAt": "2026-04-18T19:38:09.890Z"
+  "active": true,
+  "updatedAt": "2026-04-19T17:35:12.305Z"
 }
 {
   "id": "8GapeyJSUjSx2gNY",
   "name": "SkyHouse Sayulita — Daily Social Post",
-  "active": false,
-  "updatedAt": "2026-04-18T19:38:08.674Z"
+  "active": true,
+  "updatedAt": "2026-04-19T17:35:11.259Z"
 }
 {
   "id": "8qEtxp9DvhBuniMg",
   "name": "The Moroccan Palace — Daily Social Post",
-  "active": false,
-  "updatedAt": "2026-04-18T19:38:10.760Z"
+  "active": true,
+  "updatedAt": "2026-04-19T17:35:13.357Z"
 }
 {
   "id": "tWX1PmRCMVnXvZFx",
@@ -26,8 +26,8 @@
 {
   "id": "uEexHK92V8UiMuEY",
   "name": "LUX Property Management — Daily Social Post",
-  "active": false,
-  "updatedAt": "2026-04-18T19:38:12.403Z"
+  "active": true,
+  "updatedAt": "2026-04-19T17:35:14.810Z"
 }
 {
   "id": "ycEOQ5T0T47GrevA",
@@ -37,6 +37,42 @@
 }
 
 === RECENT EXECUTIONS (last 30) ===
+{
+  "id": "47",
+  "workflowId": "8qEtxp9DvhBuniMg",
+  "finished": true,
+  "mode": "error",
+  "status": "success",
+  "startedAt": "2026-04-19T21:00:03.457Z",
+  "stoppedAt": "2026-04-19T21:00:03.520Z"
+}
+{
+  "id": "46",
+  "workflowId": "8qEtxp9DvhBuniMg",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-19T21:00:00.183Z",
+  "stoppedAt": "2026-04-19T21:00:03.282Z"
+}
+{
+  "id": "45",
+  "workflowId": "3mW5h8P4qWdwvNmf",
+  "finished": true,
+  "mode": "error",
+  "status": "success",
+  "startedAt": "2026-04-18T23:00:02.386Z",
+  "stoppedAt": "2026-04-18T23:00:02.451Z"
+}
+{
+  "id": "44",
+  "workflowId": "3mW5h8P4qWdwvNmf",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-18T23:00:00.334Z",
+  "stoppedAt": "2026-04-18T23:00:02.024Z"
+}
 {
   "id": "43",
   "workflowId": "ycEOQ5T0T47GrevA",
@@ -48,3 +84,23 @@
 }
 
 === FAILED EXECUTIONS (last 15) ===
+{
+  "id": "46",
+  "workflowId": "8qEtxp9DvhBuniMg",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-19T21:00:00.183Z",
+  "errorMessage": "Bad request - please check your parameters",
+  "errorNode": "Upload Photo to Facebook"
+}
+{
+  "id": "44",
+  "workflowId": "3mW5h8P4qWdwvNmf",
+  "finished": false,
+  "mode": "trigger",
+  "status": "error",
+  "startedAt": "2026-04-18T23:00:00.334Z",
+  "errorMessage": "invalid syntax",
+  "errorNode": ""
+}
