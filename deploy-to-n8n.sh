@@ -137,15 +137,15 @@ CRED_ID_FACEBOOK=$(upsert_cred \
   "SkyHouse Facebook Token" "httpQueryAuth" \
   "{\"name\":\"access_token\",\"value\":\"$FB_ACCESS_TOKEN\"}")
 
-CRED_ID_ANTHROPIC=$(get_or_create_cred \
+CRED_ID_ANTHROPIC=$(upsert_cred \
   "Anthropic API" "httpHeaderAuth" \
   "{\"name\":\"x-api-key\",\"value\":\"$ANTHROPIC_API_KEY\"}")
 
-CRED_ID_BUNNY_SKYHOUSE=$(get_or_create_cred \
+CRED_ID_BUNNY_SKYHOUSE=$(upsert_cred \
   "Bunny SkyHouse Storage" "httpHeaderAuth" \
   "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_SKYHOUSE_KEY\"}")
 
-CRED_ID_BUNNY_SAYULITA=$(get_or_create_cred \
+CRED_ID_BUNNY_SAYULITA=$(upsert_cred \
   "Bunny Sayulita Shared" "httpHeaderAuth" \
   "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_SAYULITA_KEY\"}")
 
@@ -157,7 +157,7 @@ CRED_ID_FB_CASASEMPREAVANTI=$(upsert_cred \
   "Facebook VSA Page Token" "httpQueryAuth" \
   "{\"name\":\"access_token\",\"value\":\"$FB_VSA_TOKEN\"}")
 
-CRED_ID_BUNNY_CASASEMPREAVANTI=$(get_or_create_cred \
+CRED_ID_BUNNY_CASASEMPREAVANTI=$(upsert_cred \
   "Bunny VSA Storage" "httpHeaderAuth" \
   "{\"name\":\"AccessKey\",\"value\":\"$BUNNY_CSA_KEY\"}")
 
@@ -169,7 +169,7 @@ CRED_ID_FB_LUX=$(upsert_cred \
   "Facebook LUX Token" "httpQueryAuth" \
   "{\"name\":\"access_token\",\"value\":\"$FB_LUX_TOKEN\"}")
 
-CRED_ID_PEXELS=$(get_or_create_cred \
+CRED_ID_PEXELS=$(upsert_cred \
   "Pexels API" "httpHeaderAuth" \
   "{\"name\":\"Authorization\",\"value\":\"$PEXELS_API_KEY\"}")
 
