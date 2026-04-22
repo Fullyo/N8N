@@ -1,34 +1,36 @@
 === Facebook Post Creator ===
   Property:  casasempreavanti
   Category:  Surf
-  Photos:    3
-  Caption:   April in Sayulita is when everything outside comes alive.
+  Photos:    1
+  Caption:   Five things to do in Sayulita this April — in the order your day wants them:
 
-The dry season is at ...
+🏄 ...
 
   ✓ Exchanged user token for page token
 --- Scanning Bunny CDN (sayulitaandbeyond/Surf/) ---
   Found 11 images in Bunny CDN
 
---- Selecting 3 photos (priority: pool/ocean/exterior first) ---
+--- Selecting 1 photos (priority: pool/ocean/exterior first) ---
 
 --- Adding activity photos ---
-  + [Yoga] 554392_acb376a4e1904dab843b4438befade54~mv2.jpg
+  + [Whale Tours] boat-trip-sayulita-1.jpeg
+  + [Marieta Islands] Marietas Islands.jpeg
+  + [Monkey Mountain] First_Viewpoint_from_Monkey_Mountain__2.jpg
   + [Restaurants] Don Pedro's.jpg
 
 --- Uploading to Facebook (page: 350547805544245) ---
-  → vary3.jpeg
-  ✓ ID: 1504554758039171
   → burros.jpg
-  ✓ ID: 1504554801372500
-  → chillo.jpg
-  ✓ ID: 1504554848039162
-  → 554392_acb376a4e1904dab843b4438befade54~mv2.jpg
-  ✓ ID: 1504554894705824
+  ✓ ID: 1504572424704071
+  → boat-trip-sayulita-1.jpeg
+  ✓ ID: 1504572471370733
+  → Marietas Islands.jpeg
+  ✓ ID: 1504572551370725
+  → First_Viewpoint_from_Monkey_Mountain__2.jpg
+  ✓ ID: 1504572591370721
   → Don Pedro's.jpg
-  ✓ ID: 1504554944705819
+  ✓ ID: 1504572621370718
 
 --- Publishing post ---
 
-✓ Published! Post ID: 350547805544245_1504554978039149
+✓ Published! Post ID: 350547805544245_1504572668037380
 === DONE ===
