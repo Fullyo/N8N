@@ -9,18 +9,16 @@
   Found 32 photos — selecting 6
 
 --- Downloading photos ---
-  ✓ DSC05949.JPG (941KB)
-  ✓ DSC05964.JPG (1327KB)
-  ✓ DSC05988.JPG (1723KB)
-  ✓ DSC05976.JPG (1546KB)
-  ✓ DSC05916.JPG (1969KB)
-  ✓ DSC05937.JPG (1378KB)
+  ✓ DSC05934.JPG (1383KB)
+  ✓ DSC05958.JPG (1543KB)
+  ✓ DSC05994.JPG (1704KB)
+  ✓ DSC05940.JPG (1379KB)
+  ✓ DSC05913.JPG (1857KB)
+  ✓ DSC05928.JPG (1287KB)
   → 6 photos ready
 
 --- Getting background music ---
-  Downloading ambient track from Pixabay (CC0)...
-  ✓ Track downloaded
-  ✓ Cached to Bunny CDN for next run
+  ✓ Using cached music from Bunny CDN
 
 --- Generating Ken Burns video segments ---
 generate-reel.sh: line 234: ffmpeg: command not found
