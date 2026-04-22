@@ -1,29 +1,34 @@
 === Facebook Post Creator ===
   Property:  casasempreavanti
-  Category:  Villa Luisa
+  Category:  Surf
   Photos:    3
-  Caption:   April in Sayulita is the window most people wish they'd booked sooner.
+  Caption:   April in Sayulita is when everything outside comes alive.
 
-Dry seas...
+The dry season is at ...
 
   ✓ Exchanged user token for page token
---- Scanning Bunny CDN (villassempreavanti/Villa Luisa/) ---
-  Found 33 images in Bunny CDN
+--- Scanning Bunny CDN (sayulitaandbeyond/Surf/) ---
+  Found 11 images in Bunny CDN
 
 --- Selecting 3 photos (priority: pool/ocean/exterior first) ---
 
+--- Adding activity photos ---
+  + [Yoga] 554392_acb376a4e1904dab843b4438befade54~mv2.jpg
+  + [Restaurants] Don Pedro's.jpg
+
 --- Uploading to Facebook (page: 350547805544245) ---
-  → Casa Sempre Avanti Old House-10.jpg
-  ✓ ID: 1504553671372613
-  → Casa Sempre Avanti Old House-3.jpg
-    ⚙ File is 10MB — compressing...
-post-to-facebook.sh: line 570: convert: command not found
-    ✓ Compressed to 10MB
-  ✓ ID: 1504553741372606
-  → Villa Luisa-1.jpg
-  ✓ ID: 1504553801372600
+  → vary3.jpeg
+  ✓ ID: 1504554758039171
+  → burros.jpg
+  ✓ ID: 1504554801372500
+  → chillo.jpg
+  ✓ ID: 1504554848039162
+  → 554392_acb376a4e1904dab843b4438befade54~mv2.jpg
+  ✓ ID: 1504554894705824
+  → Don Pedro's.jpg
+  ✓ ID: 1504554944705819
 
 --- Publishing post ---
 
-✓ Published! Post ID: 350547805544245_1504553854705928
+✓ Published! Post ID: 350547805544245_1504554978039149
 === DONE ===
