@@ -61,6 +61,17 @@ and never repeats the same diagnostic mistakes across sessions.
    - `villa_three.hero_photos` → Villa Luisa (3BR)
    - Re-curate via pickers at `https://stellular-gaufre-2b4f51.netlify.app/select-hero-{estate,luisa,pietro}.html`
 
+10. **Photos must match the caption. If the post mentions it, show it.** Never write a
+    caption that pitches an activity, location, or feature we don't have a photo for.
+    Before drafting a things-to-do / activity post, list the exact Bunny folders being
+    used and write one bullet per folder. Map each bullet to its folder. If a topic has
+    no folder, either drop it or add the folder (Pexels fallback will populate on first
+    use). Confirmed folders in `sayulitaandbeyond` zone (VSA/SkyHouse activity posts):
+    - `Surf`, `Yoga`, `Restaurants`, `Whale Tours`, `Marieta Islands`, `Monkey Mountain`,
+      `SUP`, `Fishing Charter`, `Golf`, `Local Cultural`, `Ally Cat`, `CachaSol`, `lux`
+    - MP La Ventana activities in `themoroccanpalace` zone: `La Ventana/Diving/`,
+      `La Ventana/Kite Surfing/`, etc.
+
 ---
 
 ## Repository
