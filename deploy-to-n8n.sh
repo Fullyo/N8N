@@ -209,6 +209,9 @@ deploy_workflow() {
 
   local wid response
   if [ -n "$existing_id" ]; then
+    # Deactivate first — clears old schedule state so activate re-registers the cron fresh
+    api POST "/workflows/$existing_id/deactivate" '{}' > /dev/null
+    echo "  → Deactivated: $existing_id (will re-activate after update)"
     # UPDATE existing — preserves published state, no webhook re-registration needed
     echo "  → Updating existing workflow: $existing_id"
     response=$(api PUT "/workflows/$existing_id" "$json")
@@ -220,7 +223,7 @@ deploy_workflow() {
     echo "  ✓ Updated in place: $wid"
     # n8n Cloud Public API requires POST /workflows/:id/activate — PATCH active is ignored
     api POST "/workflows/$wid/activate" '{}' > /dev/null
-    echo "  ✓ Activated"
+    echo "  ✓ Activated (fresh cron registration)"
 
     # Delete any duplicate workflows with same name (keep the one we just updated)
     while IFS= read -r dup_id; do

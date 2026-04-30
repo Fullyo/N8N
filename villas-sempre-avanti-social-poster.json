@@ -1,5 +1,5 @@
 {
-  "name": "Villas Sempre Avanti — Daily Social Post",
+  "name": "Villas Sempre Avanti \u2014 Daily Social Post",
   "nodes": [
     {
       "id": "a1b2c3d4-0001",
@@ -32,7 +32,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];\nconst today = new Date();\nconst dayIndex = today.getDay();\n\n// Alternate Sundays between Retreats and Venues using ISO week number\nconst getWeekNumber = (d) => {\n  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));\n  const dayNum = date.getUTCDay() || 7;\n  date.setUTCDate(date.getUTCDate() + 4 - dayNum);\n  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));\n  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);\n};\nconst weekNum = getWeekNumber(new Date());\nconst sundayMode = weekNum % 2 === 0 ? 'retreats' : 'venues';\n\nconst categoryMap = {\n  0: sundayMode === 'retreats'\n    ? { category: 'Retreats', folder: 'Yoga', zone: 'sayulitaandbeyond', topic: 'Wellness retreats at Villas Sempre Avanti — yoga, sound healing, breathwork, massage, beachfront setting' }\n    : { category: 'Venues & Private Events', folder: 'Yoga', zone: 'sayulitaandbeyond', topic: 'Villas Sempre Avanti as a venue — weddings, bachelorettes, corporate retreats, family gatherings' },\n  1: { category: 'Villa Luisa', folder: 'Villa Luisa', zone: 'villassempreavanti', topic: 'Villa Luisa — 3BR beachfront villa, infinity pool, ocean views, main gathering space' },\n  2: { category: 'Wellness', folder: 'Yoga', zone: 'sayulitaandbeyond', topic: 'Yoga, sound healing, massages, breathwork — on the terrace overlooking the Pacific' },\n  3: { category: 'Ocean', folder: 'Whale Tours', zone: 'sayulitaandbeyond', topic: 'Everything on the water — Ally Cat sailing, whale watching, spearfishing, private boat, snorkeling, fishing charter' },\n  4: { category: 'Villa Pietro', folder: 'Villa Pietro', zone: 'villassempreavanti', topic: 'Villa Pietro — intimate 2BR villa, private pool, romantic, ocean views' },\n  5: { category: 'Chef & Dining', folder: 'Restaurants', zone: 'sayulitaandbeyond', topic: 'Ricardo & Crethell — private chefs, pizza night, sunset margaritas, fresh catch, cooking from local markets' },\n  6: { category: 'Land Adventures', folder: 'Monkey Mountain', zone: 'sayulitaandbeyond', topic: 'UTV coastal cruise, horseback riding, zipline (13 lines), Monkey Mountain hike, ATV, Cachasol distillery' }\n};\n\nconst audienceMap = {\n  0: sundayMode === 'retreats'\n    ? { audience: 'Wellness Retreat Leaders & Groups', postStyle: 'Intentional, restorative, retreat-specific language', ctaStyle: 'DM for retreat availability', hookExample: 'Sunrise yoga on the terrace. Sound bowls at dusk. Your group has the whole beach.' }\n    : { audience: 'Event Planners & Couples', postStyle: 'Celebratory, venue-focused, emotional', ctaStyle: 'Inquire about event availability', hookExample: 'A beach ceremony. A fire-lit dinner. Two villas all to yourselves.' },\n  1: { audience: 'Families & Multi-family Groups', postStyle: 'Warm, spacious, family-friendly', ctaStyle: 'Inquire at villassempreavanti.com', hookExample: 'Three bedrooms. Private pool. 250 feet of Pacific beachfront. Villa Luisa.' },\n  2: { audience: 'Wellness Seekers', postStyle: 'Quiet, intentional, sensory', ctaStyle: 'Link in bio for wellness stays', hookExample: 'The ocean is the soundtrack. The terrace is the studio.' },\n  3: { audience: 'Adventure & Ocean Lovers', postStyle: 'Vivid, active, experiential', ctaStyle: 'Inquire to book your ocean experience', hookExample: 'Open bar on a 56-foot catamaran. Snorkeling at the Marietas. Humpbacks in January.' },\n  4: { audience: 'Couples & Romantic Getaways', postStyle: 'Intimate, romantic, slow luxury', ctaStyle: 'DM to check availability', hookExample: 'Two bedrooms. Your own pool. The sound of the Pacific from every room.' },\n  5: { audience: 'Foodies & Culinary Travelers', postStyle: 'Warm, sensory, specific details', ctaStyle: 'Ask about chef packages', hookExample: 'Ricardo fires the wood oven at dusk. Guests choose their toppings. Magic happens.' },\n  6: { audience: 'Adventure Seekers & Active Travelers', postStyle: 'Energetic, free-spirited, variety-focused', ctaStyle: 'Inquire to book your adventure stay', hookExample: 'ATV to Punta de Mita. Zipline through 13 jungle lines. Horses at golden hour.' }\n};\n\nconst cfg = categoryMap[dayIndex];\nconst aud = audienceMap[dayIndex];\n\nreturn [{\n  json: {\n    dayIndex,\n    dayName: days[dayIndex],\n    runDate: today.toISOString().split('T')[0],\n    sundayMode: dayIndex === 0 ? sundayMode : null,\n    photoFolder: cfg.folder,\n    photoZone: cfg.zone,\n    topic: cfg.topic,\n    audience: aud.audience,\n    postStyle: aud.postStyle,\n    ctaStyle: aud.ctaStyle,\n    hookExample: aud.hookExample\n  }\n}];"
+        "jsCode": "const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];\nconst today = new Date();\nconst dayIndex = today.getDay();\n\n// Alternate Sundays between Retreats and Venues using ISO week number\nconst getWeekNumber = (d) => {\n  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));\n  const dayNum = date.getUTCDay() || 7;\n  date.setUTCDate(date.getUTCDate() + 4 - dayNum);\n  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));\n  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);\n};\nconst weekNum = getWeekNumber(new Date());\nconst sundayMode = weekNum % 2 === 0 ? 'retreats' : 'venues';\n\nconst categoryMap = {\n  0: sundayMode === 'retreats'\n    ? { category: 'Retreats', folder: 'Yoga', zone: 'sayulitaandbeyond', topic: 'Wellness retreats at Villas Sempre Avanti \u2014 yoga, sound healing, breathwork, massage, beachfront setting' }\n    : { category: 'Venues & Private Events', folder: 'Yoga', zone: 'sayulitaandbeyond', topic: 'Villas Sempre Avanti as a venue \u2014 weddings, bachelorettes, corporate retreats, family gatherings' },\n  1: { category: 'Villa Luisa', folder: 'Villa Luisa', zone: 'villassempreavanti', topic: 'Villa Luisa \u2014 3BR beachfront villa, infinity pool, ocean views, main gathering space' },\n  2: { category: 'Wellness', folder: 'Yoga', zone: 'sayulitaandbeyond', topic: 'Yoga, sound healing, massages, breathwork \u2014 on the terrace overlooking the Pacific' },\n  3: { category: 'Ocean', folder: 'Whale Tours', zone: 'sayulitaandbeyond', topic: 'Everything on the water \u2014 Ally Cat sailing, whale watching, spearfishing, private boat, snorkeling, fishing charter' },\n  4: { category: 'Villa Pietro', folder: 'Villa Pietro', zone: 'villassempreavanti', topic: 'Villa Pietro \u2014 intimate 2BR villa, private pool, romantic, ocean views' },\n  5: { category: 'Chef & Dining', folder: 'Restaurants', zone: 'sayulitaandbeyond', topic: 'Ricardo & Crethell \u2014 private chefs, pizza night, sunset margaritas, fresh catch, cooking from local markets' },\n  6: { category: 'Land Adventures', folder: 'Monkey Mountain', zone: 'sayulitaandbeyond', topic: 'UTV coastal cruise, horseback riding, zipline (13 lines), Monkey Mountain hike, ATV, Cachasol distillery' }\n};\n\nconst audienceMap = {\n  0: sundayMode === 'retreats'\n    ? { audience: 'Wellness Retreat Leaders & Groups', postStyle: 'Intentional, restorative, retreat-specific language', ctaStyle: 'DM for retreat availability', hookExample: 'Sunrise yoga on the terrace. Sound bowls at dusk. Your group has the whole beach.' }\n    : { audience: 'Event Planners & Couples', postStyle: 'Celebratory, venue-focused, emotional', ctaStyle: 'Inquire about event availability', hookExample: 'A beach ceremony. A fire-lit dinner. Two villas all to yourselves.' },\n  1: { audience: 'Families & Multi-family Groups', postStyle: 'Warm, spacious, family-friendly', ctaStyle: 'Inquire at villassempreavanti.com', hookExample: 'Three bedrooms. Private pool. 250 feet of Pacific beachfront. Villa Luisa.' },\n  2: { audience: 'Wellness Seekers', postStyle: 'Quiet, intentional, sensory', ctaStyle: 'Link in bio for wellness stays', hookExample: 'The ocean is the soundtrack. The terrace is the studio.' },\n  3: { audience: 'Adventure & Ocean Lovers', postStyle: 'Vivid, active, experiential', ctaStyle: 'Inquire to book your ocean experience', hookExample: 'Open bar on a 56-foot catamaran. Snorkeling at the Marietas. Humpbacks in January.' },\n  4: { audience: 'Couples & Romantic Getaways', postStyle: 'Intimate, romantic, slow luxury', ctaStyle: 'DM to check availability', hookExample: 'Two bedrooms. Your own pool. The sound of the Pacific from every room.' },\n  5: { audience: 'Foodies & Culinary Travelers', postStyle: 'Warm, sensory, specific details', ctaStyle: 'Ask about chef packages', hookExample: 'Ricardo fires the wood oven at dusk. Guests choose their toppings. Magic happens.' },\n  6: { audience: 'Adventure Seekers & Active Travelers', postStyle: 'Energetic, free-spirited, variety-focused', ctaStyle: 'Inquire to book your adventure stay', hookExample: 'ATV to Punta de Mita. Zipline through 13 jungle lines. Horses at golden hour.' }\n};\n\nconst cfg = categoryMap[dayIndex];\nconst aud = audienceMap[dayIndex];\n\nreturn [{\n  json: {\n    dayIndex,\n    dayName: days[dayIndex],\n    runDate: today.toISOString().split('T')[0],\n    sundayMode: dayIndex === 0 ? sundayMode : null,\n    photoFolder: cfg.folder,\n    photoZone: cfg.zone,\n    topic: cfg.topic,\n    audience: aud.audience,\n    postStyle: aud.postStyle,\n    ctaStyle: aud.ctaStyle,\n    hookExample: aud.hookExample\n  }\n}];"
       }
     },
     {
@@ -281,12 +281,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        460,
+        680,
         700
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const errorData = $input.first().json;\nconsole.error('SkyHouse workflow error:', JSON.stringify({\n  date: new Date().toISOString(),\n  workflow: 'SkyHouse Sayulita — Daily Social Post',\n  error: errorData.error && errorData.error.message,\n  node: errorData.error && errorData.error.node && errorData.error.node.name,\n  executionId: errorData.execution && errorData.execution.id\n}));\nreturn $input.all();"
+        "jsCode": "const errorData = $input.first().json;\nconsole.error('SkyHouse workflow error:', JSON.stringify({\n  date: new Date().toISOString(),\n  workflow: 'SkyHouse Sayulita \u2014 Daily Social Post',\n  error: errorData.error && errorData.error.message,\n  node: errorData.error && errorData.error.node && errorData.error.node.name,\n  executionId: errorData.execution && errorData.execution.id\n}));\nreturn $input.all();"
       }
     },
     {
@@ -301,6 +301,29 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const dayConfig = $input.first().json;\n\nconst allFolders = [\n  'Surf', 'Yoga', 'Restaurants', 'Marieta Islands',\n  'Monkey Mountain', 'Golf', 'Fishing Charter',\n  'Whale Tours', 'SUP', 'Ally Cat', 'CachaSol', 'Local Cultural'\n];\n\nconst staticData = $getWorkflowStaticData('global');\nlet usedFolders = staticData.usedFolders || [];\n\nif (usedFolders.length >= allFolders.length) {\n  usedFolders = [];\n}\n\nconst available = allFolders.filter(f => !usedFolders.includes(f));\nconst folder = available[Math.floor(Math.random() * available.length)];\n\nusedFolders.push(folder);\nstaticData.usedFolders = usedFolders;\n\nreturn [{\n  json: {\n    ...dayConfig,\n    sayulitaFolder: folder\n  }\n}];"
+      }
+    },
+    {
+      "id": "tg-alert-d18934a7",
+      "name": "Telegram \u2014 Post Failure Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        460,
+        700
+      ],
+      "parameters": {
+        "chatId": "8609472348",
+        "text": "={{ '\ud83d\udd34 *' + $workflow.name + '* failed\\n\\nNode: ' + ($json.execution?.lastNodeExecuted ?? 'unknown') + '\\nError: ' + ($json.error?.message ?? JSON.stringify($json.error ?? 'unknown')) + '\\n\\n' + new Date().toLocaleString('en-US', {timeZone:'America/Mazatlan'}) + ' (Mexico)' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "CRED_ID_TELEGRAM",
+          "name": "Fullyo Telegram Bot"
+        }
       }
     }
   ],
@@ -435,7 +458,7 @@
       "main": [
         [
           {
-            "node": "Log Error to Console",
+            "node": "Telegram \u2014 Post Failure Alert",
             "type": "main",
             "index": 0
           }
@@ -447,6 +470,17 @@
         [
           {
             "node": "List Sayulita Shared Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram \u2014 Post Failure Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Error to Console",
             "type": "main",
             "index": 0
           }
