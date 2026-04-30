@@ -3,19 +3,19 @@
   "id": "3mW5h8P4qWdwvNmf",
   "name": "Villas Sempre Avanti — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-22T17:00:32.451Z"
+  "updatedAt": "2026-04-30T17:05:36.116Z"
 }
 {
   "id": "8GapeyJSUjSx2gNY",
   "name": "SkyHouse Sayulita — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-22T17:00:30.998Z"
+  "updatedAt": "2026-04-30T17:05:34.717Z"
 }
 {
   "id": "8qEtxp9DvhBuniMg",
   "name": "The Moroccan Palace — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-22T17:00:33.693Z"
+  "updatedAt": "2026-04-30T17:05:37.499Z"
 }
 {
   "id": "tWX1PmRCMVnXvZFx",
@@ -27,7 +27,7 @@
   "id": "uEexHK92V8UiMuEY",
   "name": "LUX Property Management — Daily Social Post",
   "active": true,
-  "updatedAt": "2026-04-22T17:00:35.301Z"
+  "updatedAt": "2026-04-30T17:05:38.830Z"
 }
 {
   "id": "ycEOQ5T0T47GrevA",
