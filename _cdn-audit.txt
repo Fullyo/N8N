@@ -1,0 +1,52 @@
+CDN AUDIT — 2026-04-30 18:16 UTC
+
+=== SKYHOUSESAYULITA — SkyHouse property ===
+  OK     SkyHouse root: 32 photos | subdirs: _audio
+  EMPTY  SkyHouse/_audio
+
+=== SAYULITAANDBEYOND — Shared activity photos ===
+  EMPTY  Surf
+  OK     Yoga: 2 photos
+  OK     Restaurants: 1 photos
+  OK     Marieta Islands: 1 photos
+  OK     Monkey Mountain: 5 photos
+  OK     Golf: 11 photos
+  OK     Fishing Charter: 1 photos
+  OK     Whale Tours: 4 photos
+  OK     SUP: 1 photos
+  OK     Ally Cat: 5 photos
+  OK     CachaSol: 4 photos
+  EMPTY  Local Cultural
+
+=== VILLASSEMPREAVANTI — VSA property photos ===
+  OK     Villa Luisa: 33 photos
+  OK     Villa Pietro: 44 photos
+  OK     Villas Sempre Avanti: 10 photos
+
+=== THEMOROCCANPALACE — MP property + La Ventana ===
+  EMPTY  Pool
+  EMPTY  Rooftop
+  EMPTY  Riad
+  EMPTY  Interiors
+  EMPTY  Glamping
+  EMPTY  Villa
+  EMPTY  La Ventana/Diving
+  EMPTY  La Ventana/Kite Surfing
+  EMPTY  La Ventana/Whale Sharks
+  EMPTY  La Ventana/Sea Lions
+
+SUMMARY: 14 folders OK, 13 EMPTY
+EMPTY FOLDERS:
+  - SkyHouse/_audio
+  - Surf
+  - Local Cultural
+  - Pool
+  - Rooftop
+  - Riad
+  - Interiors
+  - Glamping
+  - Villa
+  - La Ventana/Diving
+  - La Ventana/Kite Surfing
+  - La Ventana/Whale Sharks
+  - La Ventana/Sea Lions
