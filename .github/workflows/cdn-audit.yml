@@ -1,4 +1,4 @@
-name: Full CDN Audit — All Properties
+name: CDN Audit All Properties
 
 on:
   workflow_dispatch:
@@ -18,144 +18,131 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Read MP Bunny key from fb-tokens.json
+        id: mp_key
+        run: |
+          MP_KEY=$(jq -r '.bunny.themoroccanpalace.storageApiKey // empty' fb-tokens.json)
+          echo "mp_key=$MP_KEY" >> $GITHUB_OUTPUT
+
       - name: Audit all Bunny CDN zones
         env:
           BUNNY_SKYHOUSE_KEY: ${{ secrets.BUNNY_SKYHOUSE_KEY }}
           BUNNY_SAYULITA_KEY: ${{ secrets.BUNNY_SAYULITA_KEY }}
           BUNNY_SEMPREAVANTI_KEY: ${{ secrets.BUNNY_SEMPREAVANTI_KEY }}
-          BUNNY_MOROCCANPALACE_KEY: ${{ secrets.BUNNY_MOROCCANPALACE_KEY }}
+          BUNNY_MOROCCANPALACE_KEY: ${{ secrets.BUNNY_MOROCCANPALACE_KEY || steps.mp_key.outputs.mp_key }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
-          BASE="https://la.storage.bunnycdn.com"
-          TG_CHAT="8609472348"
-          OUT="_cdn-audit.txt"
+          python3 << 'PYEOF'
+          import os, json, urllib.request, urllib.parse
 
-          list_folder() {
-            local zone="$1" key="$2" path="$3"
-            curl -sf -H "AccessKey: $key" "$BASE/$zone/$path" 2>/dev/null || echo "[]"
-          }
+          BASE = "https://la.storage.bunnycdn.com"
+          TG_CHAT = "8609472348"
+          TG_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
-          count_photos() {
-            echo "$1" | python3 -c "
-          import json,sys
-          data=json.load(sys.stdin)
-          if isinstance(data,list):
-              imgs=[x for x in data if not x.get('IsDirectory',False) and x.get('ObjectName','').lower().split('.')[-1] in ['jpg','jpeg','png','webp','gif']]
-              print(len(imgs))
-          else:
-              print(0)"
-          }
+          def list_folder(zone, key, path=""):
+              url = f"{BASE}/{zone}/{urllib.parse.quote(path, safe='/')}/"
+              req = urllib.request.Request(url, headers={"AccessKey": key})
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as r:
+                      return json.loads(r.read())
+              except Exception as e:
+                  return []
 
-          {
-          echo "============================================"
-          echo "FULLYO CDN AUDIT — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          echo "============================================"
+          def count_photos(items):
+              exts = {'.jpg','.jpeg','.png','.webp','.gif','.JPG','.JPEG','.PNG'}
+              return len([x for x in items if not x.get('IsDirectory') and
+                         any(x.get('ObjectName','').endswith(e) for e in exts)])
 
-          # ── SKYHOUSE SAYULITA ─────────────────────────
-          echo ""
-          echo "=== SKYHOUSESAYULITA (SkyHouse property photos) ==="
-          SKY_ROOT=$(list_folder "skyhousesayulita" "$BUNNY_SKYHOUSE_KEY" "")
-          SKY_COUNT=$(count_photos "$SKY_ROOT")
-          echo "  Root folder: $SKY_COUNT photos"
-          # List subdirs
-          echo "$SKY_ROOT" | python3 -c "
-          import json,sys
-          data=json.load(sys.stdin)
-          if isinstance(data,list):
-              dirs=[x['ObjectName'] for x in data if x.get('IsDirectory')]
-              if dirs: print('  Subdirs: '+', '.join(dirs))
-          " 2>/dev/null
+          def count_videos(items):
+              exts = {'.mp4','.mov','.avi','.MP4','.MOV'}
+              return len([x for x in items if not x.get('IsDirectory') and
+                         any(x.get('ObjectName','').endswith(e) for e in exts)])
 
-          # ── SAYULITA SHARED (activity photos) ─────────
-          echo ""
-          echo "=== SAYULITAANDBEYOND (Shared activity photos) ==="
-          FOLDERS="Surf Yoga Restaurants Marieta\ Islands Monkey\ Mountain Golf Fishing\ Charter Whale\ Tours SUP Ally\ Cat CachaSol Local\ Cultural"
-          for FOLDER in "Surf" "Yoga" "Restaurants" "Marieta Islands" "Monkey Mountain" "Golf" "Fishing Charter" "Whale Tours" "SUP" "Ally Cat" "CachaSol" "Local Cultural"; do
-            ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$FOLDER'))")
-            DATA=$(list_folder "sayulitaandbeyond" "$BUNNY_SAYULITA_KEY" "$ENCODED/")
-            COUNT=$(count_photos "$DATA")
-            if [ "$COUNT" -eq 0 ]; then
-              echo "  ⚠ $FOLDER: EMPTY"
-            else
-              echo "  ✓ $FOLDER: $COUNT photos"
-            fi
-          done
+          SKY_KEY  = os.environ.get("BUNNY_SKYHOUSE_KEY","")
+          SAY_KEY  = os.environ.get("BUNNY_SAYULITA_KEY","")
+          VSA_KEY  = os.environ.get("BUNNY_SEMPREAVANTI_KEY","")
+          MP_KEY   = os.environ.get("BUNNY_MOROCCANPALACE_KEY","")
 
-          # ── VILLAS SEMPRE AVANTI ──────────────────────
-          echo ""
-          echo "=== VILLASSEMPREAVANTI (VSA property photos) ==="
-          for FOLDER in "Villa Luisa" "Villa Pietro" "Villas Sempre Avanti"; do
-            ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$FOLDER'))")
-            DATA=$(list_folder "villassempreavanti" "$BUNNY_SEMPREAVANTI_KEY" "$ENCODED/")
-            COUNT=$(count_photos "$DATA")
-            if [ "$COUNT" -eq 0 ]; then
-              echo "  ⚠ $FOLDER: EMPTY"
-            else
-              echo "  ✓ $FOLDER: $COUNT photos"
-            fi
-          done
+          lines = []
+          missing = []
+          ok = []
 
-          # ── THE MOROCCAN PALACE ───────────────────────
-          echo ""
-          echo "=== THEMOROCCANPALACE (MP property + La Ventana activity photos) ==="
-          MP_ROOT=$(list_folder "themoroccanpalace" "$BUNNY_MOROCCANPALACE_KEY" "")
-          echo "$MP_ROOT" | python3 -c "
-          import json,sys
-          data=json.load(sys.stdin)
-          if isinstance(data,list):
-              for x in data:
-                  print('  ' + ('📁' if x.get('IsDirectory') else '🖼') + ' ' + x.get('ObjectName',''))
-          " 2>/dev/null
+          def section(title):
+              lines.append("")
+              lines.append(f"=== {title} ===")
 
-          for FOLDER in "Pool" "Rooftop" "Riad" "Interiors" "Glamping" "Villa"; do
-            DATA=$(list_folder "themoroccanpalace" "$BUNNY_MOROCCANPALACE_KEY" "$FOLDER/")
-            COUNT=$(count_photos "$DATA")
-            if [ "$COUNT" -eq 0 ]; then
-              echo "  ⚠ $FOLDER/: EMPTY"
-            else
-              echo "  ✓ $FOLDER/: $COUNT photos"
-            fi
-          done
+          def check(label, zone, key, path=""):
+              items = list_folder(zone, key, path)
+              photos = count_photos(items)
+              videos = count_videos(items)
+              subdirs = [x['ObjectName'] for x in items if x.get('IsDirectory')]
+              if photos == 0 and videos == 0:
+                  lines.append(f"  EMPTY  {label}")
+                  missing.append(label)
+              else:
+                  detail = f"{photos} photos"
+                  if videos: detail += f", {videos} videos"
+                  if subdirs: detail += f" | subdirs: {', '.join(subdirs)}"
+                  lines.append(f"  OK     {label}: {detail}")
+                  ok.append(f"{label}: {detail}")
+              return items
 
-          # La Ventana activity subfolders
-          LV=$(list_folder "themoroccanpalace" "$BUNNY_MOROCCANPALACE_KEY" "La%20Ventana/")
-          echo ""
-          echo "  La Ventana subfolders:"
-          echo "$LV" | python3 -c "
-          import json,sys
-          data=json.load(sys.stdin)
-          if isinstance(data,list):
-              for x in data:
-                  print('    ' + ('📁' if x.get('IsDirectory') else '  ') + ' ' + x.get('ObjectName','?'))
-          " 2>/dev/null
+          # SKYHOUSESAYULITA
+          section("SKYHOUSESAYULITA — SkyHouse property")
+          items = check("SkyHouse root", "skyhousesayulita", SKY_KEY, "")
+          subdirs = [x['ObjectName'] for x in items if x.get('IsDirectory')]
+          for d in subdirs:
+              check(f"SkyHouse/{d}", "skyhousesayulita", SKY_KEY, d)
 
-          for SUBFOLDER in "Diving" "Kite Surfing" "Whale Sharks" "Sea Lions"; do
-            ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('La Ventana/$SUBFOLDER'))")
-            DATA=$(list_folder "themoroccanpalace" "$BUNNY_MOROCCANPALACE_KEY" "$ENCODED/")
-            COUNT=$(count_photos "$DATA")
-            if [ "$COUNT" -eq 0 ]; then
-              echo "  ⚠ La Ventana/$SUBFOLDER/: EMPTY"
-            else
-              echo "  ✓ La Ventana/$SUBFOLDER/: $COUNT photos"
-            fi
-          done
+          # SAYULITAANDBEYOND
+          section("SAYULITAANDBEYOND — Shared activity photos")
+          for folder in ["Surf","Yoga","Restaurants","Marieta Islands","Monkey Mountain",
+                         "Golf","Fishing Charter","Whale Tours","SUP","Ally Cat","CachaSol","Local Cultural"]:
+              check(folder, "sayulitaandbeyond", SAY_KEY, folder)
 
-          echo ""
-          echo "============================================"
-          echo "AUDIT COMPLETE"
-          echo "============================================"
-          } > "$OUT"
+          # VILLASSEMPREAVANTI
+          section("VILLASSEMPREAVANTI — VSA property photos")
+          for folder in ["Villa Luisa","Villa Pietro","Villas Sempre Avanti"]:
+              check(folder, "villassempreavanti", VSA_KEY, folder)
 
-          cat "$OUT"
+          # THEMOROCCANPALACE
+          section("THEMOROCCANPALACE — MP property + La Ventana")
+          for folder in ["Pool","Rooftop","Riad","Interiors","Glamping","Villa"]:
+              check(folder, "themoroccanpalace", MP_KEY, folder)
+          for sub in ["Diving","Kite Surfing","Whale Sharks","Sea Lions"]:
+              check(f"La Ventana/{sub}", "themoroccanpalace", MP_KEY, f"La Ventana/{sub}")
 
-          # Send summary to Telegram
-          SUMMARY=$(cat "$OUT" | grep -E "(EMPTY|✓|===)" | head -40 | sed 's/[&<>]//g')
-          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TG_CHAT}" \
-            -d "parse_mode=Markdown" \
-            --data-urlencode "text=📦 *CDN Audit Complete*
+          # Summary
+          lines.insert(0, f"CDN AUDIT — {__import__('datetime').datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+          lines.append("")
+          lines.append(f"SUMMARY: {len(ok)} folders OK, {len(missing)} EMPTY")
+          if missing:
+              lines.append("EMPTY FOLDERS:")
+              for m in missing:
+                  lines.append(f"  - {m}")
 
-$(cat "$OUT" | grep -E '(⚠|✓)' | head -30)" > /dev/null
+          report = "\n".join(lines)
+          print(report)
+
+          with open("_cdn-audit.txt", "w") as f:
+              f.write(report)
+
+          # Telegram summary
+          if TG_TOKEN:
+              status = "All folders have photos" if not missing else f"{len(missing)} empty folders"
+              tg_lines = [f"CDN Audit Complete"]
+              tg_lines += [f"OK: {x}" for x in ok[:15]]
+              if missing:
+                  tg_lines += [f"EMPTY: {m}" for m in missing]
+              msg = "\n".join(tg_lines)
+              data = urllib.parse.urlencode({"chat_id": TG_CHAT, "text": msg}).encode()
+              req = urllib.request.Request(
+                  f"https://api.telegram.org/bot{TG_TOKEN}/sendMessage", data=data)
+              try:
+                  urllib.request.urlopen(req, timeout=10)
+              except:
+                  pass
+          PYEOF
 
       - name: Commit audit results
         run: |
